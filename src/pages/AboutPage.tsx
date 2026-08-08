@@ -5,12 +5,12 @@ import { Breadcrumbs } from "@/components/Breadcrumbs";
 
 export default function AboutPage() {
   const { t } = useTranslation();
-  const stats = [
-    { value: "19+", label: t("hero.stat.tools") },
-    { value: "2.4M+", label: t("hero.stat.users") },
-    { value: "99.9%", label: t("hero.stat.uptime") },
-    { value: "180+", label: t("hero.stat.countries") },
-  ];
+ const stats = [
+  { value: "70+", label: t("hero.stat.tools") },
+  { value: "13", label: t("hero.stat.categories") },
+  { value: "6", label: t("hero.stat.languages") },
+  { value: "100%", label: t("hero.stat.free") },
+];
   const values = [
     { icon: Shield, text: t("about.value.privacy") },
     { icon: Eye, text: t("about.value.access") },
