@@ -124,7 +124,7 @@ export function Footer() {
         <p className="mt-4 flex items-center justify-center gap-1 text-center text-[11px] text-ink-400 dark:text-ink-600">
           <span>{t("footer.madeWith")}</span>
           <Heart className="h-3 w-3 fill-danger text-danger" />
-          
+          <span>{t("footer.madeFor")}</span>
         </p>
       </div>
     </footer>
