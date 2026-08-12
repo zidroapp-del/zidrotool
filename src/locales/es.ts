@@ -37,11 +37,11 @@ export const es = {
   "hero.title": "Herramientas online inteligentes para todos",
   "hero.subtitle": "Una colección creciente de utilidades rápidas y respetuosas con la privacidad para desarrolladores, creadores y usuarios. Sin instalaciones, sin complicaciones — solo herramientas que funcionan.",
   "hero.cta": "Explorar herramientas",
-  "hero.ctaSecondary": "Ver precios",
+  "hero.ctaSecondary": "Ver precios", 
   "hero.stat.tools": "Herramientas",
-  "hero.stat.users": "Usuarios/mes",
-  "hero.stat.uptime": "Disponibilidad",
-  "hero.stat.countries": "Países",
+  "hero.stat.categories": "Categorías",
+  "hero.stat.languages": "Idiomas",
+  "hero.stat.free": "Gratis",
 
   "section.featured": "Destacadas",
   "section.featured.sub": "Herramientas seleccionadas que nuestra comunidad usa a diario.",
@@ -62,6 +62,12 @@ export const es = {
   "section.blog.sub": "Guías, actualizaciones y novedades del equipo ZidroTool.",
   "section.viewAll": "Ver todo",
 
+  // Blog bodies (copy English content as fallback when Spanish translations are missing)
+  "blog.welcome.body": "Today, we're thrilled to open the doors to ZidroTool. What started as a handful of developer utilities has grown into a platform with 100+ tools across 12 categories — from text and image tools to AI, finance, health, and security.\n\n<h2>Why We Built ZidroTool</h2>\nEvery tool runs in your browser, meaning your data never leaves your device. No sign-up required, no paywalls, no tricks. Just tools that work.",
+  "blog.100-tools.body": "When we launched, we had a vision: build the most comprehensive collection of free, browser-based tools on the web. Today, we're celebrating 100 tools across 12 categories.\n\n<h2>New Categories</h2>\nWe added AI Tools, SEO Tools, Social Media Tools, Health, and Finance — bringing our total to 12 categories.",
+  "blog.changelog-july.body": "July was a big month for ZidroTool. Here's everything we shipped:\n\n<h2>New Tools</h2>\nAdded 30+ new tool placeholders across all categories. Expanded the catalog from 45 to 100+ tools.",
+  "blog.ai-productivity.body": "AI tools have moved from novelty to necessity. At ZidroTool, we're building AI-powered utilities that save you time without compromising privacy.\n\n<h2>Text Summarization</h2>\nOur AI Text Summarizer condenses long articles into key points.\n\n<h2>Grammar Checking</h2>\nThe AI Grammar Checker catches mistakes that spell-check misses.",
+
   "why.fast.title": "Ultrarrápido",
   "why.fast.desc": "Cada herramienta se ejecuta en tu navegador sin latencia.",
   "why.privacy.title": "Privacidad primero",
@@ -75,10 +81,19 @@ export const es = {
   "why.quality.title": "Hecho con cuidado",
   "why.quality.desc": "Cada herramienta está pulida al detalle.",
 
-  "newsletter.placeholder": "tu@ejemplo.com",
+ "newsletter.placeholder": "tu@ejemplo.com",
   "newsletter.button": "Suscribirse",
+  "newsletter.subscribed": "Suscrito con éxito",
   "newsletter.success": "¡Gracias! Revisa tu correo para confirmar.",
-  "newsletter.error": "Introduce un email válido.",
+  "newsletter.successDesc": "Te has añadido con éxito a nuestra lista de correo.",
+  "newsletter.subscribeAnother": "Suscribirse con otro correo",
+  "newsletter.disclaimer": "Sin spam. Puedes cancelar la suscripción en cualquier momento. Respetamos tu privacidad.",
+  
+  // تصحيح الأخطاء لتعمل مع المكون
+  "newsletter.error.empty": "Por favor, introduce un correo electrónico.",
+  "newsletter.error.invalid": "Introduce un email válido.",
+  "newsletter.error.duplicate": "Este correo electrónico ya está suscrito.",
+  "newsletter.error.generic": "Ocurrió un error, por favor inténtalo de nuevo.",
 
   "tool.input": "Entrada",
   "tool.output": "Salida",
@@ -137,6 +152,10 @@ export const es = {
   "footer.legal": "Legal",
   "footer.newsletter": "Newsletter",
   "footer.follow": "Síguenos",
+  "footer.developers": "Desarrolladores",
+  "footer.links.roadmap": "Hoja de ruta",
+  "footer.links.press": "Prensa",
+  "footer.links.releases": "Notas de versión",
 
   "common.loading": "Cargando…",
   "common.cancel": "Cancelar",
@@ -161,4 +180,51 @@ export const es = {
   "breadcrumbs.tools": "Herramientas",
   "breadcrumbs.blog": "Blog",
   "breadcrumbs.category": "Categoría",
+  // Tools translations
+  tools: {
+    percentageCalculator: {
+      name: "Calculadora de Porcentajes",
+      desc: "Calcula porcentajes y diferencias fácilmente."
+    },
+    averageCalculator: {
+      name: "Calculadora de Promedio",
+      desc: "Calcula la media, mediana y valores promedio."
+    },
+    discountCalculator: {
+      name: "Calculadora de Descuentos",
+      desc: "Calcula precios con descuento y ahorros al instante."
+    },
+    speechToText: {
+      name: "Voz a Texto",
+      desc: "Convierte la voz hablada en texto escrito en tiempo real."
+    },
+    imageToTextOcr: {
+      name: "Imagen a Texto (OCR)",
+      desc: "Extrae texto de imágenes y documentos escaneados."
+    },
+    textToSpeech: {
+      name: "Texto a Voz",
+      desc: "Convierte texto escrito en audio de voz natural."
+    },
+    pdfToText: {
+      name: "PDF a Texto",
+      desc: "Extrae texto editable directamente de archivos PDF."
+    },
+    invoiceGenerator: {
+      name: "Generador de Facturas",
+      desc: "Crea facturas profesionales y personalizables al instante."
+    },
+    qrCodeScanner: {
+      name: "Escáner de Código QR",
+      desc: "Escanea y lee códigos QR usando tu cámara o imágenes."
+    },
+    imageBackgroundRemover: {
+      name: "Eliminador de Fondo",
+      desc: "Elimina el fondo de las imágenes automáticamente con IA."
+    },
+    imageCropper: {
+      name: "Recortador de Imágenes",
+      desc: "Recorta y ajusta dimensiones de imágenes fácilmente."
+    }
+  }
 };

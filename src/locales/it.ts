@@ -39,9 +39,9 @@ export const it = {
   "hero.cta": "Esplora strumenti",
   "hero.ctaSecondary": "Vedi i prezzi",
   "hero.stat.tools": "Strumenti",
-  "hero.stat.users": "Utenti/mese",
-  "hero.stat.uptime": "Disponibilità",
-  "hero.stat.countries": "Paesi",
+  "hero.stat.categories": "Categorie",
+  "hero.stat.languages": "Lingue",
+  "hero.stat.free": "Gratuito",
 
   "section.featured": "In evidenza",
   "section.featured.sub": "Strumenti scelti a mano che la nostra community usa ogni giorno.",
@@ -62,6 +62,12 @@ export const it = {
   "section.blog.sub": "Guide, aggiornamenti e novità dal team ZidroTool.",
   "section.viewAll": "Vedi tutto",
 
+  // Blog bodies (copy English content as fallback when Italian translations are missing)
+  "blog.welcome.body": "Today, we're thrilled to open the doors to ZidroTool. What started as a handful of developer utilities has grown into a platform with 100+ tools across 12 categories — from text and image tools to AI, finance, health, and security.\n\n<h2>Why We Built ZidroTool</h2>\nEvery tool runs in your browser, meaning your data never leaves your device. No sign-up required, no paywalls, no tricks. Just tools that work.",
+  "blog.100-tools.body": "When we launched, we had a vision: build the most comprehensive collection of free, browser-based tools on the web. Today, we're celebrating 100 tools across 12 categories.\n\n<h2>New Categories</h2>\nWe added AI Tools, SEO Tools, Social Media Tools, Health, and Finance — bringing our total to 12 categories.",
+  "blog.changelog-july.body": "July was a big month for ZidroTool. Here's everything we shipped:\n\n<h2>New Tools</h2>\nAdded 30+ new tool placeholders across all categories. Expanded the catalog from 45 to 100+ tools.",
+  "blog.ai-productivity.body": "AI tools have moved from novelty to necessity. At ZidroTool, we're building AI-powered utilities that save you time without compromising privacy.\n\n<h2>Text Summarization</h2>\nOur AI Text Summarizer condenses long articles into key points.\n\n<h2>Grammar Checking</h2>\nThe AI Grammar Checker catches mistakes that spell-check misses.",
+
   "why.fast.title": "Fulmineo",
   "why.fast.desc": "Ogni strumento gira nel tuo browser senza latenza.",
   "why.privacy.title": "Privacy prima di tutto",
@@ -79,6 +85,7 @@ export const it = {
   "newsletter.button": "Iscriviti",
   "newsletter.success": "Grazie! Controlla la posta per confermare.",
   "newsletter.error": "Inserisci un'email valida.",
+  "newsletter.disclaimer": "Niente spam. Puoi annullare l'iscrizione in qualsiasi momento. Rispettiamo la tua privacy.",
 
   "tool.input": "Input",
   "tool.output": "Output",
@@ -137,6 +144,10 @@ export const it = {
   "footer.legal": "Legale",
   "footer.newsletter": "Newsletter",
   "footer.follow": "Seguici",
+  "footer.developers": "Sviluppatori", 
+  "footer.links.roadmap": "Roadmap",
+  "footer.links.press": "Stampa",
+  "footer.links.releases": "Note di rilascio",
 
   "common.loading": "Caricamento…",
   "common.cancel": "Annulla",
@@ -161,4 +172,51 @@ export const it = {
   "breadcrumbs.tools": "Strumenti",
   "breadcrumbs.blog": "Blog",
   "breadcrumbs.category": "Categoria",
+  // Tools translations
+  tools: {
+    percentageCalculator: {
+      name: "Calcolatore di Percentuale",
+      desc: "Calcola facilmente percentuali e differenze."
+    },
+    averageCalculator: {
+      name: "Calcolatore di Media",
+      desc: "Calcola media, mediana e valori medi."
+    },
+    discountCalculator: {
+      name: "Calcolatore di Sconto",
+      desc: "Calcola prezzi scontati e risparmi all'istante."
+    },
+    speechToText: {
+      name: "Da Voce a Testo",
+      desc: "Converti la voce parlata in testo scritto in tempo reale."
+    },
+    imageToTextOcr: {
+      name: "Da Immagine a Testo (OCR)",
+      desc: "Estrai testo da immagini e documenti scansionati."
+    },
+    textToSpeech: {
+      name: "Da Testo a Voce",
+      desc: "Converti testo scritto in audio con voce naturale."
+    },
+    pdfToText: {
+      name: "Da PDF a Testo",
+      desc: "Estrai testo modificabile direttamente dai file PDF."
+    },
+    invoiceGenerator: {
+      name: "Generatore di Fatture",
+      desc: "Crea fatture professionali e personalizzabili all'istante."
+    },
+    qrCodeScanner: {
+      name: "Scanner di Codici QR",
+      desc: "Scansiona e leggi codici QR tramite fotocamera o immagini."
+    },
+    imageBackgroundRemover: {
+      name: "Rimuovi Sfondo Immagine",
+      desc: "Rimuovi lo sfondo dalle immagini automaticamente con l'IA."
+    },
+    imageCropper: {
+      name: "Ritaglio Immagini",
+      desc: "Ritaglia e regola le dimensioni delle immagini facilmente."
+    }
+  }
 };

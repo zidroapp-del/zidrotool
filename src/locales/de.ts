@@ -39,9 +39,9 @@ export const de = {
   "hero.cta": "Werkzeuge durchsuchen",
   "hero.ctaSecondary": "Preise ansehen",
   "hero.stat.tools": "Werkzeuge",
-  "hero.stat.users": "Nutzer/Monat",
-  "hero.stat.uptime": "Verfügbarkeit",
-  "hero.stat.countries": "Länder",
+  "hero.stat.categories": "Kategorien",
+  "hero.stat.languages": "Sprachen",
+  "hero.stat.free": "Kostenlos",
 
   "section.featured": "Empfohlene Werkzeuge",
   "section.featured.sub": "Handverlesene Werkzeuge, die unsere Community täglich nutzt.",
@@ -62,6 +62,12 @@ export const de = {
   "section.blog.sub": "Anleitungen, Updates und Einblicke vom ZidroTool-Team.",
   "section.viewAll": "Alle ansehen",
 
+  // Blog bodies (copy English content as fallback when German translations are missing)
+  "blog.welcome.body": "Today, we're thrilled to open the doors to ZidroTool. What started as a handful of developer utilities has grown into a platform with 100+ tools across 12 categories — from text and image tools to AI, finance, health, and security.\n\n<h2>Why We Built ZidroTool</h2>\nEvery tool runs in your browser, meaning your data never leaves your device. No sign-up required, no paywalls, no tricks. Just tools that work.",
+  "blog.100-tools.body": "When we launched, we had a vision: build the most comprehensive collection of free, browser-based tools on the web. Today, we're celebrating 100 tools across 12 categories.\n\n<h2>New Categories</h2>\nWe added AI Tools, SEO Tools, Social Media Tools, Health, and Finance — bringing our total to 12 categories.",
+  "blog.changelog-july.body": "July was a big month for ZidroTool. Here's everything we shipped:\n\n<h2>New Tools</h2>\nAdded 30+ new tool placeholders across all categories. Expanded the catalog from 45 to 100+ tools.",
+  "blog.ai-productivity.body": "AI tools have moved from novelty to necessity. At ZidroTool, we're building AI-powered utilities that save you time without compromising privacy.\n\n<h2>Text Summarization</h2>\nOur AI Text Summarizer condenses long articles into key points.\n\n<h2>Grammar Checking</h2>\nThe AI Grammar Checker catches mistakes that spell-check misses.",
+
   "why.fast.title": "Blitzschnell",
   "why.fast.desc": "Jedes Werkzeug läuft ohne Latenz im Browser. Kein Warten.",
   "why.privacy.title": "Datenschutz zuerst",
@@ -75,10 +81,19 @@ export const de = {
   "why.quality.title": "Mit Sorgfalt gefertigt",
   "why.quality.desc": "Jedes Werkzeug wird mit Liebe zum Detail gestaltet.",
 
-  "newsletter.placeholder": "sie@beispiel.de",
+ "newsletter.placeholder": "sie@beispiel.de",
   "newsletter.button": "Abonnieren",
+  "newsletter.subscribed": "Erfolgreich abonniert",
   "newsletter.success": "Danke! Posteingang zur Bestätigung prüfen.",
-  "newsletter.error": "Bitte gültige E-Mail-Adresse eingeben.",
+  "newsletter.successDesc": "Sie wurden erfolgreich zu unserer E-Mail-Liste hinzugefügt.",
+  "newsletter.subscribeAnother": "Mit einer anderen E-Mail abonnieren",
+  "newsletter.disclaimer": "Kein Spam. Jederzeit abbestellbar. Wir respektieren Ihre Privatsphäre.",
+  
+  // تصحيح الأخطاء لتعمل مع المكون
+  "newsletter.error.empty": "Bitte geben Sie eine E-Mail-Adresse ein.",
+  "newsletter.error.invalid": "Bitte gültige E-Mail-Adresse eingeben.",
+  "newsletter.error.duplicate": "Diese E-Mail-Adresse ist bereits abonniert.",
+  "newsletter.error.generic": "Ein Fehler ist aufgetreten. Bitte versuchen Sie es später erneut.",
 
   "tool.input": "Eingabe",
   "tool.output": "Ausgabe",
@@ -137,6 +152,10 @@ export const de = {
   "footer.legal": "Rechtliches",
   "footer.newsletter": "Newsletter",
   "footer.follow": "Folgen Sie uns",
+  "footer.developers": "Entwickler",
+  "footer.links.roadmap": "Roadmap",
+  "footer.links.press": "Presse", 
+  "footer.links.releases": "Versionshinweise",
 
   "common.loading": "Laden…",
   "common.cancel": "Abbrechen",
@@ -161,4 +180,51 @@ export const de = {
   "breadcrumbs.tools": "Werkzeuge",
   "breadcrumbs.blog": "Blog",
   "breadcrumbs.category": "Kategorie",
+  // Tools translations
+  tools: {
+    percentageCalculator: {
+      name: "Prozentrechner",
+      desc: "Prozentsätze und Differenzen einfach berechnen."
+    },
+    averageCalculator: {
+      name: "Durchschnittsrechner",
+      desc: "Mittelwert, Median und Durchschnittswerte berechnen."
+    },
+    discountCalculator: {
+      name: "Rabattrechner",
+      desc: "Rabattierte Preise und Ersparnisse sofort berechnen."
+    },
+    speechToText: {
+      name: "Sprache zu Text",
+      desc: "Gesprochene Sprache in Echtzeit in Text umwandeln."
+    },
+    imageToTextOcr: {
+      name: "Bild zu Text (OCR)",
+      desc: "Text aus Bildern und gescannten Dokumenten extrahieren."
+    },
+    textToSpeech: {
+      name: "Text zu Sprache",
+      desc: "Geschriebenen Text in natürliche Sprache umwandeln."
+    },
+    pdfToText: {
+      name: "PDF zu Text",
+      desc: "Bearbeitbaren Text direkt aus PDF-Dateien extrahieren."
+    },
+    invoiceGenerator: {
+      name: "Rechnungsgenerator",
+      desc: "Professionelle und anpassbare Rechnungen sofort erstellen."
+    },
+    qrCodeScanner: {
+      name: "QR-Code-Scanner",
+      desc: "QR-Codes mit Ihrer Kamera oder aus Bildern scannen."
+    },
+    imageBackgroundRemover: {
+      name: "Hintergrundentferner",
+      desc: "Bildhintergrund automatisch mit KI entfernen."
+    },
+    imageCropper: {
+      name: "Bild zuschneiden",
+      desc: "Bilder einfach zuschneiden und anpassen."
+    }
+  }
 };

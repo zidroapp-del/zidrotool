@@ -609,6 +609,7 @@ export const en = {
   "footer.company": "Company",
   "footer.resources": "Resources",
   "footer.legal": "Legal",
+  "footer.developers": "Developers",
   "footer.newsletter": "Newsletter",
   "footer.follow": "Follow us",
   "footer.links.about": "About",
@@ -619,6 +620,9 @@ export const en = {
   "footer.links.status": "Status",
   "footer.links.careers": "Careers",
   "footer.links.partners": "Partners",
+  "footer.links.press": "Press",
+  "footer.links.roadmap": "Roadmap",
+  "footer.links.releases": "Release Notes",
   "footer.links.feedback": "Feedback",
   "footer.links.api": "API (Coming Soon)",
   "footer.links.privacy": "Privacy Policy",
@@ -1104,6 +1108,12 @@ export const en = {
   "blog.image-formats.body": "Choosing the wrong image format can mean bloated files or poor quality. Here's when to use each format.\n\n<h2>PNG — For Graphics and Transparency</h2>\nPNG uses lossless compression and supports transparency. Use it for logos, icons, screenshots, and graphics with sharp edges or text.\n\n<h2>JPG — For Photographs</h2>\nJPG uses lossy compression optimized for photographs. It handles gradients and complex color transitions well. Use it for photos where small file size matters.\n\n<h3>WebP — The Modern All-Rounder</h3>\nWebP supports both lossy and lossless compression, plus transparency. It produces smaller files than both PNG and JPG. Use it when browser support allows.\n\n<h2>Rule of Thumb</h2>\nPhotos → WebP or JPG. Graphics with transparency → WebP or PNG. Animations → WebP or GIF.",
   "blog.image-formats.seoTitle": "PNG vs JPG vs WebP: Choosing the Right Image Format",
   "blog.image-formats.seoDesc": "A practical guide to choosing between PNG, JPG, and WebP image formats based on your content type and use case.",
+  
+  "blog.image-compress.title": "How to Compress Images Without Losing Quality",
+  "blog.image-compress.excerpt": "Learn how to compress JPEG, PNG, and WebP images, reduce file size, and keep a good balance between image quality and performance.",
+  "blog.image-compress.body": "Large image files can slow down websites, increase loading times, and make images harder to upload and share.\n\n<h2>What Is Image Compression?</h2>\nImage compression reduces an image's file size while preserving as much visual quality as possible.\n\n<h2>Why Compress Images?</h2>\nCompressing images can make websites load faster, reduce upload times, save storage space, and improve the experience for visitors.\n\n<h2>How to Compress an Image</h2>\nWith ZidroTool Image Compressor, you can process images directly in your browser without installing additional software.\n\n<h3>Step 1: Upload Your Image</h3>\nChoose an image from your device or drag and drop it into the compressor. ZidroTool supports JPEG, PNG, and WebP images.\n\n<h3>Step 2: Choose the Output Format</h3>\nJPEG is useful for photographs. PNG is useful for graphics, screenshots, logos, and transparency. WebP is a modern web-friendly format that can provide a good balance between quality and file size.\n\n<h3>Step 3: Adjust the Quality</h3>\nFor JPEG and WebP images, you can adjust the compression quality. A higher quality setting generally preserves more visual detail, while a lower setting can produce a smaller file.\n\n<h3>Step 4: Compress the Image</h3>\nClick Compress Image and let your browser process the image.\n\n<h3>Step 5: Check the Result</h3>\nZidroTool shows the original and compressed file sizes so you can see how much space you saved.\n\n<h3>Step 6: Download Your Image</h3>\nWhen you're satisfied with the result, click Download to save the compressed image.\n\n<h2>JPEG vs PNG vs WebP</h2>\nJPEG is commonly used for photographs. PNG is useful for graphics, screenshots, logos, and transparency. WebP is a modern format designed for efficient web delivery.\n\n<h2>Does Compression Reduce Image Quality?</h2>\nIt depends on the format and compression settings. JPEG and WebP can use lossy compression, while PNG commonly uses lossless compression.\n\n<h2>Best Image Compression Tips</h2>\nResize very large images when appropriate, choose the right format for your content, and avoid extremely aggressive compression. The goal is to find a good balance between file size and visual quality.\n\n<h2>Compress Images Online With ZidroTool</h2>\nUpload your image, choose the format, adjust the quality when available, compress it, and download the optimized file directly from your browser.\n\n<h2>Frequently Asked Questions</h2>\n\n<h3>Can I compress JPEG images online?</h3>\nYes. JPEG images can be compressed by adjusting the compression quality.\n\n<h3>Can I compress PNG images?</h3>\nYes. ZidroTool supports PNG images and can process them directly in your browser.\n\n<h3>Can I compress WebP images?</h3>\nYes. ZidroTool supports WebP input and output.\n\n<h3>Does image compression make images blurry?</h3>\nIt can if compression is too aggressive. Using a moderate quality setting can help maintain good visual quality while reducing file size.\n\n<h3>What is the best image format for websites?</h3>\nIt depends on the image. JPEG is commonly useful for photographs, PNG is useful for graphics and transparency, and WebP is a modern option for many web images.",
+  "blog.image-compress.seoTitle": "How to Compress Images Without Losing Quality",
+  "blog.image-compress.seoDesc": "Learn how to compress JPEG, PNG, and WebP images without losing quality. Reduce image file size and optimize images online with ZidroTool.",
 
   "blog.json-format.title": "JSON Formatting: Why It Matters and How to Do It Right",
   "blog.json-format.excerpt": "Properly formatted JSON is readable, debuggable, and maintainable. Here's why formatting matters and how to use it effectively.",
@@ -1226,6 +1236,7 @@ export const en = {
   "newsletter.subscribed": "You're already subscribed.",
   "newsletter.subscribeAnother": "Subscribe another email",
   "newsletter.privacy": "No spam. Unsubscribe anytime. We respect your privacy.",
+  "newsletter.disclaimer": "No spam. Unsubscribe anytime. We respect your privacy.",
   "newsletter.error.empty": "Please enter your email address.",
   "newsletter.error.invalid": "Please enter a valid email address.",
   "newsletter.error.duplicate": "This email is already subscribed in this session.",
@@ -1845,4 +1856,6 @@ export const en = {
   "status.overall": "Overall System Status",
   "status.lastUpdated": "Last updated",
   "status.poweredBy": "Powered by ZidroTool monitoring",
+
+  
 };

@@ -39,9 +39,9 @@ export const fr = {
   "hero.cta": "Parcourir les outils",
   "hero.ctaSecondary": "Voir les tarifs",
   "hero.stat.tools": "Outils",
-  "hero.stat.users": "Utilisateurs/mois",
-  "hero.stat.uptime": "Disponibilité",
-  "hero.stat.countries": "Pays",
+  "hero.stat.categories": "Catégories",
+  "hero.stat.languages": "Langues",
+  "hero.stat.free": "Gratuit",
 
   "section.featured": "Outils en vedette",
   "section.featured.sub": "Outils sélectionnés que notre communauté utilise chaque jour.",
@@ -79,6 +79,7 @@ export const fr = {
   "newsletter.button": "S'abonner",
   "newsletter.success": "Merci ! Vérifiez votre boîte de réception pour confirmer.",
   "newsletter.error": "Veuillez saisir une adresse e-mail valide.",
+  "newsletter.disclaimer": "Pas de spam. Désabonnez-vous à tout moment. Nous respectons votre vie privée.",
 
   "tool.input": "Entrée",
   "tool.output": "Résultat",
@@ -161,6 +162,10 @@ export const fr = {
   "footer.links.cookies": "Cookies",
   "footer.links.tools": "Tous les outils",
   "footer.links.categories": "Catégories",
+  "footer.developers": "Développeurs",
+  "footer.links.roadmap": "Feuille de route",
+  "footer.links.press": "Presse",
+  "footer.links.releases": "Notes de version",
 
   "ad.label": "Publicité",
   "ad.placeholder": "Espace publicitaire réservé",
@@ -276,4 +281,136 @@ export const fr = {
   "breadcrumbs.tools": "Outils",
   "breadcrumbs.blog": "Blog",
   "breadcrumbs.category": "Catégorie",
+  tools: {
+  percentageCalculator: {
+    name: "Calculateur de Pourcentage",
+    desc: "Calculez facilement les pourcentages et les différences."
+  },
+  averageCalculator: {
+    name: "Calculateur de Moyenne",
+    desc: "Calculez la moyenne et les valeurs statistiques."
+  },
+  discountCalculator: {
+    name: "Calculateur de Remise",
+    desc: "Calculez les prix réduits et les économies instantanément."
+  },
+  speechToText: {
+    name: "Reconnaissance Vocale",
+    desc: "Convertissez la voix en texte écrit en temps réel."
+  },
+  imageToTextOcr: {
+    name: "Image en Texte (OCR)",
+    desc: "Extrayez le texte des images et des documents scannés."
+  },
+  textToSpeech: {
+    name: "Synthèse Vocale",
+    desc: "Convertissez le texte écrit en voix naturelle."
+  },
+  pdfToText: {
+    name: "PDF en Texte",
+    desc: "Extrayez le texte modifiable directement des fichiers PDF."
+  },
+  invoiceGenerator: {
+    name: "Générateur de Factures",
+    desc: "Créez des factures professionnelles et personnalisables."
+  },
+  qrCodeScanner: {
+    name: "Scanner de Code QR",
+    desc: "Scannez et lisez les codes QR via caméra ou images."
+  },
+  imageBackgroundRemover: {
+    name: "Suppresseur d'Arrière-plan",
+    desc: "Supprimez l'arrière-plan des images avec l'IA."
+  },
+  imageCropper: {
+    name: "Règlement d'Image",
+    desc: "Radcadrez et ajustez les dimensions de vos images."
+  }
+  },
+  // ── Traductions du Blog ──
+  "blog.ai-productivity.title": "Outils IA qui transforment la productivité en 2026",
+  "blog.ai-productivity.excerpt": "Découvrez comment les outils IA modernes révolutionnent le travail des développeurs.",
+  "blog.llm-guide.title": "Comprendre les LLM : Guide pour débutants",
+  "blog.llm-guide.excerpt": "Un guide simple expliquant le fonctionnement des grands modèles linguistiques.",
+  "blog.ai-ethics.title": "Éthique de la réécriture de contenu par l'IA",
+  "blog.ai-ethics.excerpt": "Les règles éthiques à respecter lors de la génération de contenu avec l'IA.",
+
+  "blog.pdf-merge.title": "Meilleures pratiques pour fusionner des fichiers PDF",
+  "blog.pdf-merge.excerpt": "Guide complet pour combiner et organiser facilement vos documents PDF.",
+  "blog.pdf-compress.title": "Compresser des fichiers PDF sans perte de qualité",
+  "blog.pdf-compress.excerpt": "Étapes pratiques pour réduire la taille des PDF volumineux.",
+
+  "blog.image-opt.title": "Guide d'optimisation des images pour le Web 2026",
+  "blog.image-opt.excerpt": "Apprenez à compresser vos images pour accélérer le chargement de votre site.",
+  "blog.image-formats.title": "Choisir le bon format d'image : PNG, WebP ou JPEG ?",
+  "blog.image-formats.excerpt": "Comparatif complet des formats d'images et leurs usages recommandés.",
+  "blog.image-compress.title": "Comment compresser des images sans perdre en qualité",
+  "blog.image-compress.excerpt": "Les meilleures méthodes techniques pour alléger les images tout en restant nettes.",
+
+  "blog.json-format.title": "Formater du JSON : Pourquoi c'est essentiel pour les développeurs",
+  "blog.json-format.excerpt": "Comprendre l'importance de la structure JSON dans les API et le développement.",
+  "blog.jwt-security.title": "Meilleures pratiques de sécurité JWT",
+  "blog.jwt-security.excerpt": "Comment sécuriser vos applications web contre les vulnérabilités de jetons.",
+  "blog.regex-cheat.title": "Aide-mémoire Regex pour développeurs",
+  "blog.regex-cheat.excerpt": "Expressions régulières essentielles pour manipuler du texte efficacement.",
+  "blog.base64-explained.title": "Le codage Base64 expliqué simplement",
+  "blog.base64-explained.excerpt": "Comment fonctionne le codage Base64 et pourquoi il est utilisé sur le web.",
+
+  "blog.pomodoro.title": "La méthode Pomodoro : Guide complet de concentration",
+  "blog.pomodoro.excerpt": "Boostez votre productivité quotidienne grâce à des sessions de travail structurées.",
+  "blog.dev-productivity.title": "Meilleurs outils de productivité pour développeurs 2026",
+  "blog.dev-productivity.excerpt": "Sélection d'applications pour faire gagner plusieurs heures par semaine aux développeurs.",
+
+  "blog.compound-interest.title": "Comprendre les intérêts composés simplement",
+  "blog.compound-interest.excerpt": "Comment fonctionnent les intérêts composés pour faire fructifier vos investissements.",
+  "blog.loan-amort.title": "Comprendre le tableau d'amortissement d'un prêt",
+  "blog.loan-amort.excerpt": "Comment sont réparties les mensualités entre le capital et les intérêts.",
+
+  "blog.bmi-guide.title": "Guide de l'IMC : Que signifie-t-il vraiment ?",
+  "blog.bmi-guide.excerpt": "Comment calculer votre Indice de Masse Corporelle et interpréter vos résultats.",
+  "blog.water-intake.title": "Guide de l'hydratation quotidienne en eau",
+  "blog.water-intake.excerpt": "Calculez votre besoin quotidien en eau selon votre poids et votre activité.",
+
+  "blog.browser-tools.title": "L'avenir des outils web intégrés au navigateur",
+  "blog.browser-tools.excerpt": "Comment WebAssembly permet d'exécuter des outils directement dans le navigateur.",
+  "blog.privacy-first.title": "Applications web axées sur la confidentialité",
+  "blog.privacy-first.excerpt": "L'importance de traiter les données localement sans les envoyer aux serveurs.",
+
+  "blog.tut-json.title": "Comment utiliser un formateur JSON étape par étape",
+  "blog.tut-json.excerpt": "Tutoriel pratique pour formater, valider et déboguer vos fichiers JSON.",
+  "blog.tut-passwords.title": "Comment générer des mots de passe sécurisés",
+  "blog.tut-passwords.excerpt": "Règles essentielles pour créer des mots de passe forts et protéger vos comptes.",
+
+  "blog.welcome.title": "Bienvenue sur ZidroTool",
+  "blog.welcome.excerpt": "Découvrez notre mission et nos outils web gratuits conçus pour les créateurs.",
+  "blog.100-tools.title": "ZidroTool atteint les 100 outils en ligne gratuits",
+  "blog.100-tools.excerpt": "Une étape importante pour la plateforme avec de nouveaux ajouts réguliers.",
+  "blog.changelog-july.title": "Journal des modifications de juillet 2026",
+  "blog.changelog-july.excerpt": "Résumé des nouvelles fonctionnalités et corrections apportées ce mois-ci.",
+  // Blog bodies (machine-translated from English)
+  "blog.ai-productivity.body": "Les outils d'IA ne sont plus une nouveauté mais une nécessité. Chez ZidroTool, nous développons des utilitaires IA qui vous font gagner du temps sans compromettre la confidentialité.\n\n<h2>Résumé de texte</h2>\nNotre résumé IA condense de longs articles en points clés. Au lieu de lire un document de 2000 mots, obtenez l'essentiel en quelques secondes.\n\n<h2>Vérification grammaticale</h2>\nLe correcteur IA repère les formulations maladroites, les incohérences de temps et les problèmes de style que l'orthographe ne détecte pas.\n\n<h3>Explication de code</h3>\nPour les développeurs, l'explicateur de code transforme les extraits obscurs en explications claires. Collez du code, obtenez de la clarté.\n\n<h2>Avantage confidentialité</h2>\nContrairement à de nombreux outils IA qui envoient vos données à des serveurs, nos outils sont conçus pour respecter la vie privée. Votre contenu vous appartient.",
+  "blog.llm-guide.body": "Si vous avez utilisé récemment un outil d'IA, vous avez interagi avec un Grand Modèle de Langage (LLM). Mais qu'est-ce qu'un LLM ?\n\n<h2>Qu'est-ce qu'un LLM ?</h2>\nUn LLM est un type d'IA entraîné sur d'énormes corpus textuels. Il apprend des patterns — grammaire, contexte, ton — et utilise ces modèles pour générer et comprendre du texte.\n\n<h2>Comment ça marche ?</h2>\nLes LLM prédisent le mot suivant dans une séquence. Ce mécanisme simple, à l'échelle de milliards de paramètres, produit un comportement linguistique sophistiqué.\n\n<h3>Processus d'entraînement</h3>\nL'entraînement ajuste les paramètres du modèle pour minimiser les erreurs de prédiction, ce qui permet au modèle d'écrire, résumer, traduire et répondre aux questions.",
+  "blog.ai-ethics.body": "Les outils de réécriture IA sont puissants : ils peuvent reformuler des phrases, simplifier le jargon et adapter le ton. Mais cette puissance implique des responsabilités éthiques.\n\n<h2>Transparence</h2>\nSi vous utilisez l'IA pour réécrire du contenu, soyez transparent. Les lecteurs méritent de savoir si l'IA a participé.\n\n<h2>Originalité et attribution</h2>\nLes modèles s'appuient sur des contenus existants. Cela soulève des questions sur l'originalité et la propriété intellectuelle.\n\n<h2>Qualité vs rapidité</h2>\nLa réécriture IA est rapide, mais la vitesse n'est pas toujours souhaitable. Parfois, la touche humaine rend le contenu plus pertinent.",
+  "blog.pdf-merge.body": "Fusionner des PDFs est une tâche courante. Que vous assembliez des rapports ou organisiez des reçus, voici les bonnes pratiques.\n\n<h2>Organiser avant de fusionner</h2>\nPlacez vos fichiers dans l'ordre souhaité : la plupart des outils fusionnent dans l'ordre fourni.\n\n<h2>Vérifier l'orientation des pages</h2>\nLes PDFs peuvent avoir des orientations différentes : vérifiez et faites pivoter les pages si nécessaire.\n\n<h3>Taille des fichiers</h3>\nLes PDFs fusionnés peuvent devenir volumineux : compressez si la taille est un problème.",
+  "blog.pdf-compress.body": "La compression PDF réduit la taille en éliminant les données redondantes, en sous-échantillonnant les images et en optimisant les polices. Trouver l'équilibre entre taille et qualité est essentiel.\n\n<h2>Comment ça marche</h2>\nLa compression cible les images, les polices et les objets redondants.\n\n<h2>Niveaux de compression</h2>\nLes outils offrent des niveaux : compression légère pour préserver la qualité, forte pour réduire la taille pour le web.\n\n<h3>Quand ne pas compresser</h3>\nÉvitez la compression agressive pour des documents d'impression ou juridiques.",
+  "blog.image-opt.body": "Des images non optimisées ralentissent un site. Selon HTTP Archive, les images représentent souvent plus de 50 % du poids d'une page. Voici comment y remédier.\n\n<h2>Choisir le bon format</h2>\nWebP offre une meilleure compression que PNG/JPG. AVIF est encore plus efficace mais moins supporté.\n\n<h2>Redimensionner avant téléchargement</h2>\nNe téléchargez pas une image 4000px si l'affichage est 800px : redimensionner réduit considérablement la taille.\n\n<h3>Niveaux de compression</h3>\nPour les photos, une qualité JPEG 80–85 est un bon compromis. Pour les graphismes, PNG ou WebP sans perte convient.\n\n<h2>Lazy loading</h2>\nUtilisez loading='lazy' pour charger les images hors écran uniquement lorsqu'elles sont nécessaires.",
+  "blog.image-formats.body": "Choisir le mauvais format peut alourdir les fichiers. Voici quand utiliser chaque format.\n\n<h2>PNG — pour graphiques et transparence</h2>\nPNG est sans perte et gère la transparence : idéal pour logos et icônes.\n\n<h2>JPG — pour photographies</h2>\nJPG compresse efficacement les photos avec dégradés.\n\n<h3>WebP — le polyvalent moderne</h3>\nWebP supporte la compression avec ou sans perte et la transparence : souvent le meilleur choix si le support navigateur le permet.",
+  "blog.image-compress.body": "Les gros fichiers image ralentissent les sites. La compression permet d'alléger les images tout en conservant la qualité visuelle.\n\n<h2>Qu'est-ce que la compression d'image ?</h2>\nRéduire la taille d'un fichier tout en préservant l'apparence.\n\n<h2>Comment compresser</h2>\nTéléversez, choisissez le format de sortie et ajustez la qualité puis compressez et téléchargez le résultat.",
+  "blog.json-format.body": "Le JSON est omniprésent. Un JSON minifié est difficile à lire ; le formatage rend le contenu lisible et débogable.\n\n<h2>Beautifier vs Minifier</h2>\nBeautify ajoute l'indentation ; Minify supprime l'espace pour la production.\n\n<h2>Validation</h2>\nUn formateur valide le JSON et indique la position des erreurs courantes.",
+  "blog.jwt-security.body": "Les JWT sont courants en authentification, mais présentent des risques si on ne les gère pas correctement.\n\n<h2>Clés de signature fortes</h2>\nUtilisez des clés longues et aléatoires, et ne les commettez pas au code.\n\n<h2>Choisir l'algorithme</h2>\nPrivilégiez RS256/ES256 ; évitez HS256 avec des clés faibles.\n\n<h3>Durées d'expiration courtes</h3>\nGardez des expirations courtes et utilisez des tokens de rafraîchissement.",
+  "blog.regex-cheat.body": "Regex est un outil puissant. Voici quelques motifs courants :\n\n<h2>Exemples</h2>\nEmail: /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/\nURL: /^https?:\\/\\/.+$/\nPhone: /^\\+?[\\d\\s()-]{10,}$/\n\n<h2>Classes de caractères</h2>\n\\d, \\w, \\s et leurs contraires.\n\n<h3>Quantificateurs</h3>\n*, +, ?, {n,m}.",
+  "blog.base64-explained.body": "Base64 convertit des données binaires en texte ASCII. Ce n'est pas du chiffrement — l'encodage augmente la taille d'environ 33 %.\n\n<h2>Cas d'usage</h2>\nImages en data URI, données binaires en JSON, pièces jointes MIME.\n\n<h3>Quand ne pas utiliser Base64</h3>\nÉvitez pour les gros fichiers ou comme méthode de chiffrement.",
+  "blog.pomodoro.body": "La technique Pomodoro segmente le travail en intervalles (traditionnellement 25 minutes) séparés par de courtes pauses.\n\n<h2>Comment</h2>\n1. Choisir une tâche. 2. Démarrer 25 minutes. 3. Travailler jusqu'à la sonnerie. 4. Pause 5 minutes. Après quatre cycles, pause plus longue.\n\n<h2>Pourquoi ça marche</h2>\nCrée de l'urgence, réduit les distractions et prévient l'épuisement.",
+  "blog.dev-productivity.body": "Les développeurs perdent du temps sur des tâches mineures — formatage, décodage, génération d'ID. Les bons outils rendent ces tâches instantanées.\n\n<h2>Outils essentiels</h2>\nFormatteur JSON, encodeur Base64, décodeur JWT, générateur de hash, testeur Regex, générateur UUID.\n\n<h3>Avantage du navigateur</h3>\nPas d'installation, pas de mises à jour, pas de latence réseau — tout fonctionne localement.",
+  "blog.compound-interest.body": "L'intérêt composé fait gagner de l'argent sur les intérêts accumulés. Commencer tôt laisse plus de temps à l'effet composé pour agir.\n\n<h2>Formule</h2>\nA = P(1 + r/n)^(nt) — notre calculatrice s'en charge pour vous.\n\n<h3>Le temps est un atout</h3>\nPlus vous commencez tôt, plus l'effet est puissant.",
+  "blog.loan-amort.body": "Lorsque vous contractez un prêt, la mensualité est fixe, mais sa répartition entre intérêt et capital évolue.\n\n<h2>Fonctionnement</h2>\nAu début, la part intérêt est plus importante ; avec le temps, la part capital augmente.\n\n<h3>Paiements supplémentaires</h3>\nDes paiements additionnels réduisent la durée et les intérêts totaux.",
+  "blog.bmi-guide.body": "L'IMC est un indicateur simple basé sur la taille et le poids. Il est utile pour le dépistage mais ne distingue pas masse musculaire et masse grasse.\n\n<h2>Calcul</h2>\nIMC = poids (kg) / taille (m)².\n\n<h3>Utiliser comme point de départ</h3>\nConsultez un professionnel pour une évaluation complète.",
+  "blog.water-intake.body": "La règle des 8 verres est un mythe — les besoins hydriques varient selon le poids, l'activité et le climat.\n\n<h2>Formule pratique</h2>\nBoire la moitié de son poids en livres en onces est une recommandation courante.\n\n<h3>Écoutez votre corps</h3>\nLa soif et la couleur de l'urine sont des indicateurs simples.",
+  "blog.browser-tools.body": "Les outils dans le navigateur gagnent en puissance grâce à WebAssembly et aux API modernes, permettant des traitements proches du natif côté client.\n\n<h2>WASM</h2>\nWASM permet d'exécuter du code à haute performance dans le navigateur, ouvrant des cas comme le traitement d'images et la manipulation PDF client-side.\n\n<h3>PWA et hors ligne</h3>\nLes PWAs permettent d'utiliser les outils même sans connexion après installation.",
+  "blog.privacy-first.body": "Où vont vos données quand vous utilisez un outil en ligne ? Chez beaucoup de services, elles partent sur des serveurs. Nous privilégions le traitement client-side.\n\n<h2>Traitement côté client</h2>\nLa plupart des outils s'exécutent localement : vos données ne quittent pas votre appareil.\n\n<h3>Pas de comptes requis</h3>\nUtilisez les outils sans inscription et sans suivi.",
+  "blog.tut-json.body": "Le formattage JSON est simple : collez vos données, choisissez Beautify pour l'indentation ou Minify pour la production. Le validateur signale les erreurs de syntaxe.\n\n<h2>Étapes</h2>\n1. Coller JSON. 2. Beautify ou Minify. 3. Corriger les erreurs indiquées. 4. Copier le résultat.",
+  "blog.tut-passwords.body": "La réutilisation des mots de passe est la principale cause de compromission. Utilisez des mots de passe longs (16 caractères ou plus) et un gestionnaire de mots de passe.\n\n<h2>Générateur</h2>\nPersonnalisez longueur et types de caractères et utilisez un gestionnaire pour stocker les mots de passe.\n\n<h3>2FA</h3>\nActivez l'authentification à deux facteurs lorsque possible.",
+  "blog.welcome.body": "Aujourd'hui, nous sommes heureux d'ouvrir les portes de ZidroTool. Ce qui a commencé comme quelques utilitaires est devenu une plateforme de 100+ outils dans 12 catégories.\n\n<h2>Pourquoi ZidroTool</h2>\nChaque outil s'exécute dans votre navigateur, vos données restent locales. Pas d'inscription, pas de paywall.\n\n<h3>Fonctionnalités clés</h3>\nPalette de commande, favoris, mode sombre, support PWA et 6 langues dont l'arabe RTL.",
+  "blog.100-tools.body": "À notre lancement, l'objectif était de rassembler une collection complète d'outils gratuits. Aujourd'hui, nous célébrons 100 outils répartis en 12 catégories.\n\n<h2>Nouvelles catégories</h2>\nAjout d'IA, SEO, médias sociaux, santé et finance.\n\n<h2>À venir</h2>\nAPI publique et fonctionnalités Premium.",
+  "blog.changelog-july.body": "Juillet a été un mois important : +30 outils, refonte des pages de catégories, ajout de badges (populaire, tendance), palette de commandes et lancement du système de blog avec pages auteurs, sommaire et articles associés.",
 };

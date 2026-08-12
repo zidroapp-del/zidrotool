@@ -3,10 +3,19 @@ import { Routes, Route } from "react-router-dom";
 import { Layout } from "@/components/Layout";
 import { SkeletonGrid } from "@/components/Skeletons";
 
+// Pages
 const HomePage = lazy(() => import("@/pages/HomePage"));
 const ToolsListPage = lazy(() => import("@/pages/ToolsListPage"));
 const CategoryPage = lazy(() => import("@/pages/CategoryPage"));
 const ToolPage = lazy(() => import("@/pages/ToolPage"));
+const SpeechToText = lazy(() => import("@/tools/SpeechToText"));
+const TextToSpeech = lazy(() => import("@/tools/TextToSpeech"));
+const ImageToTextOcr = lazy(() => import("@/tools/ImageToTextOcr"));
+const PdfToText = lazy(() => import("@/tools/PdfToText"));
+const QrCodeScanner = lazy(() => import("@/tools/QrCodeScanner"));
+const InvoiceGenerator = lazy(() => import("@/tools/InvoiceGenerator"));
+const ImageBackgroundRemover = lazy(() => import("@/tools/ImageBackgroundRemover"));
+const ImageCropper = lazy(() => import("@/tools/ImageCropper"));
 const BlogPage = lazy(() => import("@/pages/BlogPage"));
 const BlogPostPage = lazy(() => import("@/pages/BlogPostPage"));
 const BlogCategoryPage = lazy(() => import("@/pages/BlogCategoryPage"));
@@ -52,11 +61,27 @@ export function App() {
         <Route index element={<Suspense fallback={<PageLoader />}><HomePage /></Suspense>} />
         <Route path="tools" element={<Suspense fallback={<PageLoader />}><ToolsListPage /></Suspense>} />
         <Route path="category/:slug" element={<Suspense fallback={<PageLoader />}><CategoryPage /></Suspense>} />
+        
+        {/* جميع الأدوات تمر عبر ToolPage الآمن */}
         <Route path="tools/:slug" element={<Suspense fallback={<PageLoader />}><ToolPage /></Suspense>} />
+
+        {/* Explicit routes for advanced tools */}
+        <Route path="tools/speech-to-text" element={<Suspense fallback={<PageLoader />}><SpeechToText /></Suspense>} />
+        <Route path="tools/text-to-speech" element={<Suspense fallback={<PageLoader />}><TextToSpeech /></Suspense>} />
+        <Route path="tools/image-to-text-ocr" element={<Suspense fallback={<PageLoader />}><ImageToTextOcr /></Suspense>} />
+        <Route path="tools/pdf-to-text" element={<Suspense fallback={<PageLoader />}><PdfToText /></Suspense>} />
+        <Route path="tools/qr-code-scanner" element={<Suspense fallback={<PageLoader />}><QrCodeScanner /></Suspense>} />
+        <Route path="tools/invoice-generator" element={<Suspense fallback={<PageLoader />}><InvoiceGenerator /></Suspense>} />
+        <Route path="tools/image-background-remover" element={<Suspense fallback={<PageLoader />}><ImageBackgroundRemover /></Suspense>} />
+        <Route path="tools/image-cropper" element={<Suspense fallback={<PageLoader />}><ImageCropper /></Suspense>} />
+
+        {/* مسارات المدونة */}
         <Route path="blog" element={<Suspense fallback={<PageLoader />}><BlogPage /></Suspense>} />
         <Route path="blog/category/:slug" element={<Suspense fallback={<PageLoader />}><BlogCategoryPage /></Suspense>} />
         <Route path="blog/author/:slug" element={<Suspense fallback={<PageLoader />}><AuthorPage /></Suspense>} />
         <Route path="blog/:slug" element={<Suspense fallback={<PageLoader />}><BlogPostPage /></Suspense>} />
+
+        {/* باقي الصفحات */}
         <Route path="pricing" element={<Suspense fallback={<PageLoader />}><PricingPage /></Suspense>} />
         <Route path="about" element={<Suspense fallback={<PageLoader />}><AboutPage /></Suspense>} />
         <Route path="contact" element={<Suspense fallback={<PageLoader />}><ContactPage /></Suspense>} />

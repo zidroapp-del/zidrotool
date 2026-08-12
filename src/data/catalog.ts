@@ -207,6 +207,14 @@ export const TOOLS: Tool[] = [
   { slug: "font-generator", nameKey: n("font-generator"), descKey: d("font-generator"), seoTitleKey: st("font-generator"), seoDescKey: sd("font-generator"), category: "creator", icon: "Type", keywords: ["font","generator","fancy","text","unicode","style"], tags: ["creator","font","text"], relatedSlugs: ["emoji-picker","character-counter","instagram-font-generator","case-converter"], component: "tools/FontGenerator", implemented: true, featured: true, popular: true, popularity: 85, addedAt: "2025-07-24" },
   { slug: "creator-character-counter", nameKey: n("creator-character-counter"), descKey: d("creator-character-counter"), seoTitleKey: st("creator-character-counter"), seoDescKey: sd("creator-character-counter"), category: "creator", icon: "Hash", keywords: ["character","counter","social","twitter","tiktok","limit"], tags: ["creator","counter","social"], relatedSlugs: ["emoji-picker","font-generator","social-image-size-guide","yt-thumbnail-size-guide"], component: "tools/CreatorCharacterCounter", implemented: true, popularity: 67, addedAt: "2025-07-25" },
   { slug: "social-image-size-guide", nameKey: n("social-image-size-guide"), descKey: d("social-image-size-guide"), seoTitleKey: st("social-image-size-guide"), seoDescKey: sd("social-image-size-guide"), category: "creator", icon: "Ruler", keywords: ["social","image","size","guide","dimensions","instagram","facebook","twitter"], tags: ["creator","guide","social"], relatedSlugs: ["yt-thumbnail-size-guide","emoji-picker","font-generator","creator-character-counter"], component: "tools/SizeGuide", implemented: true, popularity: 62, addedAt: "2025-07-26" },
+  // New advanced web tools
+  { slug: "speech-to-text", nameKey: n("speech-to-text"), descKey: d("speech-to-text"), seoTitleKey: st("speech-to-text"), seoDescKey: sd("speech-to-text"), category: "utilities", icon: "Mic", keywords: ["speech","voice","transcription","stt"], tags: ["speech","voice","transcription"], relatedSlugs: [], component: "tools/SpeechToText", implemented: true, popularity: 50, addedAt: "2026-01-01" },
+  { slug: "text-to-speech", nameKey: n("text-to-speech"), descKey: d("text-to-speech"), seoTitleKey: st("text-to-speech"), seoDescKey: sd("text-to-speech"), category: "utilities", icon: "Volume2", keywords: ["speech","tts","synthesis","voice"], tags: ["speech","tts"], relatedSlugs: [], component: "tools/TextToSpeech", implemented: true, popularity: 50, addedAt: "2026-01-01" },
+  { slug: "image-to-text-ocr", nameKey: n("image-to-text-ocr"), descKey: d("image-to-text-ocr"), seoTitleKey: st("image-to-text-ocr"), seoDescKey: sd("image-to-text-ocr"), category: "image", icon: "FileText", keywords: ["ocr","image","text","tesseract"], tags: ["image","ocr"], relatedSlugs: ["image-to-base64","image-resizer"], component: "tools/ImageToTextOcr", implemented: true, popularity: 60, addedAt: "2026-01-01" },
+  { slug: "pdf-to-text", nameKey: n("pdf-to-text"), descKey: d("pdf-to-text"), seoTitleKey: st("pdf-to-text"), seoDescKey: sd("pdf-to-text"), category: "pdf", icon: "FileCode", keywords: ["pdf","text","extract","pdfjs"], tags: ["pdf","text"], relatedSlugs: ["pdf-to-image"], component: "tools/PdfToText", implemented: true, popularity: 60, addedAt: "2026-01-01" },
+  { slug: "invoice-generator", nameKey: n("invoice-generator"), descKey: d("invoice-generator"), seoTitleKey: st("invoice-generator"), seoDescKey: sd("invoice-generator"), category: "finance", icon: "Receipt", keywords: ["invoice","bill","pdf","print"], tags: ["finance","invoice"], relatedSlugs: ["tax-calculator"], component: "tools/InvoiceGenerator", implemented: true, popularity: 55, addedAt: "2026-01-01" },
+  { slug: "image-background-remover", nameKey: n("image-background-remover"), descKey: d("image-background-remover"), seoTitleKey: st("image-background-remover"), seoDescKey: sd("image-background-remover"), category: "image", icon: "Image", keywords: ["background","remove","transparent"], tags: ["image","background"], relatedSlugs: ["image-cropper","image-compressor"], component: "tools/ImageBackgroundRemover", implemented: true, popularity: 58, addedAt: "2026-01-01" },
+  { slug: "qr-code-scanner", nameKey: n("qr-code-scanner"), descKey: d("qr-code-scanner"), seoTitleKey: st("qr-code-scanner"), seoDescKey: sd("qr-code-scanner"), category: "utilities", icon: "QrCode", keywords: ["qr","scan","camera","jsqr"], tags: ["qr","scanner"], relatedSlugs: ["qr-code-generator"], component: "tools/QrCodeScanner", implemented: true, popularity: 58, addedAt: "2026-01-01" },
 ];
 
 // ═══════════════════════════════════════════════════════════
@@ -276,3 +284,130 @@ export function searchTools(query: string, limit = 20): Tool[] {
     return name.includes(q) || kw.includes(q) || tags.includes(q);
   }).slice(0, limit);
 }
+export interface ToolItem {
+  id: string;
+  slug: string;
+  nameKey: string;
+  descKey: string;
+  category: string;
+  componentName: string;
+  isPopular?: boolean;
+  isNew?: boolean;
+  isComingSoon?: boolean;
+  iconName: string;
+}
+
+export const CATALOG_TOOLS: ToolItem[] = [
+  // --- الأدوات الجديدة المطلوبة ---
+  {
+    id: "speech-to-text",
+    slug: "speech-to-text",
+    nameKey: "tools.speechToText.name",
+    descKey: "tools.speechToText.desc",
+    category: "text-utilities",
+    componentName: "GenericTool",
+    isNew: true,
+    iconName: "Mic"
+  },
+  {
+    id: "image-to-text-ocr",
+    slug: "image-to-text-ocr",
+    nameKey: "tools.imageToTextOcr.name",
+    descKey: "tools.imageToTextOcr.desc",
+    category: "image-utilities",
+    componentName: "GenericTool",
+    isNew: true,
+    iconName: "FileText"
+  },
+  {
+    id: "text-to-speech",
+    slug: "text-to-speech",
+    nameKey: "tools.textToSpeech.name",
+    descKey: "tools.textToSpeech.desc",
+    category: "text-utilities",
+    componentName: "GenericTool",
+    isNew: true,
+    iconName: "Volume2"
+  },
+  {
+    id: "pdf-to-text",
+    slug: "pdf-to-text",
+    nameKey: "tools.pdfToText.name",
+    descKey: "tools.pdfToText.desc",
+    category: "pdf-tools",
+    componentName: "GenericTool",
+    isNew: true,
+    iconName: "FileCode"
+  },
+  {
+    id: "invoice-generator",
+    slug: "invoice-generator",
+    nameKey: "tools.invoiceGenerator.name",
+    descKey: "tools.invoiceGenerator.desc",
+    category: "calculators",
+    componentName: "GenericTool",
+    isNew: true,
+    iconName: "Receipt"
+  },
+  {
+    id: "qr-code-scanner",
+    slug: "qr-code-scanner",
+    nameKey: "tools.qrCodeScanner.name",
+    descKey: "tools.qrCodeScanner.desc",
+    category: "utilities",
+    componentName: "GenericTool",
+    isNew: true,
+    iconName: "QrCode"
+  },
+  {
+    id: "image-background-remover",
+    slug: "image-background-remover",
+    nameKey: "tools.imageBackgroundRemover.name",
+    descKey: "tools.imageBackgroundRemover.desc",
+    category: "image-utilities",
+    componentName: "GenericTool",
+    isNew: true,
+    iconName: "Image"
+  },
+  {
+    id: "image-cropper",
+    slug: "image-cropper",
+    nameKey: "tools.imageCropper.name",
+    descKey: "tools.imageCropper.desc",
+    category: "image-utilities",
+    componentName: "ImageCropper",
+    isPopular: true,
+    iconName: "Crop"
+  },
+
+  // --- الأدوات الحالية القائمة في مشروك ---
+  {
+    id: "percentage-calculator",
+    slug: "percentage-calculator",
+    nameKey: "tools.percentageCalculator.name",
+    descKey: "tools.percentageCalculator.desc",
+    category: "calculators",
+    componentName: "PercentageCalculator",
+    isPopular: true,
+    iconName: "Percent"
+  },
+  {
+    id: "average-calculator",
+    slug: "average-calculator",
+    nameKey: "tools.averageCalculator.name",
+    descKey: "tools.averageCalculator.desc",
+    category: "calculators",
+    componentName: "AverageCalculator",
+    iconName: "Calculator"
+  },
+  {
+    id: "discount-calculator",
+    slug: "discount-calculator",
+    nameKey: "tools.discountCalculator.name",
+    descKey: "tools.discountCalculator.desc",
+    category: "calculators",
+    componentName: "DiscountCalculator",
+    isNew: true,
+    iconName: "Tag"
+  }
+];

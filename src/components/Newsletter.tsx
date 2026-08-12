@@ -162,7 +162,9 @@ export function Newsletter({ variant = "section" }: { variant?: "section" | "com
                 {errorMsg}
               </p>
             )}
-            <p className="mt-3 text-xs text-ink-400 dark:text-ink-500">{t("newsletter.privacy")}</p>
+            <p className="mt-3 text-xs text-ink-400 dark:text-ink-500">
+  {t("newsletter.disclaimer", { defaultValue: t("newsletter.disclaimer") })}
+</p>
           </form>
         )}
       </div>

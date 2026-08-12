@@ -11,20 +11,32 @@ function base64UrlDecode(str: string): string {
 export default function JwtDecoder() {
   const { t } = useTranslation();
   const [token, setInput] = useState("");
-
-  const { header, payload, signature, error } = useMemo(() => {
+  const { header, payload, signature, error, payloadObj, expStatus } = useMemo(() => {
     const trimmed = token.trim();
     if (!trimmed) return { header: "", payload: "", signature: "", error: "" };
     const parts = trimmed.split(".");
     if (parts.length !== 3) {
-      return { header: "", payload: "", signature: "", error: "Invalid JWT: must have 3 parts separated by dots." };
+      return { header: "", payload: "", signature: "", error: "Invalid JWT: must have 3 parts separated by dots.", payloadObj: null, expStatus: null };
     }
     try {
       const header = JSON.stringify(JSON.parse(base64UrlDecode(parts[0])), null, 2);
-      const payload = JSON.stringify(JSON.parse(base64UrlDecode(parts[1])), null, 2);
-      return { header, payload, signature: parts[2], error: "" };
+      const parsedPayload = JSON.parse(base64UrlDecode(parts[1]));
+      const payload = JSON.stringify(parsedPayload, null, 2);
+      // expiration check
+      let expStatus: string | null = null;
+      if (parsedPayload && typeof parsedPayload.exp === "number") {
+        const now = Math.floor(Date.now() / 1000);
+        if (parsedPayload.exp < now) {
+          expStatus = "expired";
+        } else {
+          const secs = parsedPayload.exp - now;
+          const mins = Math.floor(secs / 60);
+          expStatus = `expires_in:${mins}m`;
+        }
+      }
+      return { header, payload, signature: parts[2], error: "", payloadObj: parsedPayload, expStatus };
     } catch (e) {
-      return { header: "", payload: "", signature: "", error: `Failed to decode: ${(e as Error).message}` };
+      return { header: "", payload: "", signature: "", error: `Failed to decode: ${(e as Error).message}`, payloadObj: null, expStatus: null };
     }
   }, [token]);
 
@@ -57,10 +69,17 @@ export default function JwtDecoder() {
             </pre>
           </div>
           <div>
-            <span className="badge-accent mb-2">Payload</span>
+            <div className="flex items-center gap-2">
+              <span className="badge-accent mb-2">Payload</span>
+              {expStatus === "expired" && <span className="rounded-md bg-danger/10 px-2 py-0.5 text-[12px] font-medium text-danger">Expired</span>}
+              {expStatus && expStatus.startsWith("expires_in:") && <span className="rounded-md bg-success/10 px-2 py-0.5 text-[12px] font-medium text-success-700">{expStatus.replace("expires_in:", "Expires in ")}</span>}
+            </div>
             <pre className="overflow-x-auto rounded-lg border border-ink-200 bg-ink-50 p-4 font-mono text-xs text-ink-800 dark:border-ink-700 dark:bg-ink-950/50 dark:text-ink-200">
               {payload}
             </pre>
+            {payloadObj && payloadObj.iat && (
+              <p className="mt-2 text-xs text-ink-500">Issued at: {new Date(payloadObj.iat * 1000).toLocaleString()}</p>
+            )}
           </div>
         </div>
       )}
