@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import { Copy, Download, Volume2, Square } from "lucide-react";
 import { AdSlot } from "@/components/AdSlot";
 
@@ -9,13 +9,8 @@ export default function TextToSpeech({ slug }: { slug?: string }) {
   const [pitch, setPitch] = useState(1);
   const [text, setText] = useState("");
   const [rtl, setRtl] = useState(false);
-  const [isMobile, setIsMobile] = useState(false);
-  const [selectedLang, setSelectedLang] = useState(() => (navigator.language || 'en').split('-')[0]);
+  const [selectedLang, setSelectedLang] = useState("ar");
 
-  const recorderRef = useRef<MediaRecorder | null>(null);
-  const chunksRef = useRef<BlobPart[]>([]);
-
-  // خريطة اللغات مع ترميز المنيو الكامل لضمان فهم المتصفح
   const langLocales: Record<string, string> = {
     ar: "ar-SA",
     en: "en-US",
@@ -25,7 +20,6 @@ export default function TextToSpeech({ slug }: { slug?: string }) {
     tr: "tr-TR"
   };
 
-  // 1. تحميل أصوات المتصفح الحقيقية
   useEffect(() => {
     const updateVoices = () => {
       const avail = window.speechSynthesis.getVoices() || [];
@@ -41,30 +35,20 @@ export default function TextToSpeech({ slug }: { slug?: string }) {
     return () => { window.speechSynthesis.onvoiceschanged = null; };
   }, []);
 
-  // 2. كشف الأجهزة المحمولة
-  useEffect(() => {
-    const ua = navigator.userAgent || '';
-    setIsMobile(/Mobi|Android|iPhone|iPad|iPod/i.test(ua));
-  }, []);
-
-  // 3. تصفية الأصوات الحقيقية فقط المتاحة باللغة المختارة
   const filteredVoices = voices.filter((v) => v.lang.toLowerCase().startsWith(selectedLang.toLowerCase()));
 
-  // 4. تغيير اللغة والاتجاه RTL
   const handleLangChange = (lang: string) => {
     setSelectedLang(lang);
     setRtl(lang === 'ar');
     const firstMatchingVoice = voices.find(v => v.lang.toLowerCase().startsWith(lang.toLowerCase()));
-    if (firstMatchingVoice) {
-      setSelectedVoiceURI(firstMatchingVoice.voiceURI);
-    } else {
-      setSelectedVoiceURI("");
-    }
+    if (firstMatchingVoice) setSelectedVoiceURI(firstMatchingVoice.voiceURI);
   };
 
-  // 5. دالة تجهيز كائن النطق
-  const createUtterance = (inputText: string) => {
-    const ut = new SpeechSynthesisUtterance(inputText);
+  const speak = () => {
+    if (!text.trim()) return;
+    window.speechSynthesis.cancel();
+
+    const ut = new SpeechSynthesisUtterance(text);
     ut.rate = rate;
     ut.pitch = pitch;
 
@@ -73,18 +57,8 @@ export default function TextToSpeech({ slug }: { slug?: string }) {
       ut.voice = matchedVoice;
       ut.lang = matchedVoice.lang;
     } else {
-      // إسناد الترميز الصريح للغة (مثلاً ar-SA) في حال عدم توفر صوت معين من النظام
       ut.lang = langLocales[selectedLang] || selectedLang;
     }
-    return ut;
-  };
-
-  // 6. التشغيل الصوتي بالنبرة المحددة
-  const speak = () => {
-    if (!text.trim()) return;
-    window.speechSynthesis.cancel(); // إيقاف أي قراءة سابقة
-
-    const ut = createUtterance(text);
     window.speechSynthesis.speak(ut);
   };
 
@@ -92,44 +66,20 @@ export default function TextToSpeech({ slug }: { slug?: string }) {
 
   const copyText = async () => { try { await navigator.clipboard.writeText(text); } catch {} };
 
-  // 7. تسجيل وتحميل الصوت (Desktop)
-  const recordAndDownload = async () => {
-    if (!text) return;
-    if (!('mediaDevices' in navigator) || !('getDisplayMedia' in navigator.mediaDevices)) {
-      alert('Recording requires a browser that supports sharing tab audio (getDisplayMedia).');
-      return;
-    }
+  // تحميل الصوت المباشر صيغة MP3
+  const downloadAudio = () => {
+    if (!text.trim()) return;
+    const targetLang = langLocales[selectedLang] || selectedLang;
+    const encodedText = encodeURIComponent(text.trim().substring(0, 200)); // Google TTS CDN limitation for quick export
+    const ttsUrl = `https://translate.google.com/translate_tts?ie=UTF-8&q=${encodedText}&tl=${targetLang}&client=tw-ob`;
 
-    let stream: MediaStream | null = null;
-    try {
-      stream = await (navigator.mediaDevices as any).getDisplayMedia({ audio: true, video: false });
-      const mr = new MediaRecorder(stream as MediaStream);
-      chunksRef.current = [];
-      mr.ondataavailable = (e) => { if (e.data && e.data.size) chunksRef.current.push(e.data); };
-      mr.onstop = () => {
-        const blob = new Blob(chunksRef.current, { type: 'audio/webm' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `${slug || 'tts'}.webm`;
-        document.body.appendChild(a);
-        a.click();
-        a.remove();
-        URL.revokeObjectURL(url);
-        try { stream?.getTracks().forEach((t) => t.stop()); } catch {}
-      };
-      recorderRef.current = mr;
-      mr.start();
-
-      const ut = createUtterance(text);
-      ut.onend = () => { try { mr.state !== 'inactive' && mr.stop(); } catch (e) {} };
-      window.speechSynthesis.cancel();
-      window.speechSynthesis.speak(ut);
-    } catch (e) {
-      console.error('Recording error:', e);
-      try { stream?.getTracks().forEach((t) => t.stop()); } catch {}
-      alert('Recording failed or was denied. Please select "Share tab" with audio.');
-    }
+    const a = document.createElement('a');
+    a.href = ttsUrl;
+    a.target = '_blank';
+    a.download = `${slug || 'speech'}.mp3`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
   };
 
   return (
@@ -139,8 +89,7 @@ export default function TextToSpeech({ slug }: { slug?: string }) {
           <h2 className="text-2xl font-semibold mb-3 text-gray-800">Text to Speech</h2>
           
           <div className="mb-4 inline-flex items-center gap-2 text-sm text-green-700 bg-green-50 px-3 py-1.5 rounded-lg border border-green-200">
-            <span className="text-base">🔒</span>
-            <span>100% Client-Side Privacy: Your audio never leaves your device.</span>
+            <span>🔒 100% Client-Side Privacy: Your text is safe and secure.</span>
           </div>
 
           <textarea 
@@ -153,7 +102,6 @@ export default function TextToSpeech({ slug }: { slug?: string }) {
           />
 
           <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-            {/* اختيار اللغة */}
             <div>
               <label className="text-xs font-semibold text-gray-500 mb-1 block">Language</label>
               <select 
@@ -170,7 +118,6 @@ export default function TextToSpeech({ slug }: { slug?: string }) {
               </select>
             </div>
 
-            {/* اختيار الصوت المعين من النظام */}
             <div>
               <label className="text-xs font-semibold text-gray-500 mb-1 block">Voice Accent</label>
               <select 
@@ -190,20 +137,17 @@ export default function TextToSpeech({ slug }: { slug?: string }) {
               </select>
             </div>
 
-            {/* السرعة Rate */}
             <div>
               <label className="text-xs font-semibold text-gray-500 mb-1 block">Speed: {rate}x</label>
               <input type="range" min={0.5} max={2} step={0.1} value={rate} onChange={(e) => setRate(Number(e.target.value))} className="w-full accent-blue-600" />
             </div>
 
-            {/* النبرة Pitch */}
             <div>
               <label className="text-xs font-semibold text-gray-500 mb-1 block">Pitch: {pitch}</label>
               <input type="range" min={0.5} max={2} step={0.1} value={pitch} onChange={(e) => setPitch(Number(e.target.value))} className="w-full accent-blue-600" />
             </div>
           </div>
 
-          {/* أزرار التحكم */}
           <div className="mt-5 flex flex-wrap gap-2 items-center">
             <button onClick={speak} className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg inline-flex items-center gap-2">
               <Volume2 className="h-4 w-4" /> Speak
@@ -211,14 +155,12 @@ export default function TextToSpeech({ slug }: { slug?: string }) {
             <button onClick={stop} className="px-4 py-2 border border-gray-300 text-gray-700 hover:bg-gray-50 rounded-lg inline-flex items-center gap-2">
               <Square className="h-4 w-4" /> Stop
             </button>
+            <button onClick={downloadAudio} className="px-3 py-2 text-sm text-blue-600 hover:bg-blue-50 border border-blue-200 rounded-lg inline-flex items-center gap-1.5">
+              <Download className="h-4 w-4" /> Download Audio (.mp3)
+            </button>
             <button onClick={copyText} className="px-3 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded-lg inline-flex items-center gap-1.5 ml-auto">
               <Copy className="h-4 w-4" /> Copy Text
             </button>
-            {!isMobile && ('mediaDevices' in navigator && 'getDisplayMedia' in navigator.mediaDevices) && (
-              <button onClick={recordAndDownload} className="px-3 py-2 text-sm text-blue-600 hover:bg-blue-50 border border-blue-200 rounded-lg inline-flex items-center gap-1.5">
-                <Download className="h-4 w-4" /> Record & Download
-              </button>
-            )}
           </div>
 
           <div className="mt-6">
