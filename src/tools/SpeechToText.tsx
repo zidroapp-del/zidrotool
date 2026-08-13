@@ -87,6 +87,10 @@ export default function SpeechToText({ slug }: { slug?: string }) {
       <div className="mx-auto w-full max-w-3xl py-8">
         <div className="rounded-xl bg-white p-6 shadow-lg">
           <h2 className="text-2xl font-semibold mb-3">Speech to Text</h2>
+          <div className="mb-3 inline-flex items-center gap-2 text-sm text-green-700">
+            <span className="text-base">🔒</span>
+            <span>100% Client-Side Privacy: Your files and audio never leave your device.</span>
+          </div>
           {!supported && (
             <p className="text-sm text-ink-500">Your browser does not support the Web Speech API.</p>
           )}

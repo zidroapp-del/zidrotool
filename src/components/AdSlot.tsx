@@ -18,10 +18,10 @@ export function AdSlot({ variant = "inline", className }: AdSlotProps) {
           : t("ad.inline");
 
   const heights: Record<string, string> = {
-    header: "h-[60px] sm:h-[90px]",
-    sidebar: "h-[250px] sm:h-[300px]",
-    inline: "h-[90px] sm:h-[120px]",
-    footer: "h-[90px]",
+    header: "min-h-[60px] sm:min-h-[90px]",
+    sidebar: "min-h-[250px] sm:min-h-[300px]",
+    inline: "min-h-[90px] sm:min-h-[120px]",
+    footer: "min-h-[90px]",
   };
 
   return (

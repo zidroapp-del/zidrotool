@@ -43,6 +43,11 @@ export default function PdfToText({ slug }: { slug?: string }) {
         <div className="rounded-xl bg-white p-6 shadow-lg">
           <h2 className="text-2xl font-semibold mb-3">PDF to Text</h2>
 
+          <div className="mb-3 inline-flex items-center gap-2 text-sm text-green-700">
+            <span className="text-base">🔒</span>
+            <span>100% Client-Side Privacy: Your files and audio never leave your device.</span>
+          </div>
+
           <div className="mb-4 flex items-center justify-center rounded border-dashed border-ink-200 py-8">
             <div className="text-center text-sm text-ink-600">
               <p>Select a PDF to extract text from</p>

@@ -6,6 +6,7 @@ import { Copy } from "lucide-react";
 export default function ImageToTextOcr({ slug }: { slug?: string }) {
   const [busy, setBusy] = useState(false);
   const [progress, setProgress] = useState(0);
+  const [statusMsg, setStatusMsg] = useState("");
   const [text, setText] = useState("");
   const [dragOver, setDragOver] = useState(false);
 
@@ -13,11 +14,14 @@ export default function ImageToTextOcr({ slug }: { slug?: string }) {
     if (!file) return;
     setBusy(true);
     setProgress(0);
+    setStatusMsg("Starting OCR...");
     setText("");
     try {
       const res = await Tesseract.recognize(file, "eng", {
         logger: (m) => {
-          if (m.status === "recognizing text" && m.progress) setProgress(Math.round(m.progress * 100));
+          // m.status can be 'initializing tesseract', 'loading language', 'recognizing text', etc.
+          if (m.status) setStatusMsg(m.status);
+          if (typeof m.progress === 'number') setProgress(Math.round(m.progress * 100));
         }
       });
       setText(res.data.text || "");
@@ -25,6 +29,7 @@ export default function ImageToTextOcr({ slug }: { slug?: string }) {
       setText("Error during OCR");
     }
     setBusy(false);
+    setStatusMsg("");
   }, []);
 
   const onDrop = (e: React.DragEvent) => {
@@ -39,6 +44,10 @@ export default function ImageToTextOcr({ slug }: { slug?: string }) {
       <div className="mx-auto w-full max-w-3xl py-8">
         <div className="rounded-xl bg-white p-6 shadow-lg">
           <h2 className="text-2xl font-semibold mb-3">Image to Text (OCR)</h2>
+          <div className="mb-3 inline-flex items-center gap-2 text-sm text-green-700">
+            <span className="text-base">🔒</span>
+            <span>100% Client-Side Privacy: Your files and audio never leave your device.</span>
+          </div>
 
           <div
             onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
@@ -54,10 +63,23 @@ export default function ImageToTextOcr({ slug }: { slug?: string }) {
             </div>
           </div>
 
-          {busy && <p className="text-sm text-ink-500">Processing... {progress}%</p>}
-          <div className="mt-3 flex items-start gap-3">
-            <textarea rows={10} className="w-full textarea" value={text} onChange={(e) => setText(e.target.value)} />
-            <button onClick={async () => { try { await navigator.clipboard.writeText(text); } catch {} }} title="Copy extracted text" className="btn-ghost inline-flex items-center gap-2 p-2"><Copy className="h-4 w-4" /></button>
+          <div className="mt-2">
+            {busy && (
+              <div className="mb-2">
+                <div className="flex items-center justify-between text-xs text-ink-600">
+                  <div>{statusMsg ? `${statusMsg}` : 'Processing...'}</div>
+                  <div>{progress}%</div>
+                </div>
+                <div className="w-full bg-ink-100 h-2 rounded mt-1 overflow-hidden">
+                  <div className="bg-brand-600 h-2 rounded" style={{ width: `${progress}%` }} />
+                </div>
+              </div>
+            )}
+
+            <div className="mt-3 flex items-start gap-3">
+              <textarea rows={10} className="w-full textarea" value={text} onChange={(e) => setText(e.target.value)} />
+              <button onClick={async () => { try { await navigator.clipboard.writeText(text); } catch {} }} title="Copy extracted text" className="btn-ghost inline-flex items-center gap-2 p-2"><Copy className="h-4 w-4" /></button>
+            </div>
           </div>
 
           <div className="my-6 p-4 border border-dashed rounded text-center text-xs text-muted-foreground">Ad Space</div>

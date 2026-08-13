@@ -10,12 +10,19 @@ export default function TextToSpeech({ slug }: { slug?: string }) {
   const [rtl, setRtl] = useState(false);
   const recorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<BlobPart[]>([]);
+  const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
     const load = () => setVoices(window.speechSynthesis.getVoices() || []);
     load();
     window.speechSynthesis.onvoiceschanged = load;
     return () => { window.speechSynthesis.onvoiceschanged = null; };
+  }, []);
+
+  useEffect(() => {
+    const ua = navigator.userAgent || '';
+    const mobile = /Mobi|Android|iPhone|iPad|iPod/i.test(ua);
+    setIsMobile(mobile);
   }, []);
 
   // Display voices, but ensure common Arabic locales are present in the dropdown
@@ -112,6 +119,10 @@ export default function TextToSpeech({ slug }: { slug?: string }) {
       <div className="mx-auto w-full max-w-3xl py-8">
         <div className="rounded-xl bg-white p-6 shadow-lg">
           <h2 className="text-2xl font-semibold mb-3">Text to Speech</h2>
+          <div className="mb-3 inline-flex items-center gap-2 text-sm text-green-700">
+            <span className="text-base">🔒</span>
+            <span>100% Client-Side Privacy: Your files and audio never leave your device.</span>
+          </div>
           <textarea dir={rtl ? 'rtl' : 'ltr'} className="w-full textarea" rows={6} value={text} onChange={(e) => setText(e.target.value)} />
 
           <div className="mt-3 grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -134,7 +145,12 @@ export default function TextToSpeech({ slug }: { slug?: string }) {
             <button onClick={speak} className="btn-primary">Speak</button>
             <button onClick={stop} className="btn-ghost">Stop</button>
             <button onClick={copyText} className="btn-ghost inline-flex items-center gap-2 ml-auto"><Copy className="h-4 w-4" /> Copy Text</button>
-            <button onClick={recordAndDownload} className="btn-ghost inline-flex items-center gap-2"><Download className="h-4 w-4" /> Record & Download</button>
+            {!isMobile && ('mediaDevices' in navigator && 'getDisplayMedia' in navigator.mediaDevices) && (
+              <button onClick={recordAndDownload} className="btn-ghost inline-flex items-center gap-2"><Download className="h-4 w-4" /> Record & Download</button>
+            )}
+            {isMobile && (
+              <div className="text-sm text-ink-500 ml-2">Direct MP3 audio download is currently optimized for Desktop browsers.</div>
+            )}
           </div>
 
           <div className="mt-2 text-sm text-ink-600">
