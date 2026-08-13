@@ -57,10 +57,35 @@ export default function TextToSpeech({ slug }: { slug?: string }) {
   // Prefer getDisplayMedia to capture tab audio; improved error handling and cleanup
   const recordAndDownload = async () => {
     if (!text) return;
-    // Try to capture tab audio via getDisplayMedia first (recommended)
-    // New approach: synthesize speech into an OfflineAudioContext and export WAV Blob
+    // Recommended flow: ask user to Share Tab Audio via getDisplayMedia and record the returned stream
+    if (!('mediaDevices' in navigator) || !('getDisplayMedia' in navigator.mediaDevices)) {
+      alert('Recording requires a browser that supports sharing tab audio (getDisplayMedia). Please use a Chromium-based browser.');
+      return;
+    }
+
+    let stream: MediaStream | null = null;
     try {
-      // Create an utterance and speak it to an Audio element routed through AudioContext
+      // Prompt the user to share the tab (they must select "Share tab" and enable "Share audio")
+      stream = await (navigator.mediaDevices as any).getDisplayMedia({ audio: true, video: false });
+      const mr = new MediaRecorder(stream as MediaStream);
+      chunksRef.current = [];
+      mr.ondataavailable = (e) => { if (e.data && e.data.size) chunksRef.current.push(e.data); };
+      mr.onstop = () => {
+        const blob = new Blob(chunksRef.current, { type: 'audio/webm' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${slug || 'tts'}.webm`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(url);
+        try { stream?.getTracks().forEach((t: MediaStreamTrack) => t.stop()); } catch {}
+      };
+      recorderRef.current = mr;
+      mr.start();
+
+      // Now speak; the shared tab audio includes this playback so it is captured by the recorder
       const utterance = new SpeechSynthesisUtterance(text);
       utterance.rate = rate;
       utterance.pitch = pitch;
@@ -70,56 +95,15 @@ export default function TextToSpeech({ slug }: { slug?: string }) {
       } else if (selected && selected.lang) {
         utterance.lang = selected.lang;
       }
-
-      // Use SpeechSynthesis to generate audio via an Audio element
-      // Create a temporary audio element and capture its output with an AudioContext MediaStreamDestination
-      const audioEl = document.createElement('audio');
-      audioEl.autoplay = true;
-      // Hook into SpeechSynthesis by speaking to the page and routing via audio output capture using WebAudio API
-      const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
-      const dest = ctx.createMediaStreamDestination();
-      const mediaStream = dest.stream;
-
-      // Create a MediaRecorder from the destination stream to record PCM to webm/wav
-      const recorder = new MediaRecorder(mediaStream);
-      const chunks: BlobPart[] = [];
-      recorder.ondataavailable = (ev) => { if (ev.data && ev.data.size) chunks.push(ev.data); };
-      const onEnded = () => {
-        try { recorder.state !== 'inactive' && recorder.stop(); } catch (e) { console.error(e); }
+      utterance.onend = () => {
+        try { mr.state !== 'inactive' && mr.stop(); } catch (e) { /* ignore */ }
       };
-      recorder.onstop = () => {
-        const blob = new Blob(chunks, { type: 'audio/webm' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `${slug || 'tts'}.webm`;
-        document.body.appendChild(a);
-        a.click();
-        a.remove();
-        URL.revokeObjectURL(url);
-        try { ctx.close(); } catch {}
-      };
-
-      recorder.start();
-
-      // Play speech and route to context by creating a MediaElementSource from audioEl
-      // Use the SpeechSynthesisUtterance with onboundary to fill an AudioBuffer via OfflineAudioContext is not supported
-      // Simpler approach: create a SpeechSynthesisUtterance and let the browser play it; capture output by connecting an <audio> element is not directly possible.
-      // Instead, create an oscillator + simple TTS fallback beep if SpeechSynthesis output can't be captured; best-effort.
       window.speechSynthesis.cancel();
       window.speechSynthesis.speak(utterance);
-
-      // Wait for end event then stop recorder (speechSynthesis doesn't provide stream hookup)
-      utterance.onend = () => {
-        onEnded();
-      };
-
-      // As a safety, stop after estimated duration
-      const estimatedMs = Math.max(2000, text.length * 60);
-      setTimeout(() => { try { recorder.state !== 'inactive' && recorder.stop(); } catch {} }, estimatedMs + 5000);
     } catch (e) {
-      console.error('TTS export error:', e);
-      alert('Could not export audio in this browser. As a fallback, you can use the system audio recorder.');
+      console.error('Recording error or denied:', e);
+      try { stream?.getTracks().forEach((t: MediaStreamTrack) => t.stop()); } catch {}
+      alert('Recording failed or was denied. Please choose "Share tab" with audio when prompted.');
     }
   };
 
@@ -151,6 +135,12 @@ export default function TextToSpeech({ slug }: { slug?: string }) {
             <button onClick={stop} className="btn-ghost">Stop</button>
             <button onClick={copyText} className="btn-ghost inline-flex items-center gap-2 ml-auto"><Copy className="h-4 w-4" /> Copy Text</button>
             <button onClick={recordAndDownload} className="btn-ghost inline-flex items-center gap-2"><Download className="h-4 w-4" /> Record & Download</button>
+          </div>
+
+          <div className="mt-2 text-sm text-ink-600">
+            <div className="rounded-md bg-amber-50/40 p-2 border-l-4 border-amber-300">
+              <strong>Download help:</strong> When prompted, choose <em>Share tab</em> and enable <em>Share audio</em> so the browser records the spoken audio for download.
+            </div>
           </div>
 
           <div className="mt-6">
