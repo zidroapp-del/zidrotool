@@ -3,12 +3,9 @@ import * as pdfjsLib from "pdfjs-dist";
 import { Copy, Download, FileUp, Loader2 } from "lucide-react";
 import { AdSlot } from "@/components/AdSlot";
 
-// PDF.js worker for Vite
-pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
-  "pdfjs-dist/build/pdf.worker.min.mjs",
-  import.meta.url
-).toString();
-
+pdfjsLib.GlobalWorkerOptions.workerSrc =
+  `https://unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.mjs`;
+  
 export default function PdfToText({ slug }: { slug?: string }) {
   const [text, setText] = useState("");
   const [busy, setBusy] = useState(false);
