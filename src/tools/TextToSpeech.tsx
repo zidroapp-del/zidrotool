@@ -15,14 +15,23 @@ export default function TextToSpeech({ slug }: { slug?: string }) {
   const recorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<BlobPart[]>([]);
 
+  // خريطة اللغات مع ترميز المنيو الكامل لضمان فهم المتصفح
+  const langLocales: Record<string, string> = {
+    ar: "ar-SA",
+    en: "en-US",
+    fr: "fr-FR",
+    es: "es-ES",
+    de: "de-DE",
+    tr: "tr-TR"
+  };
+
   // 1. تحميل أصوات المتصفح الحقيقية
   useEffect(() => {
     const updateVoices = () => {
       const avail = window.speechSynthesis.getVoices() || [];
       setVoices(avail);
       if (avail.length > 0 && !selectedVoiceURI) {
-        // تعيين أول صوت مطبق تلقائياً
-        const defaultVoice = avail.find(v => v.lang.startsWith(selectedLang)) || avail[0];
+        const defaultVoice = avail.find(v => v.lang.toLowerCase().startsWith(selectedLang.toLowerCase())) || avail[0];
         if (defaultVoice) setSelectedVoiceURI(defaultVoice.voiceURI);
       }
     };
@@ -53,24 +62,29 @@ export default function TextToSpeech({ slug }: { slug?: string }) {
     }
   };
 
-  // 5. التشغيل الصوتي بالنبرة الحقيقية المحددة
-  const speak = () => {
-    if (!text.trim()) return;
-    window.speechSynthesis.cancel(); // إيقاف أي قراءة سابقة
-
-    const ut = new SpeechSynthesisUtterance(text);
+  // 5. دالة تجهيز كائن النطق
+  const createUtterance = (inputText: string) => {
+    const ut = new SpeechSynthesisUtterance(inputText);
     ut.rate = rate;
     ut.pitch = pitch;
 
-    // البحث عن الصوت المحدد حقيقةً من المتصفح
     const matchedVoice = voices.find((v) => v.voiceURI === selectedVoiceURI);
     if (matchedVoice) {
       ut.voice = matchedVoice;
       ut.lang = matchedVoice.lang;
     } else {
-      ut.lang = selectedLang === 'ar' ? 'ar-SA' : selectedLang;
+      // إسناد الترميز الصريح للغة (مثلاً ar-SA) في حال عدم توفر صوت معين من النظام
+      ut.lang = langLocales[selectedLang] || selectedLang;
     }
+    return ut;
+  };
 
+  // 6. التشغيل الصوتي بالنبرة المحددة
+  const speak = () => {
+    if (!text.trim()) return;
+    window.speechSynthesis.cancel(); // إيقاف أي قراءة سابقة
+
+    const ut = createUtterance(text);
     window.speechSynthesis.speak(ut);
   };
 
@@ -78,7 +92,7 @@ export default function TextToSpeech({ slug }: { slug?: string }) {
 
   const copyText = async () => { try { await navigator.clipboard.writeText(text); } catch {} };
 
-  // 6. تسجيل وتحميل الصوت (DeskTop)
+  // 7. تسجيل وتحميل الصوت (Desktop)
   const recordAndDownload = async () => {
     if (!text) return;
     if (!('mediaDevices' in navigator) || !('getDisplayMedia' in navigator.mediaDevices)) {
@@ -107,17 +121,7 @@ export default function TextToSpeech({ slug }: { slug?: string }) {
       recorderRef.current = mr;
       mr.start();
 
-      const ut = new SpeechSynthesisUtterance(text);
-      ut.rate = rate;
-      ut.pitch = pitch;
-      const matchedVoice = voices.find((v) => v.voiceURI === selectedVoiceURI);
-      if (matchedVoice) {
-        ut.voice = matchedVoice;
-        ut.lang = matchedVoice.lang;
-      } else {
-        ut.lang = selectedLang === 'ar' ? 'ar-SA' : selectedLang;
-      }
-
+      const ut = createUtterance(text);
       ut.onend = () => { try { mr.state !== 'inactive' && mr.stop(); } catch (e) {} };
       window.speechSynthesis.cancel();
       window.speechSynthesis.speak(ut);

@@ -7,8 +7,9 @@ export default function SpeechToText({ slug }: { slug?: string }) {
   const [listening, setListening] = useState(false);
   const [finalText, setFinalText] = useState("");
   const [preview, setPreview] = useState("");
+  const [lang, setLang] = useState<string>("ar-SA");
+
   const recognitionRef = useRef<any>(null);
-  const finalRef = useRef<string>("");
 
   useEffect(() => {
     const win: any = window as any;
@@ -18,42 +19,62 @@ export default function SpeechToText({ slug }: { slug?: string }) {
       return;
     }
     setSupported(true);
+
     const rec = new SpeechRecognition();
     rec.continuous = true;
     rec.interimResults = true;
-    rec.lang = navigator.language || "en-US";
+    rec.lang = lang;
 
-    rec.onresult = (ev: SpeechRecognitionEvent) => {
-      // Simple, robust handler: append finalized transcripts and show latest interim live
-      let interim = "";
+    rec.onresult = (ev: any) => {
+      let currentInterim = "";
+      let newFinal = "";
+
       for (let i = ev.resultIndex; i < ev.results.length; ++i) {
-        const res = ev.results[i];
-        const t = res[0]?.transcript || "";
-        if (res.isFinal) {
-          setFinalText((prev) => (prev ? prev + " " + t : t));
+        const transcript = ev.results[i][0]?.transcript || "";
+        if (ev.results[i].isFinal) {
+          newFinal += transcript + " ";
         } else {
-          interim = t;
+          currentInterim += transcript;
         }
       }
-      setPreview(interim);
+
+      if (newFinal) {
+        setFinalText((prev) => (prev ? prev.trim() + " " + newFinal.trim() : newFinal.trim()));
+        setPreview("");
+      } else {
+        setPreview(currentInterim);
+      }
     };
 
-    rec.onerror = () => setListening(false);
+    rec.onerror = (err: any) => {
+      console.error("STT Error:", err);
+      setListening(false);
+    };
+
+    rec.onend = () => {
+      setListening(false);
+      setPreview("");
+    };
+
     recognitionRef.current = rec;
+
     return () => {
       try { rec.stop(); } catch (e) {}
     };
-  }, []);
+  }, [lang]);
 
   const start = () => {
     if (!recognitionRef.current) return;
     try {
+      recognitionRef.current.lang = lang;
       recognitionRef.current.start();
       setListening(true);
     } catch (e) {
+      console.error(e);
       setListening(false);
     }
   };
+
   const stop = () => {
     if (!recognitionRef.current) return;
     try { recognitionRef.current.stop(); } catch (e) {}
@@ -81,77 +102,125 @@ export default function SpeechToText({ slug }: { slug?: string }) {
   return (
     <div className="min-h-[60vh] flex items-start lg:items-center">
       <div className="mx-auto w-full max-w-3xl py-8">
-        <div className="rounded-xl bg-white p-6 shadow-lg">
-          <h2 className="text-2xl font-semibold mb-3">Speech to Text</h2>
-          <div className="mb-3 inline-flex items-center gap-2 text-sm text-green-700">
+        <div className="rounded-xl bg-white p-6 shadow-lg border border-gray-100">
+          <h2 className="text-2xl font-semibold mb-3 text-gray-800">Speech to Text</h2>
+          
+          <div className="mb-4 inline-flex items-center gap-2 text-sm text-green-700 bg-green-50 px-3 py-1.5 rounded-lg border border-green-200">
             <span className="text-base">🔒</span>
-            <span>100% Client-Side Privacy: Your files and audio never leave your device.</span>
+            <span>100% Client-Side Privacy: Your audio never leaves your device.</span>
           </div>
+
           {!supported && (
-            <p className="text-sm text-ink-500">Your browser does not support the Web Speech API.</p>
+            <p className="text-sm text-red-500">Your browser does not support the Web Speech API (Please use Chrome or Edge).</p>
           )}
 
           {supported && (
             <div className="space-y-4">
+              {/* اختيار اللغة */}
               <div className="flex items-center gap-3">
-                <button onClick={start} disabled={listening} className="btn-primary inline-flex items-center gap-2">
-                  <Mic className="h-4 w-4" /> Start
-                </button>
-                <button onClick={stop} disabled={!listening} className="btn-ghost inline-flex items-center gap-2">
-                  <StopCircle className="h-4 w-4" /> Stop
-                </button>
-                <button onClick={() => { setFinalText(""); setPreview(""); }} className="btn-secondary">Clear</button>
-                <button onClick={copyText} className="btn-ghost inline-flex items-center gap-2 ml-auto"><Copy className="h-4 w-4" /> Copy Text</button>
-                <button onClick={downloadTxt} className="btn-ghost inline-flex items-center gap-2"><Download className="h-4 w-4" /> Download .txt</button>
+                <label className="text-sm font-medium text-gray-700">Speaking Language:</label>
+                <select 
+                  value={lang} 
+                  onChange={(e) => {
+                    stop();
+                    setLang(e.target.value);
+                  }} 
+                  disabled={listening}
+                  className="rounded border border-gray-300 px-3 py-1.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="ar-SA">العربية (Saudi Arabia)</option>
+                  <option value="ar-EG">العربية (Egypt)</option>
+                  <option value="ar-DZ">العربية (Algeria)</option>
+                  <option value="fr-FR">Français (French)</option>
+                  <option value="en-US">English (US)</option>
+                  <option value="es-ES">Español (Spanish)</option>
+                  <option value="de-DE">Deutsch (German)</option>
+                  <option value="tr-TR">Türkçe (Turkish)</option>
+                </select>
               </div>
 
-              <div className="rounded border border-ink-100 p-3 bg-ink-50">
+              {/* أزرار التحكم */}
+              <div className="flex flex-wrap items-center gap-3">
+                <button 
+                  onClick={start} 
+                  disabled={listening} 
+                  className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg font-medium text-white transition-colors ${listening ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'}`}
+                >
+                  <Mic className="h-4 w-4" /> Start Listening
+                </button>
+                
+                <button 
+                  onClick={stop} 
+                  disabled={!listening} 
+                  className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg border transition-colors ${!listening ? 'opacity-50 cursor-not-allowed' : 'border-red-500 text-red-600 hover:bg-red-50'}`}
+                >
+                  <StopCircle className="h-4 w-4" /> Stop
+                </button>
+                
+                <button onClick={() => { setFinalText(""); setPreview(""); }} className="px-3 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded-lg">
+                  Clear
+                </button>
+
+                <div className="ml-auto flex items-center gap-2">
+                  <button onClick={copyText} className="inline-flex items-center gap-1.5 text-sm text-gray-700 hover:text-black border px-3 py-1.5 rounded-lg">
+                    <Copy className="h-4 w-4" /> Copy
+                  </button>
+                  <button onClick={downloadTxt} className="inline-flex items-center gap-1.5 text-sm text-gray-700 hover:text-black border px-3 py-1.5 rounded-lg">
+                    <Download className="h-4 w-4" /> .txt
+                  </button>
+                </div>
+              </div>
+
+              {/* شاشة الاستماع اللحظي */}
+              <div className="rounded-lg border border-gray-200 p-3 bg-gray-50">
                 <div className="flex items-start gap-3">
-                  <div className="relative">
-                    <div className={`h-3 w-3 rounded-full ${listening ? 'bg-red-500' : 'bg-ink-300'}`}></div>
-                    {listening && <span className="absolute -right-2 -top-2 h-3 w-3 animate-ping rounded-full bg-red-400/60" />}
-                    <div className={`absolute -left-4 top-1/2 h-6 w-1 rounded-full ${listening ? 'bg-red-300/60 animate-pulse' : 'bg-ink-200'}`} />
+                  <div className="relative mt-1">
+                    <div className={`h-3 w-3 rounded-full ${listening ? 'bg-red-500 animate-ping' : 'bg-gray-300'}`}></div>
                   </div>
                   <div className="flex-1">
-                    <p className="text-sm text-ink-500">Live preview</p>
-                    <div className="mt-2 min-h-[48px] text-ink-900">
-                      {preview ? <em className="text-ink-600">{preview}</em> : <span className="text-ink-400">Waiting...</span>}
+                    <p className="text-xs font-semibold text-gray-500">Live Status</p>
+                    <div className="mt-1 min-h-[24px] text-sm text-gray-800">
+                      {preview ? <em className="text-blue-600 font-medium">{preview}</em> : <span className="text-gray-400">{listening ? "Listening... Speak clearly into your mic." : "Click Start Listening to begin."}</span>}
                     </div>
                   </div>
                 </div>
               </div>
 
-                  <div className="mt-3 rounded border-l-4 border-ink-200 bg-amber-50/30 p-3 text-sm text-ink-700">
-                    <strong>Recording help:</strong>
-                    <p className="mt-1 text-xs">If your browser prompts to share audio when recording, choose "Share Tab" and enable the "Share audio" option. This allows capturing playback audio for downloads.</p>
-                  </div>
+              {/* مربع النص الرئيسي */}
+              <textarea 
+                value={finalText} 
+                onChange={(e) => setFinalText(e.target.value)} 
+                rows={8} 
+                placeholder="Transcribed text will accumulate here..."
+                className="w-full rounded-lg border border-gray-300 p-3 text-base focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500" 
+                dir={lang.startsWith("ar") ? "rtl" : "ltr"}
+              />
 
-              <textarea value={finalText + (preview ? ` ${preview}` : "")} onChange={(e) => setFinalText(e.target.value)} rows={8} className="w-full textarea" />
-
+              {/* قسم الإعلانات والشرح */}
               <div className="mt-6">
-                <div className="my-6 p-4 border border-dashed rounded text-center text-xs text-muted-foreground">Ad Space</div>
+                <div className="my-6 min-h-[90px] border border-dashed rounded flex items-center justify-center text-xs text-muted-foreground">Ad Space</div>
 
                 <div className="grid gap-4 sm:grid-cols-3">
                   <div>
-                    <h3 className="font-semibold">How it works</h3>
-                    <ol className="mt-2 list-decimal list-inside text-sm text-ink-600">
-                      <li>Click Start and allow microphone access.</li>
-                      <li>Speak clearly; interim text appears live.</li>
-                      <li>Stop and download or copy the transcript.</li>
+                    <h3 className="font-semibold text-gray-900">How it works</h3>
+                    <ol className="mt-2 list-decimal list-inside text-sm text-gray-600 space-y-1">
+                      <li>Select your speaking language.</li>
+                      <li>Click Start and allow mic permissions.</li>
+                      <li>Speak clearly; your words will be typed live.</li>
                     </ol>
                   </div>
                   <div>
-                    <h3 className="font-semibold">Key features</h3>
-                    <ul className="mt-2 text-sm text-ink-600">
-                      <li>Separate confirmed transcripts and interim preview</li>
-                      <li>Download transcript as .txt</li>
-                      <li>Copy to clipboard</li>
+                    <h3 className="font-semibold text-gray-900">Key features</h3>
+                    <ul className="mt-2 text-sm text-gray-600 space-y-1">
+                      <li>Real-time live transcription</li>
+                      <li>Multi-dialect Arabic support</li>
+                      <li>Instant copy & text export</li>
                     </ul>
                   </div>
                   <div>
-                    <h3 className="font-semibold">FAQ</h3>
-                    <div className="mt-2 text-sm text-ink-600">
-                      <p><strong>Q:</strong> Is my audio uploaded? <br/><strong>A:</strong> No — recognition runs in your browser.</p>
+                    <h3 className="font-semibold text-gray-900">FAQ</h3>
+                    <div className="mt-2 text-sm text-gray-600">
+                      <p><strong>Q:</strong> Is my audio saved?<br/><strong>A:</strong> No, audio processing is strictly local in your browser.</p>
                     </div>
                   </div>
                 </div>
