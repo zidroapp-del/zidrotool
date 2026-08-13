@@ -1,10 +1,12 @@
 import { useEffect, useRef, useState } from "react";
-import { Mic, StopCircle } from "lucide-react";
+import { Mic, StopCircle, Copy, Download } from "lucide-react";
+import { AdSlot } from "@/components/AdSlot";
 
 export default function SpeechToText({ slug }: { slug?: string }) {
   const [supported, setSupported] = useState<boolean>(false);
   const [listening, setListening] = useState(false);
   const [transcript, setTranscript] = useState("");
+  const [preview, setPreview] = useState("");
   const recognitionRef = useRef<any>(null);
 
   useEffect(() => {
@@ -27,6 +29,7 @@ export default function SpeechToText({ slug }: { slug?: string }) {
         if (res.isFinal) final += res[0].transcript;
         else interim += res[0].transcript;
       }
+      setPreview(interim || "");
       setTranscript((prev) => prev + final + (interim ? ` ${interim}` : ""));
     };
     rec.onerror = () => setListening(false);
@@ -49,29 +52,93 @@ export default function SpeechToText({ slug }: { slug?: string }) {
     if (!recognitionRef.current) return;
     try { recognitionRef.current.stop(); } catch (e) {}
     setListening(false);
+    setPreview("");
+  };
+
+  const copyText = async () => {
+    try { await navigator.clipboard.writeText(transcript); }
+    catch (e) { /* ignore */ }
+  };
+
+  const downloadTxt = () => {
+    const blob = new Blob([transcript], { type: "text/plain;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${slug || "transcript"}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
   };
 
   return (
-    <div>
-      <h2 className="text-lg font-semibold mb-3">Speech to Text</h2>
-      {!supported && (
-        <p className="text-sm text-ink-500">Your browser does not support the Web Speech API.</p>
-      )}
+    <div className="mx-auto max-w-3xl">
+      <div className="rounded-xl bg-white p-6 shadow-lg">
+        <h2 className="text-2xl font-semibold mb-3">Speech to Text</h2>
+        {!supported && (
+          <p className="text-sm text-ink-500">Your browser does not support the Web Speech API.</p>
+        )}
 
-      {supported && (
-        <div className="space-y-3">
-          <div className="flex gap-2">
-            <button onClick={start} disabled={listening} className="btn-primary inline-flex items-center gap-2">
-              <Mic className="h-4 w-4" /> Start
-            </button>
-            <button onClick={stop} disabled={!listening} className="btn-ghost inline-flex items-center gap-2">
-              <StopCircle className="h-4 w-4" /> Stop
-            </button>
-            <button onClick={() => setTranscript("")} className="btn-secondary">Clear</button>
+        {supported && (
+          <div className="space-y-4">
+            <div className="flex items-center gap-3">
+              <button onClick={start} disabled={listening} className="btn-primary inline-flex items-center gap-2">
+                <Mic className="h-4 w-4" /> Start
+              </button>
+              <button onClick={stop} disabled={!listening} className="btn-ghost inline-flex items-center gap-2">
+                <StopCircle className="h-4 w-4" /> Stop
+              </button>
+              <button onClick={() => { setTranscript(""); setPreview(""); }} className="btn-secondary">Clear</button>
+              <button onClick={copyText} className="btn-ghost inline-flex items-center gap-2 ml-auto"><Copy className="h-4 w-4" /> Copy Text</button>
+              <button onClick={downloadTxt} className="btn-ghost inline-flex items-center gap-2"><Download className="h-4 w-4" /> Download .txt</button>
+            </div>
+
+            <div className="rounded border border-ink-100 p-3 bg-ink-50">
+              <div className="flex items-start gap-3">
+                <div className="relative">
+                  <div className={`h-3 w-3 rounded-full ${listening ? 'bg-red-500' : 'bg-ink-300'}`}></div>
+                  {listening && <span className="absolute -right-2 -top-2 h-3 w-3 animate-ping rounded-full bg-red-400/60" />}
+                </div>
+                <div className="flex-1">
+                  <p className="text-sm text-ink-500">Live preview</p>
+                  <div className="mt-2 min-h-[48px] text-ink-900">{preview ? <em className="text-ink-600">{preview}</em> : <span className="text-ink-400">Waiting...</span>}</div>
+                </div>
+              </div>
+            </div>
+
+            <textarea value={transcript} onChange={(e) => setTranscript(e.target.value)} rows={8} className="w-full textarea" />
+
+            {/* How it works / features / FAQ / Ad */}
+            <div className="mt-6 grid gap-4 sm:grid-cols-3">
+              <div>
+                <h3 className="font-semibold">How it works</h3>
+                <ol className="mt-2 list-decimal list-inside text-sm text-ink-600">
+                  <li>Click Start and allow microphone access.</li>
+                  <li>Speak clearly; interim text appears live.</li>
+                  <li>Stop and download or copy the transcript.</li>
+                </ol>
+              </div>
+              <div>
+                <h3 className="font-semibold">Key features</h3>
+                <ul className="mt-2 text-sm text-ink-600">
+                  <li>Real-time interim results</li>
+                  <li>Download transcript as .txt</li>
+                  <li>Copy to clipboard</li>
+                </ul>
+              </div>
+              <div>
+                <h3 className="font-semibold">FAQ</h3>
+                <div className="mt-2 text-sm text-ink-600">
+                  <p><strong>Q:</strong> Is my audio uploaded? <br/><strong>A:</strong> No — recognition runs in your browser.</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-6"><AdSlot variant="inline" /></div>
           </div>
-          <textarea value={transcript} onChange={(e) => setTranscript(e.target.value)} rows={8} className="w-full textarea" />
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 }

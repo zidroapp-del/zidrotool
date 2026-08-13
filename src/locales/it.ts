@@ -220,3 +220,17 @@ export const it = {
     }
   }
 };
+
+// Compatibility flat keys and quick filter labels
+export const itExtra = {
+  "tool.speech-to-text.name": "Da voce a testo",
+  "tool.speech-to-text.desc": "Trascrivi la voce in testo modificabile in tempo reale.",
+  "tool.text-to-speech.name": "Da testo a voce",
+  "tool.text-to-speech.desc": "Converti il testo in parlato usando le voci di sistema.",
+  "tools.filter.all": "Tutti",
+  "tools.filter.audio": "Audio",
+  "tools.filter.pdf": "PDF",
+  "tools.filter.images": "Immagini",
+  "tools.filter.dev": "Dev",
+  "tools.filter.calculators": "Calcolatrici",
+};

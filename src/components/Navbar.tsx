@@ -110,7 +110,7 @@ export function Navbar({ onOpenSearch }: NavbarProps) {
 
         {/* Search trigger (desktop) */}
         <button
-          onClick={onOpenSearch}
+          onClick={() => navigate('/tools')}
           className="hidden flex-1 items-center gap-2 rounded-lg border border-ink-200 bg-ink-50 px-3 py-2 text-sm text-ink-400 transition-colors hover:border-ink-300 hover:bg-ink-100 lg:flex dark:border-ink-700 dark:bg-ink-900 dark:hover:border-ink-600"
           aria-label={t("nav.search")}
         >
@@ -283,7 +283,7 @@ export function Navbar({ onOpenSearch }: NavbarProps) {
         {/* Mobile controls */}
         <div className="flex items-center gap-1 lg:hidden">
           <button
-            onClick={onOpenSearch}
+            onClick={() => navigate('/tools')}
             className="rounded-lg p-2 text-ink-600 hover:bg-ink-100 dark:text-ink-400 dark:hover:bg-ink-800"
             aria-label={t("nav.search")}
           >

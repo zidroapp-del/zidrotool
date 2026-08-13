@@ -16,6 +16,7 @@ export default function ToolsListPage() {
   const [query, setQuery] = useState("");
   const [activeCat, setActiveCat] = useState("all");
   const [sortMode, setSortMode] = useState<SortMode>("popular");
+  const [quickFilter, setQuickFilter] = useState<string>("all");
 
   const sortTabs: { key: SortMode; icon: React.ComponentType<{ className?: string }>; labelKey: string }[] = [
     { key: "popular", icon: Flame, labelKey: "tools.tab.popular" },
@@ -50,13 +51,34 @@ export default function ToolsListPage() {
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     return sorted.filter((tool) => {
-      const matchCat = activeCat === "all" || tool.category === activeCat;
+      let matchCat = activeCat === "all" || tool.category === activeCat;
+      if (quickFilter && quickFilter !== "all") {
+        switch (quickFilter) {
+          case "audio":
+            matchCat = matchCat && ((tool.tags || []).includes("speech") || (tool.keywords || []).some((k) => k.includes("speech") || k.includes("audio")) || tool.category === "utilities");
+            break;
+          case "pdf":
+            matchCat = matchCat && tool.category === "pdf";
+            break;
+          case "images":
+            matchCat = matchCat && tool.category === "image";
+            break;
+          case "dev":
+            matchCat = matchCat && tool.category === "dev";
+            break;
+          case "calculators":
+            matchCat = matchCat && (tool.category === "finance" || tool.category === "converters" || (tool.tags || []).includes("calculator"));
+            break;
+          default:
+            break;
+        }
+      }
       const name = t(tool.nameKey) as string;
       const desc = t(tool.descKey) as string;
       const matchQuery = !q || name.toLowerCase().includes(q) || desc.toLowerCase().includes(q) || (tool.keywords || []).some((k) => k.includes(q));
       return matchCat && matchQuery;
     });
-  }, [sorted, query, activeCat, t]);
+  }, [sorted, query, activeCat, t, quickFilter]);
 
   return (
     <>

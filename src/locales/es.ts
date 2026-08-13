@@ -228,3 +228,17 @@ export const es = {
     }
   }
 };
+
+// Legacy flat keys for compatibility
+export const esExtra = {
+  "tool.speech-to-text.name": "Voz a Texto",
+  "tool.speech-to-text.desc": "Transcribe la voz en texto editable en tiempo real.",
+  "tool.text-to-speech.name": "Texto a Voz",
+  "tool.text-to-speech.desc": "Convierte texto en audio usando voces del sistema.",
+  "tools.filter.all": "Todos",
+  "tools.filter.audio": "Audio",
+  "tools.filter.pdf": "PDF",
+  "tools.filter.images": "Imágenes",
+  "tools.filter.dev": "Dev",
+  "tools.filter.calculators": "Calculadoras",
+};

@@ -228,3 +228,17 @@ export const de = {
     }
   }
 };
+
+// Compatibility flat keys and quick filter labels
+export const deExtra = {
+  "tool.speech-to-text.name": "Sprache zu Text",
+  "tool.speech-to-text.desc": "Sprache in editierbaren Text transkribieren.",
+  "tool.text-to-speech.name": "Text zu Sprache",
+  "tool.text-to-speech.desc": "Text mit Systemstimmen in Sprache umwandeln.",
+  "tools.filter.all": "Alle",
+  "tools.filter.audio": "Audio",
+  "tools.filter.pdf": "PDF",
+  "tools.filter.images": "Bilder",
+  "tools.filter.dev": "Dev",
+  "tools.filter.calculators": "Rechner",
+};
