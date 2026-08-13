@@ -11,6 +11,7 @@ export default function TextToSpeech({ slug }: { slug?: string }) {
   const recorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<BlobPart[]>([]);
   const [isMobile, setIsMobile] = useState(false);
+  const [selectedLang, setSelectedLang] = useState(() => (navigator.language || 'en').split('-')[0]);
 
   useEffect(() => {
     const load = () => setVoices(window.speechSynthesis.getVoices() || []);
@@ -30,7 +31,6 @@ export default function TextToSpeech({ slug }: { slug?: string }) {
   const displayVoices = [...voices];
   preferredArabic.forEach((lang) => {
     if (!displayVoices.some((v) => v.lang && v.lang.toLowerCase().startsWith(lang.toLowerCase()))) {
-      // Push a lightweight placeholder so users can select an Arabic lang and RTL will apply
       displayVoices.push({ name: `Arabic (${lang})`, lang, default: false, localService: false, voiceURI: `placeholder-${lang}` } as unknown as SpeechSynthesisVoice);
     }
   });
@@ -126,10 +126,25 @@ export default function TextToSpeech({ slug }: { slug?: string }) {
           <textarea dir={rtl ? 'rtl' : 'ltr'} className="w-full textarea" rows={6} value={text} onChange={(e) => setText(e.target.value)} />
 
           <div className="mt-3 grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <select value={selectedLang} onChange={(e) => { setSelectedLang(e.target.value); setRtl(e.target.value === 'ar'); }} className="select">
+              <option value="en">English</option>
+              <option value="ar">Arabic</option>
+              <option value="fr">French</option>
+              <option value="es">Spanish</option>
+              <option value="de">German</option>
+              <option value="tr">Turkish</option>
+            </select>
             <select value={voiceIdx} onChange={(e) => onSelectVoice(Number(e.target.value))} className="select">
-              {displayVoices.map((v, i) => (
-                <option key={(v.name || '') + i} value={i}>{v.name} {v.lang ? `(${v.lang})` : ""}</option>
-              ))}
+              {(() => {
+                const filtered = displayVoices.filter((v) => v.lang?.toLowerCase().startsWith(selectedLang));
+                if (filtered.length === 0) {
+                  return <option value={voiceIdx}>Default ({selectedLang})</option>;
+                }
+                return filtered.map((v) => {
+                  const idx = displayVoices.indexOf(v);
+                  return <option key={(v.name || '') + idx} value={idx}>{v.name} {v.lang ? `(${v.lang})` : ''}</option>;
+                });
+              })()}
             </select>
             <div>
               <label className="text-sm">Rate: {rate}</label>

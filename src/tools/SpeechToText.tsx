@@ -24,21 +24,17 @@ export default function SpeechToText({ slug }: { slug?: string }) {
     rec.lang = navigator.language || "en-US";
 
     rec.onresult = (ev: SpeechRecognitionEvent) => {
-      // Maintain a running confirmed transcript in a ref to avoid duplication
+      // Simple, robust handler: append finalized transcripts and show latest interim live
       let interim = "";
       for (let i = ev.resultIndex; i < ev.results.length; ++i) {
         const res = ev.results[i];
         const t = res[0]?.transcript || "";
         if (res.isFinal) {
-          // append confirmed into the ref
-          finalRef.current = finalRef.current ? finalRef.current + " " + t : t;
+          setFinalText((prev) => (prev ? prev + " " + t : t));
         } else {
-          // keep only the latest interim (show live while speaking)
           interim = t;
         }
       }
-      // update state from ref + interim for instant live preview
-      setFinalText(finalRef.current);
       setPreview(interim);
     };
 

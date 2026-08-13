@@ -2,13 +2,8 @@ import { useState } from "react";
 import * as pdfjsLib from "pdfjs-dist/legacy/build/pdf";
 import { AdSlot } from "@/components/AdSlot";
 
-// Use CDN worker for pdfjs (use the installed pdfjs version)
-try {
-  const v = (pdfjsLib as any).version || (pdfjsLib as any).pdfjsVersion || '2.16.105';
-  (pdfjsLib as any).GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${v}/pdf.worker.min.mjs`;
-} catch (err) {
-  (pdfjsLib as any).GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js";
-}
+// Use a known CDN worker for pdfjs to ensure worker loads correctly
+(pdfjsLib as any).GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
 
 export default function PdfToText({ slug }: { slug?: string }) {
   const [text, setText] = useState("");
@@ -20,16 +15,22 @@ export default function PdfToText({ slug }: { slug?: string }) {
     setText("");
     try {
       const arrayBuffer = await file.arrayBuffer();
-      const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+      const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer });
+      const pdf = await loadingTask.promise;
       let out = "";
       for (let i = 1; i <= pdf.numPages; i++) {
-        const page = await pdf.getPage(i);
-        const content = await page.getTextContent();
-        const items = Array.isArray(content?.items) ? content.items : [];
-        const pageText = items.map((it: any) => it?.str || "").join(" ");
-        out += `\n\n--- Page ${i} ---\n` + pageText;
+        try {
+          const page = await pdf.getPage(i);
+          const content = await page.getTextContent();
+          const items = Array.isArray(content?.items) ? content.items : [];
+          const pageText = items.map((it: any) => it?.str || "").join(" ");
+          out += `\n\n--- Page ${i} ---\n` + pageText;
+        } catch (pageErr) {
+          console.error(`Error extracting page ${i}:`, pageErr);
+          out += `\n\n--- Page ${i} ---\n[Error extracting this page]\n`;
+        }
       }
-      setText(out);
+      setText(out || "(no text found)");
     } catch (e) {
       console.error('PdfToText extraction error:', e);
       setText("Failed to extract text from PDF. See console for details.");
