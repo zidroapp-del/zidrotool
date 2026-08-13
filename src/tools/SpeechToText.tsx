@@ -6,6 +6,7 @@ export default function SpeechToText({ slug }: { slug?: string }) {
   const [supported, setSupported] = useState<boolean>(false);
   const [listening, setListening] = useState(false);
   const [finalText, setFinalText] = useState("");
+  const [interim, setInterim] = useState("");
   const [lang, setLang] = useState<string>("ar-SA");
 
   const recognitionRef = useRef<any>(null);
@@ -25,11 +26,21 @@ export default function SpeechToText({ slug }: { slug?: string }) {
     rec.lang = lang;
 
     rec.onresult = (ev: any) => {
-      let liveTranscript = "";
-      for (let i = 0; i < ev.results.length; ++i) {
-        liveTranscript += ev.results[i][0]?.transcript + " ";
+      let interimTranscript = "";
+      let newFinal = "";
+      for (let i = ev.resultIndex; i < ev.results.length; i++) {
+        const res = ev.results[i];
+        const transcript = res[0]?.transcript || "";
+        if (res.isFinal) {
+          newFinal += transcript + " ";
+        } else {
+          interimTranscript += transcript;
+        }
       }
-      setFinalText(liveTranscript);
+      if (newFinal.trim()) {
+        setFinalText((prev) => (prev ? prev + " " + newFinal.trim() : newFinal.trim()));
+      }
+      setInterim(interimTranscript);
     };
 
     rec.onerror = (err: any) => {
@@ -38,9 +49,9 @@ export default function SpeechToText({ slug }: { slug?: string }) {
     };
 
     rec.onend = () => {
-      // إعادة التشغيل التلقائي إذا لم يقم المستخدم بالضغط على Stop
+      // Only restart if user intends to keep listening
       if (recognitionRef.current && listening) {
-        try { recognitionRef.current.start(); } catch (e) {}
+        try { recognitionRef.current.start(); } catch (e) { console.warn('Failed to restart recognition', e); }
       }
     };
 
@@ -67,6 +78,9 @@ export default function SpeechToText({ slug }: { slug?: string }) {
     if (!recognitionRef.current) return;
     try { recognitionRef.current.stop(); } catch (e) {}
   };
+
+  // Clear both final and interim transcripts
+  const clearAll = () => { setFinalText(""); setInterim(""); };
 
   const copyText = async () => {
     try { await navigator.clipboard.writeText(finalText); } catch (e) {}
@@ -132,7 +146,7 @@ export default function SpeechToText({ slug }: { slug?: string }) {
                   <StopCircle className="h-4 w-4" /> Stop
                 </button>
                 
-                <button onClick={() => setFinalText("")} className="px-3 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded-lg">
+                <button onClick={clearAll} className="px-3 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded-lg">
                   Clear
                 </button>
 
@@ -147,13 +161,17 @@ export default function SpeechToText({ slug }: { slug?: string }) {
               </div>
 
               <textarea 
-                value={finalText} 
-                onChange={(e) => setFinalText(e.target.value)} 
+                value={(finalText + (interim ? (finalText ? ' ' : '') + interim : '')).trim()} 
+                onChange={(e) => { setFinalText(e.target.value); setInterim(""); }} 
                 rows={8} 
                 placeholder={listening ? "Listening... Start speaking..." : "Click Start Listening and speak..."}
                 className="w-full rounded-lg border border-gray-300 p-3 text-base focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500" 
                 dir={lang.startsWith("ar") ? "rtl" : "ltr"}
               />
+
+              {interim && (
+                <div className="mt-2 text-sm text-gray-500">Preview: {interim}</div>
+              )}
 
               <div className="mt-6">
                 <div className="my-6 min-h-[90px] border border-dashed rounded flex items-center justify-center text-xs text-muted-foreground">Ad Space</div>

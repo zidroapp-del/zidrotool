@@ -3,8 +3,9 @@ import * as pdfjsLib from "pdfjs-dist";
 import { Copy, Download, FileUp } from "lucide-react";
 import { AdSlot } from "@/components/AdSlot";
 
-// ضبط رابط الـ Worker ديناميكياً حسب الإصدار المحمل لضمان التوافق 100%
-pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
+// ضبط مسار الـ Worker ليتوافق تماماً مع إصدار الحزمة المحملة
+// Use the pdf.js CDN worker matching the installed version for reliable extraction
+pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
 
 export default function PdfToText({ slug }: { slug?: string }) {
   const [text, setText] = useState("");
@@ -24,26 +25,32 @@ export default function PdfToText({ slug }: { slug?: string }) {
       const arrayBuffer = await file.arrayBuffer();
       const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer });
       const pdf = await loadingTask.promise;
+      console.log(`PdfToText: loaded document, pages=${pdf.numPages}`);
       let out = "";
 
       for (let i = 1; i <= pdf.numPages; i++) {
+        console.log(`PdfToText: extracting page ${i}/${pdf.numPages}`);
         try {
           const page = await pdf.getPage(i);
           const content = await page.getTextContent();
           const items = Array.isArray(content?.items) ? content.items : [];
-          const pageText = items.map((it: any) => it?.str || "").join(" ");
-          
-          out += `--- Page ${i} ---\n` + pageText + "\n\n";
+          const pageText = items.map((it: any) => it?.str || "").join(" ").trim();
+          console.log(`PdfToText: page ${i} text length=${pageText.length}`);
+          if (pageText) {
+            out += `--- Page ${i} ---\n` + pageText + "\n\n";
+          } else {
+            out += `--- Page ${i} ---\n[No selectable text found. This page might be a scanned image. Use Image to Text OCR for images]\n\n`;
+          }
         } catch (pageErr) {
           console.error(`Error extracting page ${i}:`, pageErr);
-          out += `--- Page ${i} ---\n[Error extracting this page]\n\n`;
+          out += `--- Page ${i} ---\n[Error extracting text from this page]\n\n`;
         }
       }
 
-      setText(out.trim() || "(No readable text found in this PDF. It might contain scanned images instead)");
+      setText(out.trim());
     } catch (e) {
       console.error("PdfToText extraction error:", e);
-      setText("Failed to extract text from PDF. Ensure the file is not password-protected.");
+      setText("Failed to extract text from PDF. The file may be password-protected or corrupt.");
     } finally {
       setBusy(false);
     }
@@ -78,7 +85,6 @@ export default function PdfToText({ slug }: { slug?: string }) {
             <span>100% Client-Side Privacy: Your PDF never leaves your device.</span>
           </div>
 
-          {/* Drag and Drop Zone */}
           <div
             onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
             onDragLeave={() => setIsDragging(false)}
@@ -106,11 +112,10 @@ export default function PdfToText({ slug }: { slug?: string }) {
 
           {busy && (
             <div className="flex items-center gap-2 text-sm text-blue-600 mb-3">
-              <span className="animate-spin">⏳</span> Processing PDF pages...
+              <span className="animate-spin">⏳</span> Extracting text from PDF...
             </div>
           )}
 
-          {/* Textarea output */}
           <textarea
             rows={10}
             className="w-full rounded-lg border border-gray-300 p-3 text-base focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
@@ -119,7 +124,6 @@ export default function PdfToText({ slug }: { slug?: string }) {
             onChange={(e) => setText(e.target.value)}
           />
 
-          {/* Quick Actions */}
           {text && (
             <div className="mt-3 flex items-center justify-end gap-2">
               <button
@@ -137,7 +141,6 @@ export default function PdfToText({ slug }: { slug?: string }) {
             </div>
           )}
 
-          {/* Information & Ad Sections */}
           <div className="mt-6">
             <div className="my-6 min-h-[90px] border border-dashed rounded flex items-center justify-center text-xs text-muted-foreground">Ad Space</div>
 
@@ -161,7 +164,7 @@ export default function PdfToText({ slug }: { slug?: string }) {
               <div>
                 <h3 className="font-semibold text-gray-900">FAQ</h3>
                 <div className="mt-2 text-sm text-gray-600">
-                  <p><strong>Q:</strong> Works with scanned PDFs?<br/><strong>A:</strong> Only PDFs containing selectable text. Use OCR for scanned images.</p>
+                  <p><strong>Q:</strong> Works with scanned PDFs?<br/><strong>A:</strong> Only PDFs containing selectable text. Use Image to Text (OCR) for scanned images.</p>
                 </div>
               </div>
             </div>

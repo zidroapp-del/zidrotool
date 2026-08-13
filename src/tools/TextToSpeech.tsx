@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Copy, Download, Volume2, Square } from "lucide-react";
+import { Copy, Volume2, Square } from "lucide-react";
 import { AdSlot } from "@/components/AdSlot";
 
 export default function TextToSpeech({ slug }: { slug?: string }) {
@@ -9,16 +9,7 @@ export default function TextToSpeech({ slug }: { slug?: string }) {
   const [pitch, setPitch] = useState(1);
   const [text, setText] = useState("");
   const [rtl, setRtl] = useState(false);
-  const [selectedLang, setSelectedLang] = useState("ar");
-
-  const langLocales: Record<string, string> = {
-    ar: "ar-SA",
-    en: "en-US",
-    fr: "fr-FR",
-    es: "es-ES",
-    de: "de-DE",
-    tr: "tr-TR"
-  };
+  const [selectedLang, setSelectedLang] = useState<string>(navigator.language || "en-US");
 
   useEffect(() => {
     const updateVoices = () => {
@@ -35,12 +26,14 @@ export default function TextToSpeech({ slug }: { slug?: string }) {
     return () => { window.speechSynthesis.onvoiceschanged = null; };
   }, []);
 
-  const filteredVoices = voices.filter((v) => v.lang.toLowerCase().startsWith(selectedLang.toLowerCase()));
+  const baseLang = selectedLang.split('-')[0].toLowerCase();
+  const filteredVoices = voices.filter((v) => (v.lang || '').toLowerCase().startsWith(baseLang));
 
   const handleLangChange = (lang: string) => {
     setSelectedLang(lang);
-    setRtl(lang === 'ar');
-    const firstMatchingVoice = voices.find(v => v.lang.toLowerCase().startsWith(lang.toLowerCase()));
+    setRtl(lang.startsWith('ar'));
+    const base = lang.split('-')[0].toLowerCase();
+    const firstMatchingVoice = voices.find(v => (v.lang || '').toLowerCase().startsWith(base));
     if (firstMatchingVoice) setSelectedVoiceURI(firstMatchingVoice.voiceURI);
   };
 
@@ -55,9 +48,9 @@ export default function TextToSpeech({ slug }: { slug?: string }) {
     const matchedVoice = voices.find((v) => v.voiceURI === selectedVoiceURI);
     if (matchedVoice) {
       ut.voice = matchedVoice;
-      ut.lang = matchedVoice.lang;
+      ut.lang = matchedVoice.lang || selectedLang;
     } else {
-      ut.lang = langLocales[selectedLang] || selectedLang;
+      ut.lang = selectedLang;
     }
     window.speechSynthesis.speak(ut);
   };
@@ -66,21 +59,7 @@ export default function TextToSpeech({ slug }: { slug?: string }) {
 
   const copyText = async () => { try { await navigator.clipboard.writeText(text); } catch {} };
 
-  // تحميل الصوت المباشر صيغة MP3
-  const downloadAudio = () => {
-    if (!text.trim()) return;
-    const targetLang = langLocales[selectedLang] || selectedLang;
-    const encodedText = encodeURIComponent(text.trim().substring(0, 200)); // Google TTS CDN limitation for quick export
-    const ttsUrl = `https://translate.google.com/translate_tts?ie=UTF-8&q=${encodedText}&tl=${targetLang}&client=tw-ob`;
-
-    const a = document.createElement('a');
-    a.href = ttsUrl;
-    a.target = '_blank';
-    a.download = `${slug || 'speech'}.mp3`;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-  };
+  // Audio download/recording removed — playback-only tool per UX decision
 
   return (
     <div className="min-h-[60vh] flex items-start lg:items-center">
