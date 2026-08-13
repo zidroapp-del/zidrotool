@@ -4,146 +4,297 @@ import { AdSlot } from "@/components/AdSlot";
 
 export default function TextToSpeech({ slug }: { slug?: string }) {
   const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([]);
-  const [selectedVoiceURI, setSelectedVoiceURI] = useState<string>("");
+  const [selectedVoiceURI, setSelectedVoiceURI] = useState("");
+  const [selectedLang, setSelectedLang] = useState("en-US");
   const [rate, setRate] = useState(1);
   const [pitch, setPitch] = useState(1);
   const [text, setText] = useState("");
-  const [rtl, setRtl] = useState(false);
-  const [selectedLang, setSelectedLang] = useState<string>(navigator.language || "en-US");
+  const [isSpeaking, setIsSpeaking] = useState(false);
+  const [supported, setSupported] = useState(true);
 
   useEffect(() => {
+    if (
+      typeof window === "undefined" ||
+      !("speechSynthesis" in window)
+    ) {
+      setSupported(false);
+      return;
+    }
+
     const updateVoices = () => {
-      const avail = window.speechSynthesis.getVoices() || [];
-      setVoices(avail);
-      if (avail.length > 0 && !selectedVoiceURI) {
-        const defaultVoice = avail.find(v => v.lang.toLowerCase().startsWith(selectedLang.toLowerCase())) || avail[0];
-        if (defaultVoice) setSelectedVoiceURI(defaultVoice.voiceURI);
-      }
+      const availableVoices = window.speechSynthesis.getVoices();
+      setVoices(availableVoices);
     };
 
     updateVoices();
+
     window.speechSynthesis.onvoiceschanged = updateVoices;
-    return () => { window.speechSynthesis.onvoiceschanged = null; };
+
+    return () => {
+      window.speechSynthesis.cancel();
+      window.speechSynthesis.onvoiceschanged = null;
+    };
   }, []);
 
-  const baseLang = selectedLang.split('-')[0].toLowerCase();
-  const filteredVoices = voices.filter((v) => (v.lang || '').toLowerCase().startsWith(baseLang));
+  const baseLang = selectedLang.split("-")[0].toLowerCase();
 
-  const handleLangChange = (lang: string) => {
-    setSelectedLang(lang);
-    setRtl(lang.startsWith('ar'));
-    const base = lang.split('-')[0].toLowerCase();
-    const firstMatchingVoice = voices.find(v => (v.lang || '').toLowerCase().startsWith(base));
-    if (firstMatchingVoice) setSelectedVoiceURI(firstMatchingVoice.voiceURI);
+  const filteredVoices = voices.filter((voice) =>
+    voice.lang.toLowerCase().startsWith(baseLang)
+  );
+
+  useEffect(() => {
+    if (filteredVoices.length > 0) {
+      const currentVoiceExists = filteredVoices.some(
+        (voice) => voice.voiceURI === selectedVoiceURI
+      );
+
+      if (!currentVoiceExists) {
+        setSelectedVoiceURI(filteredVoices[0].voiceURI);
+      }
+    } else {
+      setSelectedVoiceURI("");
+    }
+  }, [selectedLang, voices]);
+
+  const handleLanguageChange = (language: string) => {
+    window.speechSynthesis.cancel();
+    setIsSpeaking(false);
+    setSelectedLang(language);
   };
 
   const speak = () => {
-    if (!text.trim()) return;
+    if (!text.trim()) {
+      alert("Please enter some text first.");
+      return;
+    }
+
+    if (!("speechSynthesis" in window)) {
+      alert("Text to Speech is not supported in this browser.");
+      return;
+    }
+
     window.speechSynthesis.cancel();
 
-    const ut = new SpeechSynthesisUtterance(text);
-    ut.rate = rate;
-    ut.pitch = pitch;
+    const utterance = new SpeechSynthesisUtterance(text);
 
-    const matchedVoice = voices.find((v) => v.voiceURI === selectedVoiceURI);
-    if (matchedVoice) {
-      ut.voice = matchedVoice;
-      ut.lang = matchedVoice.lang || selectedLang;
-    } else {
-      ut.lang = selectedLang;
+    utterance.rate = rate;
+    utterance.pitch = pitch;
+    utterance.lang = selectedLang;
+
+    const selectedVoice = voices.find(
+      (voice) => voice.voiceURI === selectedVoiceURI
+    );
+
+    if (selectedVoice) {
+      utterance.voice = selectedVoice;
+      utterance.lang = selectedVoice.lang;
     }
-    window.speechSynthesis.speak(ut);
+
+    utterance.onstart = () => {
+      setIsSpeaking(true);
+    };
+
+    utterance.onend = () => {
+      setIsSpeaking(false);
+    };
+
+    utterance.onerror = () => {
+      setIsSpeaking(false);
+    };
+
+    window.speechSynthesis.speak(utterance);
   };
 
-  const stop = () => window.speechSynthesis.cancel();
+  const stop = () => {
+    if ("speechSynthesis" in window) {
+      window.speechSynthesis.cancel();
+    }
 
-  const copyText = async () => { try { await navigator.clipboard.writeText(text); } catch {} };
+    setIsSpeaking(false);
+  };
 
-  // Audio download/recording removed — playback-only tool per UX decision
+  const copyText = async () => {
+    if (!text.trim()) return;
+
+    try {
+      await navigator.clipboard.writeText(text);
+    } catch (error) {
+      console.error("Copy failed:", error);
+    }
+  };
+
+  if (!supported) {
+    return (
+      <div className="min-h-[60vh] flex items-start lg:items-center">
+        <div className="mx-auto w-full max-w-3xl py-8">
+          <div className="rounded-xl border border-red-200 bg-red-50 p-6">
+            <h2 className="text-2xl font-semibold text-red-700">
+              Text to Speech is not supported
+            </h2>
+
+            <p className="mt-2 text-sm text-red-600">
+              Your browser does not support the Speech Synthesis API.
+              Please try a modern browser such as Google Chrome or Microsoft Edge.
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-[60vh] flex items-start lg:items-center">
       <div className="mx-auto w-full max-w-3xl py-8">
-        <div className="rounded-xl bg-white p-6 shadow-lg border border-gray-100">
-          <h2 className="text-2xl font-semibold mb-3 text-gray-800">Text to Speech</h2>
-          
-          <div className="mb-4 inline-flex items-center gap-2 text-sm text-green-700 bg-green-50 px-3 py-1.5 rounded-lg border border-green-200">
-            <span>🔒 100% Client-Side Privacy: Your text is safe and secure.</span>
+        <div className="rounded-xl border border-gray-100 bg-white p-6 shadow-lg">
+          <h2 className="mb-3 text-2xl font-semibold text-gray-800">
+            Text to Speech
+          </h2>
+
+          <div className="mb-4 inline-flex items-center gap-2 rounded-lg border border-green-200 bg-green-50 px-3 py-1.5 text-sm text-green-700">
+            <span>🔒</span>
+            <span>
+              100% Client-Side Privacy: Your text stays on your device.
+            </span>
           </div>
 
-          <textarea 
-            dir={rtl ? 'rtl' : 'ltr'} 
-            className="w-full rounded-lg border border-gray-300 p-3 text-base focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500" 
-            rows={6} 
-            value={text} 
-            placeholder="Type or paste text here..."
-            onChange={(e) => setText(e.target.value)} 
+          <textarea
+            dir={selectedLang.startsWith("ar") ? "rtl" : "ltr"}
+            className="w-full rounded-lg border border-gray-300 p-3 text-base focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+            rows={7}
+            value={text}
+            placeholder="Type or paste your text here..."
+            onChange={(e) => setText(e.target.value)}
           />
 
-          <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+          <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            {/* Language */}
             <div>
-              <label className="text-xs font-semibold text-gray-500 mb-1 block">Language</label>
-              <select 
-                value={selectedLang} 
-                onChange={(e) => handleLangChange(e.target.value)} 
-                className="w-full rounded border border-gray-300 p-2 text-sm bg-white"
+              <label className="mb-1 block text-xs font-semibold text-gray-500">
+                Language
+              </label>
+
+              <select
+                value={selectedLang}
+                onChange={(e) => handleLanguageChange(e.target.value)}
+                className="w-full rounded border border-gray-300 bg-white p-2 text-sm"
               >
-                <option value="ar">العربية (Arabic)</option>
-                <option value="en">English</option>
-                <option value="fr">Français (French)</option>
-                <option value="es">Español (Spanish)</option>
-                <option value="de">Deutsch (German)</option>
-                <option value="tr">Türkçe (Turkish)</option>
+                <option value="ar-SA">العربية</option>
+                <option value="ar-DZ">العربية الجزائرية</option>
+                <option value="en-US">English (US)</option>
+                <option value="en-GB">English (UK)</option>
+                <option value="fr-FR">Français</option>
+                <option value="es-ES">Español</option>
+                <option value="de-DE">Deutsch</option>
+                <option value="it-IT">Italiano</option>
               </select>
             </div>
 
+            {/* Voice */}
             <div>
-              <label className="text-xs font-semibold text-gray-500 mb-1 block">Voice Accent</label>
-              <select 
-                value={selectedVoiceURI} 
-                onChange={(e) => setSelectedVoiceURI(e.target.value)} 
-                className="w-full rounded border border-gray-300 p-2 text-sm bg-white"
+              <label className="mb-1 block text-xs font-semibold text-gray-500">
+                Voice
+              </label>
+
+              <select
+                value={selectedVoiceURI}
+                onChange={(e) => setSelectedVoiceURI(e.target.value)}
+                className="w-full rounded border border-gray-300 bg-white p-2 text-sm"
               >
                 {filteredVoices.length === 0 ? (
-                  <option value="">Default System Voice ({selectedLang.toUpperCase()})</option>
+                  <option value="">
+                    Default system voice
+                  </option>
                 ) : (
-                  filteredVoices.map((v) => (
-                    <option key={v.voiceURI} value={v.voiceURI}>
-                      {v.name} ({v.lang})
+                  filteredVoices.map((voice) => (
+                    <option
+                      key={voice.voiceURI}
+                      value={voice.voiceURI}
+                    >
+                      {voice.name} ({voice.lang})
                     </option>
                   ))
                 )}
               </select>
             </div>
 
+            {/* Speed */}
             <div>
-              <label className="text-xs font-semibold text-gray-500 mb-1 block">Speed: {rate}x</label>
-              <input type="range" min={0.5} max={2} step={0.1} value={rate} onChange={(e) => setRate(Number(e.target.value))} className="w-full accent-blue-600" />
+              <label className="mb-1 block text-xs font-semibold text-gray-500">
+                Speed: {rate}x
+              </label>
+
+              <input
+                type="range"
+                min="0.5"
+                max="2"
+                step="0.1"
+                value={rate}
+                onChange={(e) => setRate(Number(e.target.value))}
+                className="w-full"
+              />
             </div>
 
+            {/* Pitch */}
             <div>
-              <label className="text-xs font-semibold text-gray-500 mb-1 block">Pitch: {pitch}</label>
-              <input type="range" min={0.5} max={2} step={0.1} value={pitch} onChange={(e) => setPitch(Number(e.target.value))} className="w-full accent-blue-600" />
+              <label className="mb-1 block text-xs font-semibold text-gray-500">
+                Pitch: {pitch}
+              </label>
+
+              <input
+                type="range"
+                min="0.5"
+                max="2"
+                step="0.1"
+                value={pitch}
+                onChange={(e) => setPitch(Number(e.target.value))}
+                className="w-full"
+              />
             </div>
           </div>
 
-          <div className="mt-5 flex flex-wrap gap-2 items-center">
-            <button onClick={speak} className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg inline-flex items-center gap-2">
-              <Volume2 className="h-4 w-4" /> Speak
+          {/* Buttons */}
+          <div className="mt-5 flex flex-wrap items-center gap-2">
+            <button
+              onClick={speak}
+              disabled={isSpeaking}
+              className={`inline-flex items-center gap-2 rounded-lg px-4 py-2 font-medium text-white ${
+                isSpeaking
+                  ? "cursor-not-allowed bg-gray-400"
+                  : "bg-blue-600 hover:bg-blue-700"
+              }`}
+            >
+              <Volume2 className="h-4 w-4" />
+              {isSpeaking ? "Speaking..." : "Speak"}
             </button>
-            <button onClick={stop} className="px-4 py-2 border border-gray-300 text-gray-700 hover:bg-gray-50 rounded-lg inline-flex items-center gap-2">
-              <Square className="h-4 w-4" /> Stop
+
+            <button
+              onClick={stop}
+              disabled={!isSpeaking}
+              className={`inline-flex items-center gap-2 rounded-lg border px-4 py-2 ${
+                !isSpeaking
+                  ? "cursor-not-allowed border-gray-200 text-gray-400"
+                  : "border-gray-300 text-gray-700 hover:bg-gray-50"
+              }`}
+            >
+              <Square className="h-4 w-4" />
+              Stop
             </button>
-            <button onClick={downloadAudio} className="px-3 py-2 text-sm text-blue-600 hover:bg-blue-50 border border-blue-200 rounded-lg inline-flex items-center gap-1.5">
-              <Download className="h-4 w-4" /> Download Audio (.mp3)
-            </button>
-            <button onClick={copyText} className="px-3 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded-lg inline-flex items-center gap-1.5 ml-auto">
-              <Copy className="h-4 w-4" /> Copy Text
+
+            <button
+              onClick={copyText}
+              disabled={!text.trim()}
+              className={`ml-auto inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm ${
+                !text.trim()
+                  ? "cursor-not-allowed text-gray-400"
+                  : "text-gray-600 hover:bg-gray-100"
+              }`}
+            >
+              <Copy className="h-4 w-4" />
+              Copy Text
             </button>
           </div>
 
           <div className="mt-6">
-            <div className="my-6 min-h-[90px] border border-dashed rounded flex items-center justify-center text-xs text-muted-foreground">Ad Space</div>
             <AdSlot variant="inline" />
           </div>
         </div>
