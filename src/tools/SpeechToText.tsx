@@ -8,6 +8,7 @@ export default function SpeechToText({ slug }: { slug?: string }) {
   const [finalText, setFinalText] = useState("");
   const [preview, setPreview] = useState("");
   const recognitionRef = useRef<any>(null);
+  const finalRef = useRef<string>("");
 
   useEffect(() => {
     const win: any = window as any;
@@ -23,18 +24,21 @@ export default function SpeechToText({ slug }: { slug?: string }) {
     rec.lang = navigator.language || "en-US";
 
     rec.onresult = (ev: SpeechRecognitionEvent) => {
-      // Build confirmed final text separately from interim
+      // Maintain a running confirmed transcript in a ref to avoid duplication
       let interim = "";
-      let confirmed = "";
       for (let i = ev.resultIndex; i < ev.results.length; ++i) {
         const res = ev.results[i];
         const t = res[0]?.transcript || "";
-        if (res.isFinal) confirmed += (confirmed ? " " : "") + t;
-        else interim += (interim ? " " : "") + t;
+        if (res.isFinal) {
+          // append confirmed into the ref
+          finalRef.current = finalRef.current ? finalRef.current + " " + t : t;
+        } else {
+          // keep only the latest interim (show live while speaking)
+          interim = t;
+        }
       }
-      if (confirmed) {
-        setFinalText((prev) => (prev ? prev + " " + confirmed : confirmed));
-      }
+      // update state from ref + interim for instant live preview
+      setFinalText(finalRef.current);
       setPreview(interim);
     };
 
@@ -116,6 +120,11 @@ export default function SpeechToText({ slug }: { slug?: string }) {
                   </div>
                 </div>
               </div>
+
+                  <div className="mt-3 rounded border-l-4 border-ink-200 bg-amber-50/30 p-3 text-sm text-ink-700">
+                    <strong>Recording help:</strong>
+                    <p className="mt-1 text-xs">If your browser prompts to share audio when recording, choose "Share Tab" and enable the "Share audio" option. This allows capturing playback audio for downloads.</p>
+                  </div>
 
               <textarea value={finalText + (preview ? ` ${preview}` : "")} onChange={(e) => setFinalText(e.target.value)} rows={8} className="w-full textarea" />
 

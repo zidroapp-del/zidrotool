@@ -1,6 +1,7 @@
 import { useState, useCallback } from "react";
 import Tesseract from "tesseract.js";
 import { AdSlot } from "@/components/AdSlot";
+import { Copy } from "lucide-react";
 
 export default function ImageToTextOcr({ slug }: { slug?: string }) {
   const [busy, setBusy] = useState(false);
@@ -54,7 +55,10 @@ export default function ImageToTextOcr({ slug }: { slug?: string }) {
           </div>
 
           {busy && <p className="text-sm text-ink-500">Processing... {progress}%</p>}
-          <textarea rows={10} className="w-full textarea mt-3" value={text} onChange={(e) => setText(e.target.value)} />
+          <div className="mt-3 flex items-start gap-3">
+            <textarea rows={10} className="w-full textarea" value={text} onChange={(e) => setText(e.target.value)} />
+            <button onClick={async () => { try { await navigator.clipboard.writeText(text); } catch {} }} title="Copy extracted text" className="btn-ghost inline-flex items-center gap-2 p-2"><Copy className="h-4 w-4" /></button>
+          </div>
 
           <div className="my-6 p-4 border border-dashed rounded text-center text-xs text-muted-foreground">Ad Space</div>
 

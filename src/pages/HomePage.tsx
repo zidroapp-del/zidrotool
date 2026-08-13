@@ -172,6 +172,22 @@ export default function HomePage() {
         <AdSlot variant="header" />
       </div>
 
+      {/* Recently Added */}
+      <section className="section bg-ink-50/50 dark:bg-ink-900/30 pt-12">
+        <div className="container-page">
+          <SectionHeader
+            titleKey="section.recent"
+            subKey="section.recent.sub"
+            viewAllTo="/tools"
+          />
+          <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {recent.map((tool) => (
+              <ToolCard key={tool.slug} tool={tool} />
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* Trending Tools */}
       <section className="section pt-12">
         <div className="container-page">
@@ -182,22 +198,6 @@ export default function HomePage() {
           />
           <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {trending.map((tool) => (
-              <ToolCard key={tool.slug} tool={tool} />
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Recently Added */}
-      <section className="section bg-ink-50/50 dark:bg-ink-900/30">
-        <div className="container-page">
-          <SectionHeader
-            titleKey="section.recent"
-            subKey="section.recent.sub"
-            viewAllTo="/tools"
-          />
-          <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {recent.map((tool) => (
               <ToolCard key={tool.slug} tool={tool} />
             ))}
           </div>

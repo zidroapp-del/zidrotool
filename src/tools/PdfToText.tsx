@@ -2,8 +2,13 @@ import { useState } from "react";
 import * as pdfjsLib from "pdfjs-dist/legacy/build/pdf";
 import { AdSlot } from "@/components/AdSlot";
 
-// Use CDN worker for pdfjs
-(pdfjsLib as any).GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js";
+// Use CDN worker for pdfjs (use the installed pdfjs version)
+try {
+  const v = (pdfjsLib as any).version || (pdfjsLib as any).pdfjsVersion || '2.16.105';
+  (pdfjsLib as any).GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${v}/pdf.worker.min.mjs`;
+} catch (err) {
+  (pdfjsLib as any).GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js";
+}
 
 export default function PdfToText({ slug }: { slug?: string }) {
   const [text, setText] = useState("");
@@ -20,12 +25,14 @@ export default function PdfToText({ slug }: { slug?: string }) {
       for (let i = 1; i <= pdf.numPages; i++) {
         const page = await pdf.getPage(i);
         const content = await page.getTextContent();
-        const pageText = content.items.map((it: any) => it.str).join(" ");
+        const items = Array.isArray(content?.items) ? content.items : [];
+        const pageText = items.map((it: any) => it?.str || "").join(" ");
         out += `\n\n--- Page ${i} ---\n` + pageText;
       }
       setText(out);
     } catch (e) {
-      setText("Failed to extract text from PDF.");
+      console.error('PdfToText extraction error:', e);
+      setText("Failed to extract text from PDF. See console for details.");
     }
     setBusy(false);
   };
