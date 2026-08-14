@@ -11,6 +11,7 @@ import {
   Radio,
 } from "lucide-react";
 import { AdSlot } from "@/components/AdSlot";
+import { TRANSLATIONS } from "@/lib/translations";
 
 export default function SpeechToText({ slug }: { slug?: string }) {
   const [supported, setSupported] = useState(true);
@@ -24,6 +25,9 @@ export default function SpeechToText({ slug }: { slug?: string }) {
   const recognitionRef = useRef<any>(null);
   const shouldListenRef = useRef(false);
   const restartTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  const baseLang = lang.split("-")[0];
+  const t = (key: string) => TRANSLATIONS[baseLang]?.[key] || TRANSLATIONS['en']?.[key] || key;
 
   // Stop current recognition instance safely
   const stopEngine = useCallback(() => {
@@ -244,7 +248,7 @@ export default function SpeechToText({ slug }: { slug?: string }) {
         <div className="rounded-xl border border-gray-100 bg-white p-6 shadow-lg dark:border-ink-800 dark:bg-ink-900">
           <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
             <h2 className="text-2xl font-semibold text-gray-800 dark:text-white">
-              تحويل الصوت إلى نص (Speech to Text)
+              {t('speech_to_text_title')}
             </h2>
 
             {listening && (
@@ -256,13 +260,13 @@ export default function SpeechToText({ slug }: { slug?: string }) {
           </div>
 
           <div className="mb-4 inline-flex items-center gap-2 rounded-lg border border-green-200 bg-green-50 px-3 py-1.5 text-sm text-green-700 dark:border-green-800 dark:bg-green-950/40 dark:text-green-300">
-            <span>🔒 يتم معالجة صوتك بأمان داخل متصفحك مباشرة.</span>
+            <span>🔒 {t('privacy_notice')}</span>
           </div>
 
           {!supported && (
             <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700 dark:border-red-800 dark:bg-red-950/40 dark:text-red-300 flex items-center gap-2">
               <AlertCircle className="h-5 w-5 shrink-0" />
-              خاصية التعرف على الصوت غير مدعومة في هذا المتصفح. يرجى تجربة Google Chrome أو Microsoft Edge.
+              {t('speech_not_supported')}
             </div>
           )}
 
@@ -271,7 +275,7 @@ export default function SpeechToText({ slug }: { slug?: string }) {
               {/* Controls Header */}
               <div className="flex flex-wrap items-center gap-3">
                 <label className="text-sm font-medium text-gray-700 dark:text-gray-200">
-                  لغة التحدث:
+                  {t('speaking_language_label')}
                 </label>
 
                 <select
@@ -305,12 +309,12 @@ export default function SpeechToText({ slug }: { slug?: string }) {
                   {listening ? (
                     <>
                       <StopCircle className="h-4 w-4" />
-                      إيقاف الاستماع
+                      {t('stop')}
                     </>
                   ) : (
                     <>
                       <Mic className="h-4 w-4" />
-                      بدء الاستماع
+                      {t('start_listening')}
                     </>
                   )}
                 </button>
@@ -322,7 +326,7 @@ export default function SpeechToText({ slug }: { slug?: string }) {
                   className="inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm text-gray-600 hover:bg-gray-100 disabled:opacity-50 dark:text-gray-300 dark:hover:bg-ink-800 transition-colors"
                 >
                   <Trash2 className="h-4 w-4" />
-                  مسح النص
+                  {t('clear')}
                 </button>
 
                 <div className="mr-auto flex items-center gap-2">
@@ -335,12 +339,12 @@ export default function SpeechToText({ slug }: { slug?: string }) {
                     {copied ? (
                       <>
                         <Check className="h-4 w-4 text-green-600" />
-                        <span className="text-green-600">تم النسخ</span>
+                        <span className="text-green-600">{t('copied_success')}</span>
                       </>
                     ) : (
                       <>
                         <Copy className="h-4 w-4" />
-                        نسخ
+                        {t('copy')}
                       </>
                     )}
                   </button>
@@ -370,11 +374,7 @@ export default function SpeechToText({ slug }: { slug?: string }) {
                   value={finalText}
                   onChange={(e) => setFinalText(e.target.value)}
                   rows={10}
-                  placeholder={
-                    listening
-                      ? "جاري الاستماع... ابدأ بالتحدث الآن..."
-                      : "انقر على 'بدء الاستماع' ثم ابدأ بالتحدث..."
-                  }
+                  placeholder={listening ? t('listening_placeholder') : t('start_placeholder')}
                   className="w-full rounded-lg border border-gray-300 p-3 text-base text-gray-800 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-ink-700 dark:bg-ink-800 dark:text-white transition-all"
                   dir={isRtl ? "rtl" : "ltr"}
                 />
@@ -383,7 +383,7 @@ export default function SpeechToText({ slug }: { slug?: string }) {
                 {interim && (
                   <div className="mt-2 flex items-center gap-2 rounded-md bg-blue-50 p-2.5 text-sm text-blue-700 dark:bg-ink-800 dark:text-blue-300 border border-blue-100 dark:border-ink-700">
                     <Radio className="h-4 w-4 shrink-0 animate-spin text-blue-500" />
-                    <span className="font-medium">جاري التعرف: </span>
+                    <span className="font-medium">{t('preview')}: </span>
                     <span className="italic">{interim}</span>
                   </div>
                 )}
@@ -393,7 +393,7 @@ export default function SpeechToText({ slug }: { slug?: string }) {
               <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400 px-1">
                 <span className="flex items-center gap-1">
                   <FileText className="h-3.5 w-3.5" />
-                  الكلمات: {wordCount} | الأحرف: {charCount}
+                  {t('words_label')}: {wordCount} | {t('chars_label')}: {charCount}
                 </span>
               </div>
 

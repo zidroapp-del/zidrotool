@@ -101,7 +101,8 @@ export default function PdfToText({ slug }: { slug?: string }) {
   const downloadTxt = () => {
     if (!text) return;
 
-    const blob = new Blob([text], {
+    // Prepend UTF-8 BOM to preserve Arabic and RTL characters in Windows editors
+    const blob = new Blob(["\uFEFF" + text], {
       type: "text/plain;charset=utf-8",
     });
 
