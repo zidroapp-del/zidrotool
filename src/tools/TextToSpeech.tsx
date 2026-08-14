@@ -13,15 +13,18 @@ import {
   Loader2,
 } from "lucide-react";
 import { AdSlot } from "@/components/AdSlot";
+import { TRANSLATIONS } from "@/lib/translations";
 
 export default function TextToSpeech({ slug }: { slug?: string }) {
   // Mode Selection
   const [engine, setEngine] = useState<"browser" | "elevenlabs">("browser");
+  const [uiLang, setUiLang] = useState("ar");
 
   // Browser Speech State
   const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([]);
   const [selectedVoiceURI, setSelectedVoiceURI] = useState("");
   const [selectedLang, setSelectedLang] = useState("ar-SA"); // Default: Arabic
+  const t = (key: string) => TRANSLATIONS[uiLang]?.[key] || TRANSLATIONS['en']?.[key] || key;
   const [rate, setRate] = useState(1);
   const [pitch, setPitch] = useState(1);
 
@@ -78,6 +81,13 @@ export default function TextToSpeech({ slug }: { slug?: string }) {
     };
   }, []);
 
+  useEffect(() => {
+    // Stop any active speech synthesis when UI language changes
+    if (typeof window !== "undefined" && "speechSynthesis" in window) {
+      window.speechSynthesis.cancel();
+    }
+  }, [uiLang]);
+
   // Filter available voices strictly based on current language prefix (e.g., 'ar', 'en', 'fr')
   const currentBaseLang = selectedLang.split("-")[0].toLowerCase();
   const filteredVoices = voices.filter((voice) =>
@@ -95,6 +105,14 @@ export default function TextToSpeech({ slug }: { slug?: string }) {
       setSelectedVoiceURI("");
     }
   }, [selectedLang, voices]);
+
+  const handleUiLangChange = (lang: string) => {
+    // Stop speech engines before switching UI language
+    if (typeof window !== "undefined" && "speechSynthesis" in window) {
+      window.speechSynthesis.cancel();
+    }
+    setUiLang(lang);
+  };
 
   // Record Browser Audio Stream for Download
   const startBrowserRecording = () => {
@@ -274,7 +292,7 @@ export default function TextToSpeech({ slug }: { slug?: string }) {
   };
 
   return (
-    <div className="min-h-[60vh] flex items-start lg:items-center">
+    <div className="min-h-[60vh] flex items-start lg:items-center" dir={uiLang === 'ar' ? 'rtl' : 'ltr'}>
       <audio
         ref={audioRef}
         onEnded={() => {
@@ -288,7 +306,7 @@ export default function TextToSpeech({ slug }: { slug?: string }) {
         <div className="rounded-xl border border-gray-100 bg-white p-6 shadow-lg">
           <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
             <h2 className="text-2xl font-semibold text-gray-800">
-              تحويل النص إلى صوت (TTS)
+              {t('tts_title') || t('tts_title')}
             </h2>
 
             {/* Engine Switcher */}
@@ -304,7 +322,7 @@ export default function TextToSpeech({ slug }: { slug?: string }) {
                     : "text-gray-500 hover:text-gray-700"
                 }`}
               >
-                مجاني (المتصفح)
+                {t('engine_free')}
               </button>
               <button
                 onClick={() => {
@@ -326,11 +344,11 @@ export default function TextToSpeech({ slug }: { slug?: string }) {
           {/* Text Input Area */}
           <div className="relative">
             <textarea
-              dir="auto"
+              dir={uiLang === 'ar' ? 'rtl' : 'ltr'}
               className="w-full rounded-lg border border-gray-300 p-3 text-base focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
               rows={6}
               value={text}
-              placeholder="اكتب أو ألصق النص هنا..."
+              placeholder={t('textarea_placeholder')}
               onChange={(e) => setText(e.target.value)}
             />
             {text && (
@@ -351,26 +369,26 @@ export default function TextToSpeech({ slug }: { slug?: string }) {
           {engine === "browser" ? (
             <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
               <div>
-                <label className="mb-1 block text-xs font-semibold text-gray-500">
-                  اللغة
+                  <label className="mb-1 block text-xs font-semibold text-gray-500">
+                  {t('language_label')}
                 </label>
                 <select
                   value={selectedLang}
                   onChange={(e) => setSelectedLang(e.target.value)}
                   className="w-full rounded border border-gray-300 bg-white p-2 text-sm"
                 >
-                  <option value="ar-SA">العربية (Arabic)</option>
-                  <option value="en-US">English (US)</option>
-                  <option value="fr-FR">Français (French)</option>
-                  <option value="es-ES">Español (Spanish)</option>
-                  <option value="de-DE">Deutsch (German)</option>
-                  <option value="tr-TR">Türkçe (Turkish)</option>
+                    <option value="ar-SA">{t('lang_ar')} (العربية)</option>
+                    <option value="en-US">{t('lang_en')}</option>
+                    <option value="fr-FR">{t('lang_fr')}</option>
+                    <option value="es-ES">{t('lang_es')}</option>
+                    <option value="de-DE">{t('lang_de')}</option>
+                    <option value="it-IT">{t('lang_it')}</option>
                 </select>
               </div>
 
               <div>
-                <label className="mb-1 block text-xs font-semibold text-gray-500">
-                  صوت المتحدث
+                  <label className="mb-1 block text-xs font-semibold text-gray-500">
+                  {t('voice_label')}
                 </label>
                 <select
                   value={selectedVoiceURI}
@@ -384,14 +402,14 @@ export default function TextToSpeech({ slug }: { slug?: string }) {
                       </option>
                     ))
                   ) : (
-                    <option value="">الصوت الافتراضي للغة المختارة</option>
+                    <option value="">{t('default_voice_label')}</option>
                   )}
                 </select>
               </div>
 
               <div>
                 <label className="mb-1 block text-xs font-semibold text-gray-500">
-                  السرعة: {rate}x
+                  {t('rate_label')}: {rate}x
                 </label>
                 <input
                   type="range"
@@ -406,7 +424,7 @@ export default function TextToSpeech({ slug }: { slug?: string }) {
 
               <div>
                 <label className="mb-1 block text-xs font-semibold text-gray-500">
-                  الطبقة (Pitch): {pitch}
+                  {t('pitch_label')}: {pitch}
                 </label>
                 <input
                   type="range"
@@ -424,8 +442,8 @@ export default function TextToSpeech({ slug }: { slug?: string }) {
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <div>
                   <label className="mb-1 block text-xs font-semibold text-gray-600 flex items-center gap-1">
-                    <Key className="h-3 w-3" /> مفتاح ElevenLabs API Key
-                  </label>
+                      <Key className="h-3 w-3" /> {t('eleven_api_key_label')}
+                    </label>
                   <input
                     type="password"
                     placeholder="ضع مفتاح API الخاص بك هنا"
@@ -436,18 +454,18 @@ export default function TextToSpeech({ slug }: { slug?: string }) {
                 </div>
 
                 <div>
-                  <label className="mb-1 block text-xs font-semibold text-gray-600">
-                    الصوت الذكي
+                    <label className="mb-1 block text-xs font-semibold text-gray-600">
+                    {t('eleven_voice_label')}
                   </label>
                   <select
                     value={elevenVoice}
                     onChange={(e) => setElevenVoice(e.target.value)}
                     className="w-full rounded border border-gray-300 bg-white p-2 text-sm"
                   >
-                    <option value="21m00Tcm4TlvDq8ikWAM">Rachel (هادئ وواضح)</option>
-                    <option value="AZnzlk1XvdvUeBnXmlld">Domi (حماسي)</option>
-                    <option value="EXAVITQu4vr4xnSDxMaL">Bella (سرد قصصي)</option>
-                    <option value="ErXwobaYiN019PkySvjV">Antoni (صوت رجالي قوي)</option>
+                    <option value="21m00Tcm4TlvDq8ikWAM">Rachel</option>
+                    <option value="AZnzlk1XvdvUeBnXmlld">Domi</option>
+                    <option value="EXAVITQu4vr4xnSDxMaL">Bella</option>
+                    <option value="ErXwobaYiN019PkySvjV">Antoni</option>
                   </select>
                 </div>
               </div>
@@ -457,7 +475,7 @@ export default function TextToSpeech({ slug }: { slug?: string }) {
           {/* Error Message Alert */}
           {error && (
             <div className="mt-3 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-600">
-              {error}
+              {t(error) || error}
             </div>
           )}
 
@@ -475,50 +493,50 @@ export default function TextToSpeech({ slug }: { slug?: string }) {
               {loading ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin" />
-                  جاري التوليد...
+                  {t('generate_loading')}
                 </>
               ) : isPaused ? (
                 <>
                   <Play className="h-4 w-4" />
-                  استئناف
+                  {t('resume')}
                 </>
               ) : (
                 <>
                   <Volume2 className="h-4 w-4" />
-                  {isSpeaking ? "جاري القراءة..." : "تشغيل الصوت"}
+                  {isSpeaking ? t('speaking_now') : t('play_speech')}
                 </>
               )}
             </button>
 
             {isSpeaking && (
-              <button
-                onClick={pause}
-                className="inline-flex items-center gap-2 rounded-lg border border-yellow-300 bg-yellow-50 px-4 py-2 text-yellow-700 hover:bg-yellow-100 transition-colors"
-              >
-                <Pause className="h-4 w-4" />
-                إيقاف مؤقت
-              </button>
+                <button
+                  onClick={pause}
+                  className="inline-flex items-center gap-2 rounded-lg border border-yellow-300 bg-yellow-50 px-4 py-2 text-yellow-700 hover:bg-yellow-100 transition-colors"
+                >
+                  <Pause className="h-4 w-4" />
+                  {t('pause_label')}
+                </button>
             )}
 
             {(isSpeaking || isPaused) && (
-              <button
-                onClick={stop}
-                className="inline-flex items-center gap-2 rounded-lg border border-gray-300 px-4 py-2 text-gray-700 hover:bg-gray-50 transition-colors"
-              >
-                <Square className="h-4 w-4" />
-                إيقاف كامل
-              </button>
+                <button
+                  onClick={stop}
+                  className="inline-flex items-center gap-2 rounded-lg border border-gray-300 px-4 py-2 text-gray-700 hover:bg-gray-50 transition-colors"
+                >
+                  <Square className="h-4 w-4" />
+                  {t('stop_label')}
+                </button>
             )}
 
             {audioUrl && (
-              <a
-                href={audioUrl}
-                download={`${slug || "speech-audio"}.${engine === "elevenlabs" ? "mp3" : "wav"}`}
-                className="inline-flex items-center gap-1.5 rounded-lg border border-green-300 bg-green-50 px-3 py-2 text-sm font-medium text-green-700 hover:bg-green-100 transition-colors"
-              >
-                <Download className="h-4 w-4" />
-                تحميل الصوت ({engine === "elevenlabs" ? "MP3" : "WAV"})
-              </a>
+                <a
+                  href={audioUrl}
+                  download={`${slug || "speech-audio"}.${engine === "elevenlabs" ? "mp3" : "wav"}`}
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-green-300 bg-green-50 px-3 py-2 text-sm font-medium text-green-700 hover:bg-green-100 transition-colors"
+                >
+                  <Download className="h-4 w-4" />
+                  {t('download_audio_label')} ({engine === "elevenlabs" ? "MP3" : "WAV"})
+                </a>
             )}
 
             <button
@@ -529,12 +547,12 @@ export default function TextToSpeech({ slug }: { slug?: string }) {
               {copied ? (
                 <>
                   <Check className="h-4 w-4 text-green-600" />
-                  <span className="text-green-600">تم النسخ!</span>
+                  <span className="text-green-600">{t('copied_success')}</span>
                 </>
               ) : (
                 <>
                   <Copy className="h-4 w-4" />
-                  نسخ النص
+                  {t('copy_text_label')}
                 </>
               )}
             </button>

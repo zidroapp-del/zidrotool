@@ -19,6 +19,7 @@ export default function SpeechToText({ slug }: { slug?: string }) {
   const [finalText, setFinalText] = useState("");
   const [interim, setInterim] = useState("");
   const [lang, setLang] = useState("ar-DZ");
+  const [uiLang, setUiLang] = useState("ar");
   const [error, setError] = useState("");
   const [copied, setCopied] = useState(false);
 
@@ -27,7 +28,7 @@ export default function SpeechToText({ slug }: { slug?: string }) {
   const restartTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   const baseLang = lang.split("-")[0];
-  const t = (key: string) => TRANSLATIONS[baseLang]?.[key] || TRANSLATIONS['en']?.[key] || key;
+  const t = (key: string) => TRANSLATIONS[uiLang]?.[key] || TRANSLATIONS[baseLang]?.[key] || TRANSLATIONS["en"]?.[key] || key;
 
   // Stop current recognition instance safely
   const stopEngine = useCallback(() => {
@@ -234,13 +235,20 @@ export default function SpeechToText({ slug }: { slug?: string }) {
   };
 
   const handleLangChange = (newLang: string) => {
+    // When changing speech recognition language, safely stop engine and reset interim state
     stopEngine();
     setLang(newLang);
   };
 
+  const handleUiLangChange = (newUiLang: string) => {
+    // Stop any active engines to avoid mismatches when UI language changes
+    stopEngine();
+    setUiLang(newUiLang);
+  };
+
   const wordCount = finalText.trim() ? finalText.trim().split(/\s+/).length : 0;
   const charCount = finalText.length;
-  const isRtl = lang.startsWith("ar");
+  const isRtl = uiLang === "ar";
 
   return (
     <div className="flex min-h-[60vh] items-start">
@@ -254,7 +262,7 @@ export default function SpeechToText({ slug }: { slug?: string }) {
             {listening && (
               <span className="inline-flex items-center gap-1.5 rounded-full bg-red-100 px-3 py-1 text-xs font-semibold text-red-600 dark:bg-red-950/60 dark:text-red-400">
                 <Radio className="h-3.5 w-3.5 animate-pulse" />
-                جاري الاستماع الآن
+                {t('listening_now')}
               </span>
             )}
           </div>
@@ -274,25 +282,43 @@ export default function SpeechToText({ slug }: { slug?: string }) {
             <div className="space-y-4">
               {/* Controls Header */}
               <div className="flex flex-wrap items-center gap-3">
-                <label className="text-sm font-medium text-gray-700 dark:text-gray-200">
-                  {t('speaking_language_label')}
-                </label>
+                <div className="flex items-center gap-2">
+                  <label className="text-sm font-medium text-gray-700 dark:text-gray-200">
+                    {t('speaking_language_label')}
+                  </label>
 
-                <select
-                  value={lang}
-                  onChange={(e) => handleLangChange(e.target.value)}
-                  disabled={listening}
-                  className="rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm text-gray-800 focus:border-blue-500 focus:outline-none dark:border-ink-700 dark:bg-ink-800 dark:text-white"
-                >
-                  <option value="ar-DZ">العربية (الجزائر)</option>
-                  <option value="ar-SA">العربية (السعودية)</option>
-                  <option value="ar-EG">العربية (مصر)</option>
-                  <option value="fr-FR">Français (فرنسا)</option>
-                  <option value="en-US">English (US)</option>
-                  <option value="en-GB">English (UK)</option>
-                  <option value="de-DE">Deutsch (ألمانيا)</option>
-                  <option value="es-ES">Español (إسبانيا)</option>
-                </select>
+                  <select
+                    value={lang}
+                    onChange={(e) => handleLangChange(e.target.value)}
+                    disabled={listening}
+                    className="rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm text-gray-800 focus:border-blue-500 focus:outline-none dark:border-ink-700 dark:bg-ink-800 dark:text-white"
+                  >
+                    <option value="ar-DZ">العربية (الجزائر)</option>
+                    <option value="ar-SA">العربية (السعودية)</option>
+                    <option value="ar-EG">العربية (مصر)</option>
+                    <option value="fr-FR">Français (FR)</option>
+                    <option value="en-US">English (US)</option>
+                    <option value="en-GB">English (UK)</option>
+                    <option value="de-DE">Deutsch (DE)</option>
+                    <option value="es-ES">Español (ES)</option>
+                    <option value="it-IT">Italiano (IT)</option>
+                  </select>
+
+                  {/* UI Language Selector */}
+                  <select
+                    value={uiLang}
+                    onChange={(e) => handleUiLangChange(e.target.value)}
+                    className="rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm text-gray-800 focus:border-blue-500 focus:outline-none dark:border-ink-700 dark:bg-ink-800 dark:text-white"
+                    aria-label="UI language"
+                  >
+                    <option value="ar">العربية</option>
+                    <option value="en">English</option>
+                    <option value="fr">Français</option>
+                    <option value="es">Español</option>
+                    <option value="de">Deutsch</option>
+                    <option value="it">Italiano</option>
+                  </select>
+                </div>
               </div>
 
               {/* Action Buttons */}
@@ -356,7 +382,7 @@ export default function SpeechToText({ slug }: { slug?: string }) {
                     className="inline-flex items-center gap-1.5 rounded-lg border border-gray-300 px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-ink-700 dark:text-gray-200 dark:hover:bg-ink-800 transition-colors"
                   >
                     <Download className="h-4 w-4" />
-                    TXT
+                    {t('download_txt')}
                   </button>
                 </div>
               </div>
@@ -364,7 +390,7 @@ export default function SpeechToText({ slug }: { slug?: string }) {
               {/* Error Alert */}
               {error && (
                 <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700 dark:border-red-800 dark:bg-red-950/40 dark:text-red-300">
-                  {error}
+                  {t(error) || error}
                 </div>
               )}
 
@@ -381,11 +407,11 @@ export default function SpeechToText({ slug }: { slug?: string }) {
 
                 {/* Interim Live Stream Indicator */}
                 {interim && (
-                  <div className="mt-2 flex items-center gap-2 rounded-md bg-blue-50 p-2.5 text-sm text-blue-700 dark:bg-ink-800 dark:text-blue-300 border border-blue-100 dark:border-ink-700">
-                    <Radio className="h-4 w-4 shrink-0 animate-spin text-blue-500" />
-                    <span className="font-medium">{t('preview')}: </span>
-                    <span className="italic">{interim}</span>
-                  </div>
+                    <div className="mt-2 flex items-center gap-2 rounded-md bg-blue-50 p-2.5 text-sm text-blue-700 dark:bg-ink-800 dark:text-blue-300 border border-blue-100 dark:border-ink-700">
+                      <Radio className="h-4 w-4 shrink-0 animate-spin text-blue-500" />
+                      <span className="font-medium">{t('preview')}: </span>
+                      <span className="italic">{interim}</span>
+                    </div>
                 )}
               </div>
 
