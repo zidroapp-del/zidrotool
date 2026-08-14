@@ -2,6 +2,7 @@ import { lazy, Suspense } from "react";
 import { Routes, Route } from "react-router-dom";
 import { Layout } from "@/components/Layout";
 import { SkeletonGrid } from "@/components/Skeletons";
+import { Analytics } from "@vercel/analytics/react";
 
 // Pages
 const HomePage = lazy(() => import("@/pages/HomePage"));
@@ -56,7 +57,8 @@ function PageLoader() {
 
 export function App() {
   return (
-    <Routes>
+    <>
+      <Routes>
       <Route element={<Layout />}>
         <Route index element={<Suspense fallback={<PageLoader />}><HomePage /></Suspense>} />
         <Route path="tools" element={<Suspense fallback={<PageLoader />}><ToolsListPage /></Suspense>} />
@@ -108,6 +110,8 @@ export function App() {
         <Route path="offline" element={<Suspense fallback={<PageLoader />}><OfflinePage /></Suspense>} />
         <Route path="*" element={<Suspense fallback={<PageLoader />}><NotFoundPage /></Suspense>} />
       </Route>
-    </Routes>
+      </Routes>
+      <Analytics />
+    </>
   );
 }

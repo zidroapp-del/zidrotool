@@ -23,7 +23,8 @@
     "react-helmet-async": "^2.0.5",
     "react-i18next": "^15.0.1",
     "react-router-dom": "^6.26.1",
-    "tailwind-merge": "^2.5.2"
+    "tailwind-merge": "^2.5.2",
+    "@vercel/analytics": "^1.0.0"
   },
   "devDependencies": {
     "@types/node": "^22.5.0",
