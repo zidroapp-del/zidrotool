@@ -74,6 +74,34 @@ export const BLOG_POSTS: BlogPost[] = [
   }
 ];
 
+// Add generated markdown-based posts into the index so BlogPage can list them
+const additionalPosts = [
+  // refer to files created by the content task; readingTime approximated
+  { slug: "01-speech-to-text-benefits", titleKey: "", excerptKey: "", bodyKey: "01-speech-to-text-benefits", category: "text-utilities", authorSlug: "zidro-team", date: "2026-08-14", readingTime: 4, tags: ["speech","stt"] },
+  { slug: "02-speech-to-text-mobile-tips", titleKey: "", excerptKey: "", bodyKey: "02-speech-to-text-mobile-tips", category: "text-utilities", authorSlug: "zidro-team", date: "2026-08-14", readingTime: 4, tags: ["mobile","stt"] },
+  { slug: "03-stt-privacy-guide", titleKey: "", excerptKey: "", bodyKey: "03-stt-privacy-guide", category: "text-utilities", authorSlug: "zidro-team", date: "2026-08-14", readingTime: 3, tags: ["privacy","stt"] },
+  { slug: "04-voice-productivity", titleKey: "", excerptKey: "", bodyKey: "04-voice-productivity", category: "text-utilities", authorSlug: "zidro-team", date: "2026-08-14", readingTime: 3, tags: ["productivity","voice"] },
+  { slug: "05-stt-multilingual", titleKey: "", excerptKey: "", bodyKey: "05-stt-multilingual", category: "text-utilities", authorSlug: "zidro-team", date: "2026-08-14", readingTime: 3, tags: ["multilingual","stt"] },
+  { slug: "06-tts-accessibility-1", titleKey: "", excerptKey: "", bodyKey: "06-tts-accessibility-1", category: "text-utilities", authorSlug: "zidro-team", date: "2026-08-14", readingTime: 4, tags: ["tts","accessibility"] },
+  { slug: "07-tts-content-creation", titleKey: "", excerptKey: "", bodyKey: "07-tts-content-creation", category: "text-utilities", authorSlug: "zidro-team", date: "2026-08-14", readingTime: 4, tags: ["tts","content"] },
+  { slug: "08-tts-elevenlabs-guide", titleKey: "", excerptKey: "", bodyKey: "08-tts-elevenlabs-guide", category: "text-utilities", authorSlug: "zidro-team", date: "2026-08-14", readingTime: 5, tags: ["tts","elevenlabs"] },
+  { slug: "09-tts-best-practices", titleKey: "", excerptKey: "", bodyKey: "09-tts-best-practices", category: "text-utilities", authorSlug: "zidro-team", date: "2026-08-14", readingTime: 4, tags: ["tts","best-practices"] },
+  { slug: "10-tts-education-accessibility", titleKey: "", excerptKey: "", bodyKey: "10-tts-education-accessibility", category: "text-utilities", authorSlug: "zidro-team", date: "2026-08-14", readingTime: 4, tags: ["tts","education"] },
+  { slug: "11-pdf-browser-processing", titleKey: "", excerptKey: "", bodyKey: "11-pdf-browser-processing", category: "text-utilities", authorSlug: "zidro-team", date: "2026-08-14", readingTime: 4, tags: ["pdf","privacy"] },
+  { slug: "12-pdf-to-text-workflow", titleKey: "", excerptKey: "", bodyKey: "12-pdf-to-text-workflow", category: "text-utilities", authorSlug: "zidro-team", date: "2026-08-14", readingTime: 4, tags: ["pdf","workflow"] },
+  { slug: "13-pdf-ocr-guide", titleKey: "", excerptKey: "", bodyKey: "13-pdf-ocr-guide", category: "text-utilities", authorSlug: "zidro-team", date: "2026-08-14", readingTime: 4, tags: ["ocr","pdf"] },
+  { slug: "14-pdf-format-conversion", titleKey: "", excerptKey: "", bodyKey: "14-pdf-format-conversion", category: "text-utilities", authorSlug: "zidro-team", date: "2026-08-14", readingTime: 4, tags: ["pdf","conversion"] },
+  { slug: "15-pdf-automation-webworkers", titleKey: "", excerptKey: "", bodyKey: "15-pdf-automation-webworkers", category: "text-utilities", authorSlug: "zidro-team", date: "2026-08-14", readingTime: 3, tags: ["pdf","webworkers"] },
+  { slug: "16-privacy-local-first-webtools-ar", titleKey: "", excerptKey: "", bodyKey: "16-privacy-local-first-webtools-ar", category: "text-utilities", authorSlug: "zidro-team", date: "2026-08-14", readingTime: 3, tags: ["privacy","local"] },
+  { slug: "17-privacy-browser-security-ar", titleKey: "", excerptKey: "", bodyKey: "17-privacy-browser-security-ar", category: "text-utilities", authorSlug: "zidro-team", date: "2026-08-14", readingTime: 3, tags: ["privacy","security"] },
+  { slug: "18-privacy-creator-tips-ar", titleKey: "", excerptKey: "", bodyKey: "18-privacy-creator-tips-ar", category: "text-utilities", authorSlug: "zidro-team", date: "2026-08-14", readingTime: 3, tags: ["privacy","creators"] },
+  { slug: "19-privacy-saas-trust-ar", titleKey: "", excerptKey: "", bodyKey: "19-privacy-saas-trust-ar", category: "text-utilities", authorSlug: "zidro-team", date: "2026-08-14", readingTime: 3, tags: ["privacy","saas"] },
+  { slug: "20-privacy-local-first-ar", titleKey: "", excerptKey: "", bodyKey: "20-privacy-local-first-ar", category: "text-utilities", authorSlug: "zidro-team", date: "2026-08-14", readingTime: 3, tags: ["privacy","local"] },
+];
+
+// Append additional posts to the site index
+BLOG_POSTS.push(...(additionalPosts as any));
+
 export function getPost(slug: string): BlogPost | undefined {
   return BLOG_POSTS.find((p) => p.slug === slug);
 }

@@ -6,6 +6,9 @@ import { Seo } from "../components/Seo";
 import { Breadcrumbs } from "../components/Breadcrumbs";
 import { getPost, getRelatedPosts, getAuthor, getBlogCategory } from "../data/blog";
 
+// Load markdown blog posts at build time (raw text)
+const MD_MODULES = import.meta.glob('../../content/blog/*.md', { as: 'raw' }) as Record<string, string>;
+
 export default function BlogPostPage() {
   const { slug } = useParams<{ slug: string }>();
   const { t, i18n } = useTranslation();
@@ -49,8 +52,20 @@ export default function BlogPostPage() {
   };
 
   const getPostBody = (bodyKey: string) => {
+    // First try locale keys (legacy), then try loaded markdown files in content/blog
     const val = t(bodyKey);
     if (val && val !== bodyKey) return val;
+
+    // Map slug-style keys to file paths
+    const slug = bodyKey.replace(/^blog\./, "");
+    // Try to find a markdown file matching slug
+    const possiblePaths = Object.keys(MD_MODULES);
+    for (const p of possiblePaths) {
+      if (p.endsWith(`${slug}.md`) || p.endsWith(`${slug}.md`)) {
+        return MD_MODULES[p];
+      }
+    }
+
     return "<p>Full article content is not available in the selected language.</p>";
   };
 
