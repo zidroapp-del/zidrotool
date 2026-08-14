@@ -1,54 +1,94 @@
-import { useEffect, useState } from "react";
-import { Copy, Volume2, Square } from "lucide-react";
+import { useEffect, useState, useRef } from "react";
+import {
+  Copy,
+  Volume2,
+  Square,
+  Pause,
+  Play,
+  Check,
+  Trash2,
+  Download,
+  Key,
+  Sparkles,
+  Loader2,
+} from "lucide-react";
 import { AdSlot } from "@/components/AdSlot";
 
 export default function TextToSpeech({ slug }: { slug?: string }) {
+  // Mode Selection
+  const [engine, setEngine] = useState<"browser" | "elevenlabs">("browser");
+
+  // Browser Speech State
   const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([]);
   const [selectedVoiceURI, setSelectedVoiceURI] = useState("");
-  const [selectedLang, setSelectedLang] = useState("en-US");
+  const [selectedLang, setSelectedLang] = useState("ar-SA"); // Default: Arabic
   const [rate, setRate] = useState(1);
   const [pitch, setPitch] = useState(1);
+
+  // ElevenLabs State
+  const [apiKey, setApiKey] = useState("");
+  const [elevenVoice, setElevenVoice] = useState("21m00Tcm4TlvDq8ikWAM");
+
+  // Playback & General State
   const [text, setText] = useState("");
   const [isSpeaking, setIsSpeaking] = useState(false);
-  const [supported, setSupported] = useState(true);
+  const [isPaused, setIsPaused] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const [error, setError] = useState("");
+  const [audioUrl, setAudioUrl] = useState<string | null>(null);
 
+  const utteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
+
+  // Load ElevenLabs API Key from LocalStorage
   useEffect(() => {
-    if (
-      typeof window === "undefined" ||
-      !("speechSynthesis" in window)
-    ) {
-      setSupported(false);
-      return;
-    }
+    const savedKey = localStorage.getItem("elevenlabs_key");
+    if (savedKey) setApiKey(savedKey);
+  }, []);
+
+  const handleApiKeyChange = (key: string) => {
+    setApiKey(key);
+    localStorage.setItem("elevenlabs_key", key);
+  };
+
+  // Browser Voices Setup with Async Fallback Fix
+  useEffect(() => {
+    if (typeof window === "undefined" || !("speechSynthesis" in window)) return;
 
     const updateVoices = () => {
-      const availableVoices = window.speechSynthesis.getVoices();
-      setVoices(availableVoices);
+      const availVoices = window.speechSynthesis.getVoices();
+      if (availVoices && availVoices.length > 0) {
+        setVoices(availVoices);
+      }
     };
 
     updateVoices();
 
-    window.speechSynthesis.onvoiceschanged = updateVoices;
+    if (window.speechSynthesis.onvoiceschanged !== undefined) {
+      window.speechSynthesis.onvoiceschanged = updateVoices;
+    }
 
     return () => {
-      window.speechSynthesis.cancel();
-      window.speechSynthesis.onvoiceschanged = null;
+      if ("speechSynthesis" in window) {
+        window.speechSynthesis.cancel();
+      }
     };
   }, []);
 
-  const baseLang = selectedLang.split("-")[0].toLowerCase();
-
+  // Filter available voices strictly based on current language prefix (e.g., 'ar', 'en', 'fr')
+  const currentBaseLang = selectedLang.split("-")[0].toLowerCase();
   const filteredVoices = voices.filter((voice) =>
-    voice.lang.toLowerCase().startsWith(baseLang)
+    voice.lang.toLowerCase().startsWith(currentBaseLang)
   );
 
+  // Auto-sync selected voice URI when language changes
   useEffect(() => {
     if (filteredVoices.length > 0) {
-      const currentVoiceExists = filteredVoices.some(
-        (voice) => voice.voiceURI === selectedVoiceURI
-      );
-
-      if (!currentVoiceExists) {
+      const exists = filteredVoices.some((v) => v.voiceURI === selectedVoiceURI);
+      if (!exists) {
         setSelectedVoiceURI(filteredVoices[0].voiceURI);
       }
     } else {
@@ -56,241 +96,447 @@ export default function TextToSpeech({ slug }: { slug?: string }) {
     }
   }, [selectedLang, voices]);
 
-  const handleLanguageChange = (language: string) => {
-    window.speechSynthesis.cancel();
-    setIsSpeaking(false);
-    setSelectedLang(language);
+  // Record Browser Audio Stream for Download
+  const startBrowserRecording = () => {
+    try {
+      const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+      if (!AudioCtx) return;
+
+      const audioCtx = new AudioCtx();
+      const dest = audioCtx.createMediaStreamDestination();
+      const recorder = new MediaRecorder(dest.stream);
+
+      audioChunksRef.current = [];
+      recorder.ondataavailable = (e) => {
+        if (e.data.size > 0) audioChunksRef.current.push(e.data);
+      };
+      
+      recorder.onstop = () => {
+        const blob = new Blob(audioChunksRef.current, { type: "audio/wav" });
+        if (audioUrl) URL.revokeObjectURL(audioUrl);
+        setAudioUrl(URL.createObjectURL(blob));
+      };
+
+      recorder.start();
+      mediaRecorderRef.current = recorder;
+    } catch (e) {
+      console.warn("Direct audio recording not supported by browser environment.");
+    }
   };
 
-  const speak = () => {
-    if (!text.trim()) {
-      alert("Please enter some text first.");
+  // ElevenLabs TTS Synthesis Handler
+  const handleElevenLabsSpeak = async () => {
+    if (!apiKey.trim()) {
+      setError("يرجى إدخال مفتاح ElevenLabs API أولاً.");
       return;
     }
 
-    if (!("speechSynthesis" in window)) {
-      alert("Text to Speech is not supported in this browser.");
+    setLoading(true);
+    setError("");
+
+    try {
+      const response = await fetch(
+        `https://api.elevenlabs.io/v1/text-to-speech/${elevenVoice}`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "xi-api-key": apiKey.trim(),
+          },
+          body: JSON.stringify({
+            text: text,
+            model_id: "eleven_multilingual_v2",
+            voice_settings: { stability: 0.5, similarity_boost: 0.75 },
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        const errData = await response.json().catch(() => ({}));
+        throw new Error(errData?.detail?.message || "فشل في توليد الصوت من ElevenLabs.");
+      }
+
+      const blob = await response.blob();
+      if (audioUrl) URL.revokeObjectURL(audioUrl);
+
+      const newAudioUrl = URL.createObjectURL(blob);
+      setAudioUrl(newAudioUrl);
+
+      if (audioRef.current) {
+        audioRef.current.src = newAudioUrl;
+        audioRef.current.play();
+        setIsSpeaking(true);
+        setIsPaused(false);
+      }
+    } catch (err: any) {
+      setError(err.message || "حدث خطأ أثناء الاتصال بـ ElevenLabs API.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Main Speech Handler
+  const speak = () => {
+    if (!text.trim()) return;
+
+    if (engine === "elevenlabs") {
+      handleElevenLabsSpeak();
+      return;
+    }
+
+    // Resume speech if currently paused
+    if (isPaused && "speechSynthesis" in window) {
+      window.speechSynthesis.resume();
+      setIsSpeaking(true);
+      setIsPaused(false);
       return;
     }
 
     window.speechSynthesis.cancel();
-
     const utterance = new SpeechSynthesisUtterance(text);
+    utteranceRef.current = utterance;
 
     utterance.rate = rate;
     utterance.pitch = pitch;
+
+    // 1. Explicitly assign the language tag
     utterance.lang = selectedLang;
 
-    const selectedVoice = voices.find(
-      (voice) => voice.voiceURI === selectedVoiceURI
-    );
-
-    if (selectedVoice) {
+    // 2. Strict Voice Validation Fix:
+    // Only bind utterance.voice if it matchingly starts with current selected language
+    const selectedVoice = voices.find((v) => v.voiceURI === selectedVoiceURI);
+    if (selectedVoice && selectedVoice.lang.toLowerCase().startsWith(currentBaseLang)) {
       utterance.voice = selectedVoice;
-      utterance.lang = selectedVoice.lang;
+    } else {
+      // Force null so browser uses native engine matching `selectedLang`
+      utterance.voice = null;
     }
 
     utterance.onstart = () => {
       setIsSpeaking(true);
+      setIsPaused(false);
+      startBrowserRecording();
     };
 
     utterance.onend = () => {
       setIsSpeaking(false);
+      setIsPaused(false);
+      if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
+        mediaRecorderRef.current.stop();
+      }
+      utteranceRef.current = null;
     };
 
-    utterance.onerror = () => {
+    utterance.onerror = (e) => {
+      console.error("Speech Synthesis Error:", e);
       setIsSpeaking(false);
+      setIsPaused(false);
     };
 
     window.speechSynthesis.speak(utterance);
   };
 
-  const stop = () => {
-    if ("speechSynthesis" in window) {
-      window.speechSynthesis.cancel();
+  // Pause Audio Playback
+  const pause = () => {
+    if (engine === "browser" && "speechSynthesis" in window) {
+      window.speechSynthesis.pause();
+      setIsSpeaking(false);
+      setIsPaused(true);
+    } else if (audioRef.current) {
+      audioRef.current.pause();
+      setIsSpeaking(false);
+      setIsPaused(true);
     }
-
-    setIsSpeaking(false);
   };
 
+  // Stop Audio Playback Completely
+  const stop = () => {
+    if (engine === "browser" && "speechSynthesis" in window) {
+      window.speechSynthesis.cancel();
+    } else if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current.currentTime = 0;
+    }
+    setIsSpeaking(false);
+    setIsPaused(false);
+  };
+
+  // Copy Text Handler
   const copyText = async () => {
     if (!text.trim()) return;
-
     try {
       await navigator.clipboard.writeText(text);
-    } catch (error) {
-      console.error("Copy failed:", error);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      console.error("Copy failed:", err);
     }
   };
-
-  if (!supported) {
-    return (
-      <div className="min-h-[60vh] flex items-start lg:items-center">
-        <div className="mx-auto w-full max-w-3xl py-8">
-          <div className="rounded-xl border border-red-200 bg-red-50 p-6">
-            <h2 className="text-2xl font-semibold text-red-700">
-              Text to Speech is not supported
-            </h2>
-
-            <p className="mt-2 text-sm text-red-600">
-              Your browser does not support the Speech Synthesis API.
-              Please try a modern browser such as Google Chrome or Microsoft Edge.
-            </p>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-[60vh] flex items-start lg:items-center">
+      <audio
+        ref={audioRef}
+        onEnded={() => {
+          setIsSpeaking(false);
+          setIsPaused(false);
+        }}
+        className="hidden"
+      />
+
       <div className="mx-auto w-full max-w-3xl py-8">
         <div className="rounded-xl border border-gray-100 bg-white p-6 shadow-lg">
-          <h2 className="mb-3 text-2xl font-semibold text-gray-800">
-            Text to Speech
-          </h2>
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+            <h2 className="text-2xl font-semibold text-gray-800">
+              تحويل النص إلى صوت (TTS)
+            </h2>
 
-          <div className="mb-4 inline-flex items-center gap-2 rounded-lg border border-green-200 bg-green-50 px-3 py-1.5 text-sm text-green-700">
-            <span>🔒</span>
-            <span>
-              100% Client-Side Privacy: Your text stays on your device.
-            </span>
-          </div>
-
-          <textarea
-            dir={selectedLang.startsWith("ar") ? "rtl" : "ltr"}
-            className="w-full rounded-lg border border-gray-300 p-3 text-base focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-            rows={7}
-            value={text}
-            placeholder="Type or paste your text here..."
-            onChange={(e) => setText(e.target.value)}
-          />
-
-          <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
-            {/* Language */}
-            <div>
-              <label className="mb-1 block text-xs font-semibold text-gray-500">
-                Language
-              </label>
-
-              <select
-                value={selectedLang}
-                onChange={(e) => handleLanguageChange(e.target.value)}
-                className="w-full rounded border border-gray-300 bg-white p-2 text-sm"
+            {/* Engine Switcher */}
+            <div className="inline-flex rounded-lg border border-gray-200 bg-gray-50 p-1 text-sm">
+              <button
+                onClick={() => {
+                  stop();
+                  setEngine("browser");
+                }}
+                className={`rounded-md px-3 py-1 font-medium transition-all ${
+                  engine === "browser"
+                    ? "bg-white text-gray-800 shadow-sm"
+                    : "text-gray-500 hover:text-gray-700"
+                }`}
               >
-                <option value="ar-SA">العربية</option>
-                <option value="ar-DZ">العربية الجزائرية</option>
-                <option value="en-US">English (US)</option>
-                <option value="en-GB">English (UK)</option>
-                <option value="fr-FR">Français</option>
-                <option value="es-ES">Español</option>
-                <option value="de-DE">Deutsch</option>
-                <option value="it-IT">Italiano</option>
-              </select>
-            </div>
-
-            {/* Voice */}
-            <div>
-              <label className="mb-1 block text-xs font-semibold text-gray-500">
-                Voice
-              </label>
-
-              <select
-                value={selectedVoiceURI}
-                onChange={(e) => setSelectedVoiceURI(e.target.value)}
-                className="w-full rounded border border-gray-300 bg-white p-2 text-sm"
+                مجاني (المتصفح)
+              </button>
+              <button
+                onClick={() => {
+                  stop();
+                  setEngine("elevenlabs");
+                }}
+                className={`flex items-center gap-1.5 rounded-md px-3 py-1 font-medium transition-all ${
+                  engine === "elevenlabs"
+                    ? "bg-blue-600 text-white shadow-sm"
+                    : "text-gray-500 hover:text-gray-700"
+                }`}
               >
-                {filteredVoices.length === 0 ? (
-                  <option value="">
-                    Default system voice
-                  </option>
-                ) : (
-                  filteredVoices.map((voice) => (
-                    <option
-                      key={voice.voiceURI}
-                      value={voice.voiceURI}
-                    >
-                      {voice.name} ({voice.lang})
-                    </option>
-                  ))
-                )}
-              </select>
-            </div>
-
-            {/* Speed */}
-            <div>
-              <label className="mb-1 block text-xs font-semibold text-gray-500">
-                Speed: {rate}x
-              </label>
-
-              <input
-                type="range"
-                min="0.5"
-                max="2"
-                step="0.1"
-                value={rate}
-                onChange={(e) => setRate(Number(e.target.value))}
-                className="w-full"
-              />
-            </div>
-
-            {/* Pitch */}
-            <div>
-              <label className="mb-1 block text-xs font-semibold text-gray-500">
-                Pitch: {pitch}
-              </label>
-
-              <input
-                type="range"
-                min="0.5"
-                max="2"
-                step="0.1"
-                value={pitch}
-                onChange={(e) => setPitch(Number(e.target.value))}
-                className="w-full"
-              />
+                <Sparkles className="h-3.5 w-3.5" />
+                ElevenLabs AI
+              </button>
             </div>
           </div>
 
-          {/* Buttons */}
+          {/* Text Input Area */}
+          <div className="relative">
+            <textarea
+              dir="auto"
+              className="w-full rounded-lg border border-gray-300 p-3 text-base focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+              rows={6}
+              value={text}
+              placeholder="اكتب أو ألصق النص هنا..."
+              onChange={(e) => setText(e.target.value)}
+            />
+            {text && (
+              <button
+                onClick={() => {
+                  stop();
+                  setText("");
+                }}
+                className="absolute top-3 left-3 rounded-md p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors"
+                title="مسح النص"
+              >
+                <Trash2 className="h-4 w-4" />
+              </button>
+            )}
+          </div>
+
+          {/* Settings Control Panel */}
+          {engine === "browser" ? (
+            <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              <div>
+                <label className="mb-1 block text-xs font-semibold text-gray-500">
+                  اللغة
+                </label>
+                <select
+                  value={selectedLang}
+                  onChange={(e) => setSelectedLang(e.target.value)}
+                  className="w-full rounded border border-gray-300 bg-white p-2 text-sm"
+                >
+                  <option value="ar-SA">العربية (Arabic)</option>
+                  <option value="en-US">English (US)</option>
+                  <option value="fr-FR">Français (French)</option>
+                  <option value="es-ES">Español (Spanish)</option>
+                  <option value="de-DE">Deutsch (German)</option>
+                  <option value="tr-TR">Türkçe (Turkish)</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="mb-1 block text-xs font-semibold text-gray-500">
+                  صوت المتحدث
+                </label>
+                <select
+                  value={selectedVoiceURI}
+                  onChange={(e) => setSelectedVoiceURI(e.target.value)}
+                  className="w-full rounded border border-gray-300 bg-white p-2 text-sm"
+                >
+                  {filteredVoices.length > 0 ? (
+                    filteredVoices.map((v) => (
+                      <option key={v.voiceURI} value={v.voiceURI}>
+                        {v.name} ({v.lang})
+                      </option>
+                    ))
+                  ) : (
+                    <option value="">الصوت الافتراضي للغة المختارة</option>
+                  )}
+                </select>
+              </div>
+
+              <div>
+                <label className="mb-1 block text-xs font-semibold text-gray-500">
+                  السرعة: {rate}x
+                </label>
+                <input
+                  type="range"
+                  min="0.5"
+                  max="2"
+                  step="0.1"
+                  value={rate}
+                  onChange={(e) => setRate(Number(e.target.value))}
+                  className="w-full accent-blue-600"
+                />
+              </div>
+
+              <div>
+                <label className="mb-1 block text-xs font-semibold text-gray-500">
+                  الطبقة (Pitch): {pitch}
+                </label>
+                <input
+                  type="range"
+                  min="0.5"
+                  max="2"
+                  step="0.1"
+                  value={pitch}
+                  onChange={(e) => setPitch(Number(e.target.value))}
+                  className="w-full accent-blue-600"
+                />
+              </div>
+            </div>
+          ) : (
+            <div className="mt-4 rounded-lg border border-blue-100 bg-blue-50/50 p-4">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <div>
+                  <label className="mb-1 block text-xs font-semibold text-gray-600 flex items-center gap-1">
+                    <Key className="h-3 w-3" /> مفتاح ElevenLabs API Key
+                  </label>
+                  <input
+                    type="password"
+                    placeholder="ضع مفتاح API الخاص بك هنا"
+                    value={apiKey}
+                    onChange={(e) => handleApiKeyChange(e.target.value)}
+                    className="w-full rounded border border-gray-300 bg-white p-2 text-sm"
+                  />
+                </div>
+
+                <div>
+                  <label className="mb-1 block text-xs font-semibold text-gray-600">
+                    الصوت الذكي
+                  </label>
+                  <select
+                    value={elevenVoice}
+                    onChange={(e) => setElevenVoice(e.target.value)}
+                    className="w-full rounded border border-gray-300 bg-white p-2 text-sm"
+                  >
+                    <option value="21m00Tcm4TlvDq8ikWAM">Rachel (هادئ وواضح)</option>
+                    <option value="AZnzlk1XvdvUeBnXmlld">Domi (حماسي)</option>
+                    <option value="EXAVITQu4vr4xnSDxMaL">Bella (سرد قصصي)</option>
+                    <option value="ErXwobaYiN019PkySvjV">Antoni (صوت رجالي قوي)</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Error Message Alert */}
+          {error && (
+            <div className="mt-3 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-600">
+              {error}
+            </div>
+          )}
+
+          {/* Action Button Controls */}
           <div className="mt-5 flex flex-wrap items-center gap-2">
             <button
               onClick={speak}
-              disabled={isSpeaking}
-              className={`inline-flex items-center gap-2 rounded-lg px-4 py-2 font-medium text-white ${
-                isSpeaking
-                  ? "cursor-not-allowed bg-gray-400"
+              disabled={!text.trim() || loading}
+              className={`inline-flex items-center gap-2 rounded-lg px-4 py-2 font-medium text-white transition-colors ${
+                !text.trim() || loading
+                  ? "cursor-not-allowed bg-blue-300"
                   : "bg-blue-600 hover:bg-blue-700"
               }`}
             >
-              <Volume2 className="h-4 w-4" />
-              {isSpeaking ? "Speaking..." : "Speak"}
+              {loading ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  جاري التوليد...
+                </>
+              ) : isPaused ? (
+                <>
+                  <Play className="h-4 w-4" />
+                  استئناف
+                </>
+              ) : (
+                <>
+                  <Volume2 className="h-4 w-4" />
+                  {isSpeaking ? "جاري القراءة..." : "تشغيل الصوت"}
+                </>
+              )}
             </button>
 
-            <button
-              onClick={stop}
-              disabled={!isSpeaking}
-              className={`inline-flex items-center gap-2 rounded-lg border px-4 py-2 ${
-                !isSpeaking
-                  ? "cursor-not-allowed border-gray-200 text-gray-400"
-                  : "border-gray-300 text-gray-700 hover:bg-gray-50"
-              }`}
-            >
-              <Square className="h-4 w-4" />
-              Stop
-            </button>
+            {isSpeaking && (
+              <button
+                onClick={pause}
+                className="inline-flex items-center gap-2 rounded-lg border border-yellow-300 bg-yellow-50 px-4 py-2 text-yellow-700 hover:bg-yellow-100 transition-colors"
+              >
+                <Pause className="h-4 w-4" />
+                إيقاف مؤقت
+              </button>
+            )}
+
+            {(isSpeaking || isPaused) && (
+              <button
+                onClick={stop}
+                className="inline-flex items-center gap-2 rounded-lg border border-gray-300 px-4 py-2 text-gray-700 hover:bg-gray-50 transition-colors"
+              >
+                <Square className="h-4 w-4" />
+                إيقاف كامل
+              </button>
+            )}
+
+            {audioUrl && (
+              <a
+                href={audioUrl}
+                download={`${slug || "speech-audio"}.${engine === "elevenlabs" ? "mp3" : "wav"}`}
+                className="inline-flex items-center gap-1.5 rounded-lg border border-green-300 bg-green-50 px-3 py-2 text-sm font-medium text-green-700 hover:bg-green-100 transition-colors"
+              >
+                <Download className="h-4 w-4" />
+                تحميل الصوت ({engine === "elevenlabs" ? "MP3" : "WAV"})
+              </a>
+            )}
 
             <button
               onClick={copyText}
               disabled={!text.trim()}
-              className={`ml-auto inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm ${
-                !text.trim()
-                  ? "cursor-not-allowed text-gray-400"
-                  : "text-gray-600 hover:bg-gray-100"
-              }`}
+              className="mr-auto inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm text-gray-600 hover:bg-gray-100 transition-colors"
             >
-              <Copy className="h-4 w-4" />
-              Copy Text
+              {copied ? (
+                <>
+                  <Check className="h-4 w-4 text-green-600" />
+                  <span className="text-green-600">تم النسخ!</span>
+                </>
+              ) : (
+                <>
+                  <Copy className="h-4 w-4" />
+                  نسخ النص
+                </>
+              )}
             </button>
           </div>
 
