@@ -7,13 +7,13 @@ import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { AdSlot } from "@/components/AdSlot";
 import { Newsletter } from "@/components/Newsletter";
 import { EmptyState } from "@/components/EmptyState";
-import { 
-  BLOG_CATEGORIES, 
-  getBlogCategory, 
-  getAuthor, 
-  getCategoryPostCount, 
-  BLOG_POSTS, 
-  BlogPost 
+import {
+  BLOG_CATEGORIES,
+  getBlogCategory,
+  getAuthor,
+  getCategoryPostCount,
+  BLOG_POSTS,
+  BlogPost
 } from "@/data/blog";
 import { formatDate, cn } from "@/lib/utils";
 
@@ -44,7 +44,7 @@ export default function BlogCategoryPage() {
   const { t, i18n } = useTranslation();
 
   const category = slug ? getBlogCategory(slug) : undefined;
-  
+ 
   // حماية: جلب المقالات المتوافقة مع هذا القسم بأمان
   const allPosts = useMemo(() => {
     if (!slug) return [];
@@ -86,9 +86,9 @@ export default function BlogCategoryPage() {
 
   return (
     <>
-      <Seo 
-        title={t(category.nameKey)} 
-        description={category.descKey ? t(category.descKey) : t(category.nameKey)} 
+      <Seo
+        title={t(category.nameKey)}
+        description={category.descKey ? t(category.descKey) : t(category.nameKey)}
       />
 
       <div className="container-page py-8 max-w-6xl mx-auto px-4">
@@ -116,8 +116,8 @@ export default function BlogCategoryPage() {
 
         {/* Category Pills */}
         <div className="mt-6 flex flex-wrap gap-2">
-          <Link 
-            to="/blog" 
+          <Link
+            to="/blog"
             className="rounded-lg px-3 py-1.5 text-xs font-medium transition-all bg-ink-100 text-ink-600 hover:bg-ink-200 dark:bg-ink-800 dark:text-ink-300"
           >
             {t("blog.allCategories") || "جميع الأقسام"}
@@ -129,8 +129,8 @@ export default function BlogCategoryPage() {
               to={`/blog/category/${c.slug}`}
               className={cn(
                 "rounded-lg px-3 py-1.5 text-xs font-medium transition-all",
-                c.slug === slug 
-                  ? "bg-brand-600 text-white shadow-sm" 
+                c.slug === slug
+                  ? "bg-brand-600 text-white shadow-sm"
                   : "bg-ink-100 text-ink-600 hover:bg-ink-200 dark:bg-ink-800 dark:text-ink-300"
               )}
             >
@@ -179,9 +179,9 @@ export default function BlogCategoryPage() {
               const author = getAuthor(post.authorSlug);
 
               return (
-                <Link 
-                  key={post.slug} 
-                  to={`/blog/${post.slug}`} 
+                <Link
+                  key={post.slug}
+                  to={`/blog/${post.slug}`}
                   className="card card-hover group overflow-hidden border border-ink-100 dark:border-ink-800 rounded-xl"
                 >
                   <PostCover post={post} />
@@ -221,9 +221,9 @@ export default function BlogCategoryPage() {
         {/* Pagination */}
         {totalPages > 1 && (
           <div className="mt-8 flex items-center justify-center gap-2">
-            <button 
-              onClick={() => setPage(Math.max(1, currentPage - 1))} 
-              disabled={currentPage === 1} 
+            <button
+              onClick={() => setPage(Math.max(1, currentPage - 1))}
+              disabled={currentPage === 1}
               className="btn-secondary btn-sm disabled:opacity-40"
             >
               <ChevronLeft className="h-4 w-4" />
@@ -235,8 +235,8 @@ export default function BlogCategoryPage() {
                 onClick={() => setPage(i + 1)}
                 className={cn(
                   "h-9 w-9 rounded-lg text-sm font-medium transition-all",
-                  currentPage === i + 1 
-                    ? "bg-brand-600 text-white shadow-sm" 
+                  currentPage === i + 1
+                    ? "bg-brand-600 text-white shadow-sm"
                     : "bg-ink-100 text-ink-600 hover:bg-ink-200 dark:bg-ink-800 dark:text-ink-300"
                 )}
               >
@@ -244,9 +244,9 @@ export default function BlogCategoryPage() {
               </button>
             ))}
 
-            <button 
-              onClick={() => setPage(Math.min(totalPages, currentPage + 1))} 
-              disabled={currentPage === totalPages} 
+            <button
+              onClick={() => setPage(Math.min(totalPages, currentPage + 1))}
+              disabled={currentPage === totalPages}
               className="btn-secondary btn-sm disabled:opacity-40"
             >
               <ChevronRight className="h-4 w-4" />

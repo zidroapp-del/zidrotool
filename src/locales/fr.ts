@@ -77,9 +77,16 @@ export const fr = {
 
   "newsletter.placeholder": "vous@exemple.com",
   "newsletter.button": "S'abonner",
+  "newsletter.subscribed": "Abonné avec succès",
   "newsletter.success": "Merci ! Vérifiez votre boîte de réception pour confirmer.",
-  "newsletter.error": "Veuillez saisir une adresse e-mail valide.",
+  "newsletter.successDesc": "Vous avez été ajouté avec succès à notre liste de diffusion.",
+  "newsletter.subscribeAnother": "S'abonner avec une autre adresse",
   "newsletter.disclaimer": "Pas de spam. Désabonnez-vous à tout moment. Nous respectons votre vie privée.",
+
+  "newsletter.error.empty": "Veuillez saisir une adresse e-mail.",
+  "newsletter.error.invalid": "Veuillez saisir une adresse e-mail valide.",
+  "newsletter.error.duplicate": "Cette adresse e-mail est déjà abonnée.",
+  "newsletter.error.generic": "Une erreur est survenue, veuillez réessayer.",
 
   "tool.input": "Entrée",
   "tool.output": "Résultat",
@@ -106,9 +113,12 @@ export const fr = {
   "tool.trending.badge": "Tendance",
   "tool.use": "Ouvrir l'outil",
   "tool.results.count": "{{count}} outils",
+  "tool.comingSoon": "Bientôt disponible",
+  "tool.comingSoonDesc": "Nous travaillons dur pour vous proposer cet outil très prochainement.",
+  "tool.inDevelopment": "En développement",
 
   "category.text.name": "Outils texte",
-  "category.text.desc": "Transformez, comptez et formattez du texte.",
+  "category.text.desc": "Transformez, comptez et formatez du texte.",
   "category.converters.name": "Convertisseurs",
   "category.converters.desc": "Convertissez unités, nombres et couleurs.",
   "category.encoders.name": "Encodage & décodage",
@@ -238,27 +248,6 @@ export const fr = {
   "blog.featured": "Article en vedette",
   "blog.latest": "Derniers articles",
   "blog.readingTime": "{{count}} min de lecture",
-  "tool.speech-to-text.name": "Parole en texte",
-  "tool.speech-to-text.desc": "Transcrire la parole en texte modifiable en temps réel.",
-  "tool.text-to-speech.name": "Texte en parole",
-  "tool.text-to-speech.desc": "Convertir du texte en parole avec les voix du système.",
-  "tool.image-to-text-ocr.name": "Image → Texte (OCR)",
-  "tool.image-to-text-ocr.desc": "Extraire le texte des images côté client avec OCR.",
-  "tool.pdf-to-text.name": "PDF → Texte",
-  "tool.pdf-to-text.desc": "Extraire le texte lisible des PDFs dans le navigateur.",
-  "tool.invoice-generator.name": "Générateur de facture",
-  "tool.invoice-generator.desc": "Créer et exporter des factures imprimables dans le navigateur.",
-  "tool.image-background-remover.name": "Suppression d'arrière-plan",
-  "tool.image-background-remover.desc": "Retirer les arrière-plans simples des images pour obtenir des PNG transparents.",
-  "tool.qr-code-scanner.name": "Scanner de QR Code",
-  "tool.qr-code-scanner.desc": "Scanner les QR codes depuis la caméra ou une image téléchargée.",
-
-  "tools.filter.all": "Tous",
-  "tools.filter.audio": "Audio",
-  "tools.filter.pdf": "PDF",
-  "tools.filter.images": "Images",
-  "tools.filter.dev": "Dev",
-  "tools.filter.calculators": "Calculatrices",
   "blog.by": "Par",
   "blog.related": "Articles associés",
   "blog.search": "Rechercher des articles…",
@@ -302,53 +291,71 @@ export const fr = {
   "breadcrumbs.tools": "Outils",
   "breadcrumbs.blog": "Blog",
   "breadcrumbs.category": "Catégorie",
+
   tools: {
-  percentageCalculator: {
-    name: "Calculateur de Pourcentage",
-    desc: "Calculez facilement les pourcentages et les différences."
+    wordCounter: {
+      name: "Compteur de Mots et Caractères",
+      desc: "Comptez les mots, caractères, phrases et paragraphes en temps réel.",
+      placeholder: "Commencez à saisir ou collez votre texte ici pour voir les statistiques...",
+      clear: "Effacer le texte",
+      words: "Mots",
+      characters: "Caractères",
+      noSpaces: "Sans espaces",
+      sentences: "Phrases",
+      paragraphs: "Paragraphes",
+      lines: "Lignes",
+      readingTime: "Temps de lecture",
+      readingSpeed: "Vitesse de lecture",
+      min: "min",
+      wpm: "m/m"
+    },
+    percentageCalculator: {
+      name: "Calculateur de Pourcentage",
+      desc: "Calculez facilement les pourcentages et les différences."
+    },
+    averageCalculator: {
+      name: "Calculateur de Moyenne",
+      desc: "Calculez la moyenne et les valeurs statistiques."
+    },
+    discountCalculator: {
+      name: "Calculateur de Remise",
+      desc: "Calculez les prix réduits et les économies instantanément."
+    },
+    speechToText: {
+      name: "Reconnaissance Vocale",
+      desc: "Convertissez la voix en texte écrit en temps réel."
+    },
+    imageToTextOcr: {
+      name: "Image en Texte (OCR)",
+      desc: "Extrayez le texte des images et des documents scannés."
+    },
+    textToSpeech: {
+      name: "Synthèse Vocale",
+      desc: "Convertissez le texte écrit en voix naturelle."
+    },
+    pdfToText: {
+      name: "PDF en Texte",
+      desc: "Extrayez le texte modifiable directement des fichiers PDF."
+    },
+    invoiceGenerator: {
+      name: "Générateur de Factures",
+      desc: "Créez des factures professionnelles et personnalisables."
+    },
+    qrCodeScanner: {
+      name: "Scanner de Code QR",
+      desc: "Scannez et lisez les codes QR via caméra ou images."
+    },
+    imageBackgroundRemover: {
+      name: "Suppresseur d'Arrière-plan",
+      desc: "Supprimez l'arrière-plan des images avec l'IA."
+    },
+    imageCropper: {
+      name: "Règlement d'Image",
+      desc: "Recadrez et ajustez les dimensions de vos images."
+    }
   },
-  averageCalculator: {
-    name: "Calculateur de Moyenne",
-    desc: "Calculez la moyenne et les valeurs statistiques."
-  },
-  discountCalculator: {
-    name: "Calculateur de Remise",
-    desc: "Calculez les prix réduits et les économies instantanément."
-  },
-  speechToText: {
-    name: "Reconnaissance Vocale",
-    desc: "Convertissez la voix en texte écrit en temps réel."
-  },
-  imageToTextOcr: {
-    name: "Image en Texte (OCR)",
-    desc: "Extrayez le texte des images et des documents scannés."
-  },
-  textToSpeech: {
-    name: "Synthèse Vocale",
-    desc: "Convertissez le texte écrit en voix naturelle."
-  },
-  pdfToText: {
-    name: "PDF en Texte",
-    desc: "Extrayez le texte modifiable directement des fichiers PDF."
-  },
-  invoiceGenerator: {
-    name: "Générateur de Factures",
-    desc: "Créez des factures professionnelles et personnalisables."
-  },
-  qrCodeScanner: {
-    name: "Scanner de Code QR",
-    desc: "Scannez et lisez les codes QR via caméra ou images."
-  },
-  imageBackgroundRemover: {
-    name: "Suppresseur d'Arrière-plan",
-    desc: "Supprimez l'arrière-plan des images avec l'IA."
-  },
-  imageCropper: {
-    name: "Règlement d'Image",
-    desc: "Radcadrez et ajustez les dimensions de vos images."
-  }
-  },
-  // ── Traductions du Blog ──
+
+  // ── Blog Titles & Excerpts ──
   "blog.ai-productivity.title": "Outils IA qui transforment la productivité en 2026",
   "blog.ai-productivity.excerpt": "Découvrez comment les outils IA modernes révolutionnent le travail des développeurs.",
   "blog.llm-guide.title": "Comprendre les LLM : Guide pour débutants",
@@ -408,7 +415,8 @@ export const fr = {
   "blog.100-tools.excerpt": "Une étape importante pour la plateforme avec de nouveaux ajouts réguliers.",
   "blog.changelog-july.title": "Journal des modifications de juillet 2026",
   "blog.changelog-july.excerpt": "Résumé des nouvelles fonctionnalités et corrections apportées ce mois-ci.",
-  // Blog bodies (machine-translated from English)
+
+  // ── Blog Bodies ──
   "blog.ai-productivity.body": "Les outils d'IA ne sont plus une nouveauté mais une nécessité. Chez ZidroTool, nous développons des utilitaires IA qui vous font gagner du temps sans compromettre la confidentialité.\n\n<h2>Résumé de texte</h2>\nNotre résumé IA condense de longs articles en points clés. Au lieu de lire un document de 2000 mots, obtenez l'essentiel en quelques secondes.\n\n<h2>Vérification grammaticale</h2>\nLe correcteur IA repère les formulations maladroites, les incohérences de temps et les problèmes de style que l'orthographe ne détecte pas.\n\n<h3>Explication de code</h3>\nPour les développeurs, l'explicateur de code transforme les extraits obscurs en explications claires. Collez du code, obtenez de la clarté.\n\n<h2>Avantage confidentialité</h2>\nContrairement à de nombreux outils IA qui envoient vos données à des serveurs, nos outils sont conçus pour respecter la vie privée. Votre contenu vous appartient.",
   "blog.llm-guide.body": "Si vous avez utilisé récemment un outil d'IA, vous avez interagi avec un Grand Modèle de Langage (LLM). Mais qu'est-ce qu'un LLM ?\n\n<h2>Qu'est-ce qu'un LLM ?</h2>\nUn LLM est un type d'IA entraîné sur d'énormes corpus textuels. Il apprend des patterns — grammaire, contexte, ton — et utilise ces modèles pour générer et comprendre du texte.\n\n<h2>Comment ça marche ?</h2>\nLes LLM prédisent le mot suivant dans une séquence. Ce mécanisme simple, à l'échelle de milliards de paramètres, produit un comportement linguistique sophistiqué.\n\n<h3>Processus d'entraînement</h3>\nL'entraînement ajuste les paramètres du modèle pour minimiser les erreurs de prédiction, ce qui permet au modèle d'écrire, résumer, traduire et répondre aux questions.",
   "blog.ai-ethics.body": "Les outils de réécriture IA sont puissants : ils peuvent reformuler des phrases, simplifier le jargon et adapter le ton. Mais cette puissance implique des responsabilités éthiques.\n\n<h2>Transparence</h2>\nSi vous utilisez l'IA pour réécrire du contenu, soyez transparent. Les lecteurs méritent de savoir si l'IA a participé.\n\n<h2>Originalité et attribution</h2>\nLes modèles s'appuient sur des contenus existants. Cela soulève des questions sur l'originalité et la propriété intellectuelle.\n\n<h2>Qualité vs rapidité</h2>\nLa réécriture IA est rapide, mais la vitesse n'est pas toujours souhaitable. Parfois, la touche humaine rend le contenu plus pertinent.",
@@ -433,5 +441,19 @@ export const fr = {
   "blog.tut-passwords.body": "La réutilisation des mots de passe est la principale cause de compromission. Utilisez des mots de passe longs (16 caractères ou plus) et un gestionnaire de mots de passe.\n\n<h2>Générateur</h2>\nPersonnalisez longueur et types de caractères et utilisez un gestionnaire pour stocker les mots de passe.\n\n<h3>2FA</h3>\nActivez l'authentification à deux facteurs lorsque possible.",
   "blog.welcome.body": "Aujourd'hui, nous sommes heureux d'ouvrir les portes de ZidroTool. Ce qui a commencé comme quelques utilitaires est devenu une plateforme de 100+ outils dans 12 catégories.\n\n<h2>Pourquoi ZidroTool</h2>\nChaque outil s'exécute dans votre navigateur, vos données restent locales. Pas d'inscription, pas de paywall.\n\n<h3>Fonctionnalités clés</h3>\nPalette de commande, favoris, mode sombre, support PWA et 6 langues dont l'arabe RTL.",
   "blog.100-tools.body": "À notre lancement, l'objectif était de rassembler une collection complète d'outils gratuits. Aujourd'hui, nous célébrons 100 outils répartis en 12 catégories.\n\n<h2>Nouvelles catégories</h2>\nAjout d'IA, SEO, médias sociaux, santé et finance.\n\n<h2>À venir</h2>\nAPI publique et fonctionnalités Premium.",
-  "blog.changelog-july.body": "Juillet a été un mois important : +30 outils, refonte des pages de catégories, ajout de badges (populaire, tendance), palette de commandes et lancement du système de blog avec pages auteurs, sommaire et articles associés.",
+  "blog.changelog-july.body": "Juillet a été un mois important : +30 outils, refonte des pages de catégories, ajout de badges (populaire, tendance), palette de commandes et lancement du système de blog avec pages auteurs, sommaire et articles associés."
+};
+
+// Legacy flat keys for compatibility
+export const frExtra = {
+  "tool.speech-to-text.name": "Parole en texte",
+  "tool.speech-to-text.desc": "Transcrire la parole en texte modifiable en temps réel.",
+  "tool.text-to-speech.name": "Texte en parole",
+  "tool.text-to-speech.desc": "Convertir du texte en parole avec les voix du système.",
+  "tools.filter.all": "Tous",
+  "tools.filter.audio": "Audio",
+  "tools.filter.pdf": "PDF",
+  "tools.filter.images": "Images",
+  "tools.filter.dev": "Dev",
+  "tools.filter.calculators": "Calculatrices",
 };

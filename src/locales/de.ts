@@ -62,12 +62,6 @@ export const de = {
   "section.blog.sub": "Anleitungen, Updates und Einblicke vom ZidroTool-Team.",
   "section.viewAll": "Alle ansehen",
 
-  // Blog bodies (copy English content as fallback when German translations are missing)
-  "blog.welcome.body": "Today, we're thrilled to open the doors to ZidroTool. What started as a handful of developer utilities has grown into a platform with 100+ tools across 12 categories — from text and image tools to AI, finance, health, and security.\n\n<h2>Why We Built ZidroTool</h2>\nEvery tool runs in your browser, meaning your data never leaves your device. No sign-up required, no paywalls, no tricks. Just tools that work.",
-  "blog.100-tools.body": "When we launched, we had a vision: build the most comprehensive collection of free, browser-based tools on the web. Today, we're celebrating 100 tools across 12 categories.\n\n<h2>New Categories</h2>\nWe added AI Tools, SEO Tools, Social Media Tools, Health, and Finance — bringing our total to 12 categories.",
-  "blog.changelog-july.body": "July was a big month for ZidroTool. Here's everything we shipped:\n\n<h2>New Tools</h2>\nAdded 30+ new tool placeholders across all categories. Expanded the catalog from 45 to 100+ tools.",
-  "blog.ai-productivity.body": "AI tools have moved from novelty to necessity. At ZidroTool, we're building AI-powered utilities that save you time without compromising privacy.\n\n<h2>Text Summarization</h2>\nOur AI Text Summarizer condenses long articles into key points.\n\n<h2>Grammar Checking</h2>\nThe AI Grammar Checker catches mistakes that spell-check misses.",
-
   "why.fast.title": "Blitzschnell",
   "why.fast.desc": "Jedes Werkzeug läuft ohne Latenz im Browser. Kein Warten.",
   "why.privacy.title": "Datenschutz zuerst",
@@ -81,7 +75,7 @@ export const de = {
   "why.quality.title": "Mit Sorgfalt gefertigt",
   "why.quality.desc": "Jedes Werkzeug wird mit Liebe zum Detail gestaltet.",
 
- "newsletter.placeholder": "sie@beispiel.de",
+  "newsletter.placeholder": "sie@beispiel.de",
   "newsletter.button": "Abonnieren",
   "newsletter.subscribed": "Erfolgreich abonniert",
   "newsletter.success": "Danke! Posteingang zur Bestätigung prüfen.",
@@ -89,7 +83,6 @@ export const de = {
   "newsletter.subscribeAnother": "Mit einer anderen E-Mail abonnieren",
   "newsletter.disclaimer": "Kein Spam. Jederzeit abbestellbar. Wir respektieren Ihre Privatsphäre.",
   
-  // تصحيح الأخطاء لتعمل مع المكون
   "newsletter.error.empty": "Bitte geben Sie eine E-Mail-Adresse ein.",
   "newsletter.error.invalid": "Bitte gültige E-Mail-Adresse eingeben.",
   "newsletter.error.duplicate": "Diese E-Mail-Adresse ist bereits abonniert.",
@@ -120,6 +113,9 @@ export const de = {
   "tool.trending.badge": "Trend",
   "tool.use": "Werkzeug öffnen",
   "tool.results.count": "{{count}} Werkzeuge",
+  "tool.comingSoon": "Demnächst",
+  "tool.comingSoonDesc": "Wir arbeiten hart daran, dieses Werkzeug bald bereitzustellen.",
+  "tool.inDevelopment": "In Entwicklung",
 
   "category.text.name": "Text-Werkzeuge",
   "category.text.desc": "Text umwandeln, zählen und formatieren.",
@@ -180,8 +176,24 @@ export const de = {
   "breadcrumbs.tools": "Werkzeuge",
   "breadcrumbs.blog": "Blog",
   "breadcrumbs.category": "Kategorie",
-  // Tools translations
+
   tools: {
+    wordCounter: {
+      name: "Wort- und Zeichenzähler",
+      desc: "Zählen Sie Wörter, Zeichen, Sätze und Absätze direkt in Echtzeit.",
+      placeholder: "Beginnen Sie zu tippen oder fügen Sie Ihren Text hier ein...",
+      clear: "Text löschen",
+      words: "Wörter",
+      characters: "Zeichen",
+      noSpaces: "Ohne Leerzeichen",
+      sentences: "Sätze",
+      paragraphs: "Absätze",
+      lines: "Zeilen",
+      readingTime: "Lesezeit",
+      readingSpeed: "Lesegeschwindigkeit",
+      min: "Min.",
+      wpm: "WPM"
+    },
     percentageCalculator: {
       name: "Prozentrechner",
       desc: "Prozentsätze und Differenzen einfach berechnen."
@@ -226,10 +238,76 @@ export const de = {
       name: "Bild zuschneiden",
       desc: "Bilder einfach zuschneiden und anpassen."
     }
-  }
+  },
+
+  // Blog Titles & Excerpts
+  "blog.ai-productivity.title": "KI-Werkzeuge, die die Produktivität revolutionieren",
+  "blog.ai-productivity.excerpt": "Entdecken Sie, wie moderne KI-Tools die Arbeitsweise von Entwicklern und Kreativen verändern.",
+  "blog.llm-guide.title": "Große Sprachmodelle verstehen: Ein Leitfaden für Einsteiger",
+  "blog.llm-guide.excerpt": "Ein einfacher Leitfaden zur Funktionsweise generativer KI und wie Sie diese nutzen können.",
+  "blog.ai-ethics.title": "Die Ethik beim Umschreiben von Inhalten mit KI",
+  "blog.ai-ethics.excerpt": "Ein Blick auf ethische Standards bei der Verwendung von KI zur Erstellung von Inhalten.",
+
+  "blog.pdf-merge.title": "Bewährte Verfahren zum einfachen Zusammenführen von PDFs",
+  "blog.pdf-merge.excerpt": "Ein umfassender Leitfaden zum Kombinieren von Dokumenten ohne Qualitätsverlust.",
+  "blog.pdf-compress.title": "So komprimieren Sie PDF-Dateien ohne Qualitätsverlust",
+  "blog.pdf-compress.excerpt": "Praktische Schritte zur Reduzierung der Dateigröße großer PDFs für den Mailversand.",
+
+  "blog.image-opt.title": "Leitfaden zur Bildoptimierung für das Web im Jahr 2026",
+  "blog.image-opt.excerpt": "Lernen Sie, wie Sie Bilder komprimieren und Ladezeiten für besseres SEO optimieren.",
+  "blog.image-formats.title": "Das richtige Bildformat wählen: PNG, WebP oder JPEG?",
+  "blog.image-formats.excerpt": "Ein Vergleich verschiedener Bildformate und wann welches Format ideal ist.",
+  "blog.image-compress.title": "Bilder komprimieren ohne Details zu verlieren",
+  "blog.image-compress.excerpt": "Die besten technischen Methoden zur Reduzierung von Bilddateigrößen bei hoher Schärfe.",
+
+  "blog.json-format.title": "Warum JSON-Formatierung für Entwickler so wichtig ist",
+  "blog.json-format.excerpt": "Erfahren Sie, wie strukturiertes JSON das Debugging und die Datenverarbeitung erleichtert.",
+  "blog.jwt-security.title": "Bewährte Verfahren zur Sicherung von JWT-Tokens",
+  "blog.jwt-security.excerpt": "Ein Sicherheitsleitfaden zum Schutz von Anwendungen mit korrekter Token-Verschlüsselung.",
+  "blog.regex-cheat.title": "Reguläre Ausdrücke (Regex) Spickzettel für Entwickler",
+  "blog.regex-cheat.excerpt": "Die wichtigsten Muster und Befehle für die effiziente Textverarbeitung mit Regex.",
+  "blog.base64-explained.title": "Base64-Kodierung und ihre Anwendungsbereiche erklärt",
+  "blog.base64-explained.excerpt": "Wie Base64 funktioniert und warum es zur Übertragung von Binärdaten im Web genutzt wird.",
+
+  "blog.pomodoro.title": "Die Pomodoro-Technik: Der vollständige Fokus-Leitfaden",
+  "blog.pomodoro.excerpt": "Wie Sie Ihre Zeit organisieren und Ihre Produktivität durch Arbeitsintervalle steigern.",
+  "blog.dev-productivity.title": "Die besten Produktivitätswerkzeuge für Entwickler 2026",
+  "blog.dev-productivity.excerpt": "Eine Zusammenstellung von Tools, die Ihnen täglich wertvolle Arbeitszeit sparen.",
+
+  "blog.compound-interest.title": "Zinseszins erklärt: Berechnung und Nutzen",
+  "blog.compound-interest.excerpt": "Ein wichtiges Finanzkonzept zum langfristigen Vermögensaufbau.",
+  "blog.loan-amort.title": "Tilgungspläne und Kreditberechnungen verstehen",
+  "blog.loan-amort.excerpt": "So berechnen Sie monatliche Kreditraten und Zinsanteile Schritt für Schritt.",
+
+  "blog.bmi-guide.title": "Body-Mass-Index (BMI): Was bedeutet er wirklich?",
+  "blog.bmi-guide.excerpt": "Wie man den BMI berechnet und die Ergebnisse gesundheitlich richtig einordnet.",
+  "blog.water-intake.title": "Täglicher Wasserbedarf: Ihr individueller Leitfaden",
+  "blog.water-intake.excerpt": "Berechnen Sie die optimale Flüssigkeitsmenge basierend auf Gewicht und Aktivität.",
+
+  "blog.browser-tools.title": "Die Zukunft browserbasierter Web-Werkzeuge",
+  "blog.browser-tools.excerpt": "Wie WebAssembly dafür sorgt, dass Online-Tools so schnell wie Desktop-Apps laufen.",
+  "blog.privacy-first.title": "Webanwendungen nach dem Prinzip Privacy-First",
+  "blog.privacy-first.excerpt": "Warum die lokale Datenverarbeitung im Browser den besten Schutz bietet.",
+
+  "blog.tut-json.title": "JSON-Formatter Schritt für Schritt nutzen",
+  "blog.tut-json.excerpt": "Praktische Anleitung zur Formatierung und Fehlerbehebung in JSON-Dateien.",
+  "blog.tut-passwords.title": "Wie man wirklich sichere Passwörter erstellt",
+  "blog.tut-passwords.excerpt": "Regeln für die Erstellung komplexer Passwörter zum Schutz Ihrer Konten.",
+
+  "blog.welcome.title": "Willkommen bei ZidroTool",
+  "blog.welcome.excerpt": "Lernen Sie unsere Vision und unsere kostenlosen Werkzeuge für Ihren Alltag kennen.",
+  "blog.100-tools.title": "ZidroTool erreicht 100 kostenlose Werkzeuge",
+  "blog.100-tools.excerpt": "Ein Meilenstein für die Plattform und ein Ausblick auf kommende Updates.",
+  "blog.changelog-july.title": "Changelog und Updates für Juli 2026",
+  "blog.changelog-july.excerpt": "Eine Zusammenfassung aller neuen Funktionen und Werkzeuge des letzten Monats.",
+
+  // Blog Bodies (vollständig auf Deutsch übersetzt)
+  "blog.welcome.body": "Heute freuen wir uns sehr, die Türen zu ZidroTool zu öffnen. Was als kleine Sammlung von Entwickler-Utilities begann, ist zu einer Plattform mit über 100 Werkzeugen in 12 Kategorien gewachsen — von Text- und Bild-Tools bis hin zu KI, Finanzen, Gesundheit und Sicherheit.\n\n<h2>Warum wir ZidroTool gebaut haben</h2>\nJedes Werkzeug läuft direkt in Ihrem Browser. Das bedeutet, dass Ihre Daten Ihr Gerät niemals verlassen. Keine Registrierung erforderlich, keine Paywalls, keine Verstecke. Einfach Werkzeuge, die funktionieren.",
+  "blog.100-tools.body": "Als wir starteten, hatten wir eine Vision: Die umfangreichste Sammlung kostenloser, browserbasierter Werkzeuge im Web zu erschaffen. Heute feiern wir 100 Werkzeuge in 12 Kategorien.\n\n<h2>Neue Kategorien</h2>\nWir haben KI-Werkzeuge, SEO-Tools, Social-Media-Helfer sowie Gesundheits- und Finanzrechner hinzugefügt.",
+  "blog.changelog-july.body": "Der Juli war ein ereignisreicher Monat für ZidroTool. Hier ist alles, was wir veröffentlicht haben:\n\n<h2>Neue Werkzeuge</h2>\nÜber 30 neue Tool-Platzhalter in allen Kategorien hinzugefügt. Der Katalog wurde von 45 auf über 100 Werkzeuge erweitert.",
+  "blog.ai-productivity.body": "KI-Werkzeuge haben sich vom Trend zum Alltagshelfer entwickelt. Bei ZidroTool bauen wir KI-gestützte Dienstprogramme, die Ihnen Zeit sparen, ohne Ihren Datenschutz zu gefährden.\n\n<h2>Textzusammenfassung</h2>\nUnser KI-Textzusammenfasser verdichtet lange Artikel auf die wesentlichen Punkte.\n\n<h2>Grammatikprüfung</h2>\nDie KI-Grammatikprüfung erkennt Fehler, die von einfachen Rechtschreibprüfungen übersehen werden."
 };
 
-// Compatibility flat keys and quick filter labels
 export const deExtra = {
   "tool.speech-to-text.name": "Sprache zu Text",
   "tool.speech-to-text.desc": "Sprache in editierbaren Text transkribieren.",

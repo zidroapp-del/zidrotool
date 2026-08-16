@@ -49,7 +49,7 @@ export const es = {
   "section.popular.sub": "Las más usadas este mes.",
   "section.trending": "Tendencias",
   "section.trending.sub": "Herramientas que ganan popularidad rápido.",
-  "section.recent": "Añadidas recientemente",
+  "section.recent": "Añadido recientemente",
   "section.recent.sub": "Lo nuevo en el kit.",
   "section.categories": "Explorar categorías",
   "section.categories.sub": "Encuentra la herramienta adecuada para tu tarea.",
@@ -61,12 +61,6 @@ export const es = {
   "section.blog": "Del blog",
   "section.blog.sub": "Guías, actualizaciones y novedades del equipo ZidroTool.",
   "section.viewAll": "Ver todo",
-
-  // Blog bodies (copy English content as fallback when Spanish translations are missing)
-  "blog.welcome.body": "Today, we're thrilled to open the doors to ZidroTool. What started as a handful of developer utilities has grown into a platform with 100+ tools across 12 categories — from text and image tools to AI, finance, health, and security.\n\n<h2>Why We Built ZidroTool</h2>\nEvery tool runs in your browser, meaning your data never leaves your device. No sign-up required, no paywalls, no tricks. Just tools that work.",
-  "blog.100-tools.body": "When we launched, we had a vision: build the most comprehensive collection of free, browser-based tools on the web. Today, we're celebrating 100 tools across 12 categories.\n\n<h2>New Categories</h2>\nWe added AI Tools, SEO Tools, Social Media Tools, Health, and Finance — bringing our total to 12 categories.",
-  "blog.changelog-july.body": "July was a big month for ZidroTool. Here's everything we shipped:\n\n<h2>New Tools</h2>\nAdded 30+ new tool placeholders across all categories. Expanded the catalog from 45 to 100+ tools.",
-  "blog.ai-productivity.body": "AI tools have moved from novelty to necessity. At ZidroTool, we're building AI-powered utilities that save you time without compromising privacy.\n\n<h2>Text Summarization</h2>\nOur AI Text Summarizer condenses long articles into key points.\n\n<h2>Grammar Checking</h2>\nThe AI Grammar Checker catches mistakes that spell-check misses.",
 
   "why.fast.title": "Ultrarrápido",
   "why.fast.desc": "Cada herramienta se ejecuta en tu navegador sin latencia.",
@@ -81,7 +75,7 @@ export const es = {
   "why.quality.title": "Hecho con cuidado",
   "why.quality.desc": "Cada herramienta está pulida al detalle.",
 
- "newsletter.placeholder": "tu@ejemplo.com",
+  "newsletter.placeholder": "tu@ejemplo.com",
   "newsletter.button": "Suscribirse",
   "newsletter.subscribed": "Suscrito con éxito",
   "newsletter.success": "¡Gracias! Revisa tu correo para confirmar.",
@@ -89,7 +83,6 @@ export const es = {
   "newsletter.subscribeAnother": "Suscribirse con otro correo",
   "newsletter.disclaimer": "Sin spam. Puedes cancelar la suscripción en cualquier momento. Respetamos tu privacidad.",
   
-  // تصحيح الأخطاء لتعمل مع المكون
   "newsletter.error.empty": "Por favor, introduce un correo electrónico.",
   "newsletter.error.invalid": "Introduce un email válido.",
   "newsletter.error.duplicate": "Este correo electrónico ya está suscrito.",
@@ -110,7 +103,7 @@ export const es = {
   "tool.clear": "Limpiar",
   "tool.sample": "Cargar ejemplo",
   "tool.howto": "Cómo usar",
-  "tool.faq": "FAQ",
+  "tool.faq": "Preguntas frecuentes",
   "tool.related": "Herramientas relacionadas",
   "tool.empty.input": "Introduce algo arriba para ver el resultado.",
   "tool.empty.output": "La salida aparecerá aquí.",
@@ -120,6 +113,9 @@ export const es = {
   "tool.trending.badge": "Tendencia",
   "tool.use": "Abrir herramienta",
   "tool.results.count": "{{count}} herramientas",
+  "tool.comingSoon": "Próximamente",
+  "tool.comingSoonDesc": "Estamos trabajando duro para ofrecerte esta herramienta muy pronto.",
+  "tool.inDevelopment": "En desarrollo",
 
   "category.text.name": "Herramientas de texto",
   "category.text.desc": "Transforma, cuenta y formatea texto.",
@@ -150,7 +146,7 @@ export const es = {
   "footer.company": "Empresa",
   "footer.resources": "Recursos",
   "footer.legal": "Legal",
-  "footer.newsletter": "Newsletter",
+  "footer.newsletter": "Boletín",
   "footer.follow": "Síguenos",
   "footer.developers": "Desarrolladores",
   "footer.links.roadmap": "Hoja de ruta",
@@ -180,8 +176,24 @@ export const es = {
   "breadcrumbs.tools": "Herramientas",
   "breadcrumbs.blog": "Blog",
   "breadcrumbs.category": "Categoría",
-  // Tools translations
+
   tools: {
+    wordCounter: {
+      name: "Contador de Palabras y Caracteres",
+      desc: "Cuenta palabras, caracteres, oraciones y párrafos en tiempo real.",
+      placeholder: "Empieza a escribir o pega tu texto aquí para ver las estadísticas...",
+      clear: "Limpiar texto",
+      words: "Palabras",
+      characters: "Caracteres",
+      noSpaces: "Sin espacios",
+      sentences: "Oraciones",
+      paragraphs: "Párrafos",
+      lines: "Líneas",
+      readingTime: "Tiempo de lectura",
+      readingSpeed: "Velocidad de lectura",
+      min: "min",
+      wpm: "ppm"
+    },
     percentageCalculator: {
       name: "Calculadora de Porcentajes",
       desc: "Calcula porcentajes y diferencias fácilmente."
@@ -226,7 +238,74 @@ export const es = {
       name: "Recortador de Imágenes",
       desc: "Recorta y ajusta dimensiones de imágenes fácilmente."
     }
-  }
+  },
+
+  // Titulares y extractos de artículos
+  "blog.ai-productivity.title": "Herramientas de IA que están revolucionando la productividad",
+  "blog.ai-productivity.excerpt": "Descubre cómo las herramientas de IA modernas cambian la forma de trabajar de desarrolladores y creadores en 2026.",
+  "blog.llm-guide.title": "Comprendiendo los Grandes Modelos de Lenguaje: Guía para principiantes",
+  "blog.llm-guide.excerpt": "Una guía sencilla sobre cómo funciona la IA generativa y cómo sacarle provecho.",
+  "blog.ai-ethics.title": "La ética al reescribir contenidos con Inteligencia Artificial",
+  "blog.ai-ethics.excerpt": "Un análisis sobre los estándares éticos y profesionales al usar IA en la creación de contenido.",
+
+  "blog.pdf-merge.title": "Mejores prácticas para unir archivos PDF fácilmente",
+  "blog.pdf-merge.excerpt": "Una guía completa para combinar documentos digitales sin perder calidad.",
+  "blog.pdf-compress.title": "Cómo comprimir archivos PDF sin perder calidad",
+  "blog.pdf-compress.excerpt": "Pasos prácticos para reducir el tamaño de tus archivos PDF pesados antes de enviarlos.",
+
+  "blog.image-opt.title": "Guía de optimización de imágenes para la web en 2026",
+  "blog.image-opt.excerpt": "Aprende a comprimir imágenes y mejorar la velocidad de carga de tu sitio web para SEO.",
+  "blog.image-formats.title": "Elegir el formato de imagen correcto: ¿PNG, WebP o JPEG?",
+  "blog.image-formats.excerpt": "Comparativa de formatos de imagen y cuándo usar cada uno según tus necesidades.",
+  "blog.image-compress.title": "Métodos para comprimir imágenes sin perder detalles",
+  "blog.image-compress.excerpt": "Técnicas esenciales para reducir el peso de tus imágenes manteniendo alta resolución.",
+
+  "blog.json-format.title": "Por qué el formateo de JSON es crucial para desarrolladores",
+  "blog.json-format.excerpt": "Explicación de la importancia de estructurar datos JSON para facilitar la depuración.",
+  "blog.jwt-security.title": "Mejores prácticas para asegurar tokens JWT",
+  "blog.jwt-security.excerpt": "Guía de seguridad para proteger aplicaciones web mediante una correcta encriptación.",
+  "blog.regex-cheat.title": "Hoja de referencia de Expresiones Regulares (Regex) para devs",
+  "blog.regex-cheat.excerpt": "Los patrones y comandos más utilizados en Regex para el procesamiento rápido de texto.",
+  "blog.base64-explained.title": "Codificación Base64 explicada y sus usos comunes",
+  "blog.base64-explained.excerpt": "Cómo funciona Base64 y por qué es fundamental para transmitir datos binarios en la web.",
+
+  "blog.pomodoro.title": "La técnica Pomodoro: La guía definitiva de enfoque",
+  "blog.pomodoro.excerpt": "Organiza tu tiempo y aumenta tu productividad dividiendo el trabajo en bloques enfocados.",
+  "blog.dev-productivity.title": "Las mejores herramientas de productividad para desarrolladores en 2026",
+  "blog.dev-productivity.excerpt": "Una lista de utilidades y aplicaciones que te ahorrarán horas de trabajo diario.",
+
+  "blog.compound-interest.title": "Interés compuesto: Explicación y cálculo",
+  "blog.compound-interest.excerpt": "Un concepto financiero clave para hacer crecer tus ahorros e inversiones a largo plazo.",
+  "blog.loan-amort.title": "Entendiendo las tablas de amortización de préstamos",
+  "blog.loan-amort.excerpt": "Aprende a calcular tus cuotas mensuales y los intereses acumulados paso a paso.",
+
+  "blog.bmi-guide.title": "Índice de Masa Corporal (IMC): ¿Qué significa realmente?",
+  "blog.bmi-guide.excerpt": "Cómo calcular el IMC y cómo interpretar los resultados de forma saludable.",
+  "blog.water-intake.title": "Guía para calcular tu consumo diario de agua recomendada",
+  "blog.water-intake.excerpt": "Calcula la cantidad de agua que necesita tu cuerpo según tu peso y nivel de actividad física.",
+
+  "blog.browser-tools.title": "El futuro de las herramientas basadas en el navegador",
+  "blog.browser-tools.excerpt": "Cómo WebAssembly permite ejecutar tareas complejas directamente desde el navegador.",
+  "blog.privacy-first.title": "Aplicaciones web diseñadas con la privacidad como prioridad",
+  "blog.privacy-first.excerpt": "La importancia de procesar datos localmente en tu equipo sin enviarlos a servidores.",
+
+  "blog.tut-json.title": "Cómo usar el formateador de JSON paso a paso",
+  "blog.tut-json.excerpt": "Guía práctica para formatear, embellecer y corregir errores en archivos JSON.",
+  "blog.tut-passwords.title": "Cómo crear contraseñas verdaderamente seguras",
+  "blog.tut-passwords.excerpt": "Reglas para generar claves complejas y difíciles de vulnerar para tus cuentas.",
+
+  "blog.welcome.title": "¡Bienvenidos a ZidroTool!",
+  "blog.welcome.excerpt": "Descubre nuestra visión y la suite de herramientas gratuitas diseñadas para ti.",
+  "blog.100-tools.title": "ZidroTool alcanza las 100 herramientas gratuitas",
+  "blog.100-tools.excerpt": "Un logro clave para la plataforma y un vistazo a las próximas novedades.",
+  "blog.changelog-july.title": "Registro de cambios y novedades de julio de 2026",
+  "blog.changelog-july.excerpt": "Resumen de las nuevas funciones e incorporación de utilidades durante este mes.",
+
+  // Contenidos de artículos traducidos al español
+  "blog.welcome.body": "Hoy estamos muy entusiasmados de abrir las puertas de ZidroTool. Lo que comenzó como un puñado de utilidades para desarrolladores se ha convertido en una plataforma con más de 100 herramientas en 12 categorías, desde procesadores de texto hasta utilidades de IA, finanzas y seguridad.\n\n<h2>Por qué creamos ZidroTool</h2>\nCada herramienta funciona en tu propio navegador, lo que significa que tus datos nunca salen de tu dispositivo. Sin registros obligatorios, sin límites de pago y sin trucos. Solo herramientas que funcionan.",
+  "blog.100-tools.body": "Cuando lanzamos la plataforma teníamos una visión clara: construir la colección más completa de herramientas gratuitas en la web. Hoy celebramos la llegada a las 100 herramientas distribuidas en 12 categorías.\n\n<h2>Nuevas categorías</h2>\nAñadimos utilidades de IA, herramientas SEO, redes sociales, salud y finanzas para ampliar nuestras funcionalidades.",
+  "blog.changelog-july.body": "Julio fue un mes sumamente activo en ZidroTool. Esto es todo lo que lanzamos:\n\n<h2>Nuevas herramientas</h2>\nAñadimos más de 30 nuevas herramientas en todas las categorías, expandiendo el catálogo de 45 a más de 100 utilidades.",
+  "blog.ai-productivity.body": "Las herramientas de inteligencia artificial han pasado de ser una novedad a una necesidad cotidiana. En ZidroTool creamos utilidades impulsadas por IA que te ahorran tiempo protegiendo tu privacidad.\n\n<h2>Resumen de texto</h2>\nNuestro resumidor de texto condensa artículos largos en puntos clave de forma instantánea.\n\n<h2>Corrección gramatical</h2>\nEl corrector detecta errores ortográficos y de estilo que los verificadores tradicionales suelen pasar por alto."
 };
 
 // Legacy flat keys for compatibility
