@@ -1,433 +1,229 @@
-import { useEffect, useRef, useState, useCallback } from "react";
+import React, { useState, useEffect, useRef } from "react";
+import { useSearchParams } from "react-router-dom";
 import {
   Mic,
-  StopCircle,
+  Square,
   Copy,
-  Download,
-  Trash2,
   Check,
-  AlertCircle,
-  FileText,
-  Radio,
+  Globe,
+  Trash2,
+  Volume2,
+  Sparkles,
+  Loader2,
 } from "lucide-react";
-import { AdSlot } from "@/components/AdSlot";
-import { TRANSLATIONS } from "@/lib/translations";
 
-export default function SpeechToText({ slug }: { slug?: string }) {
-  const [supported, setSupported] = useState(true);
-  const [listening, setListening] = useState(false);
-  const [finalText, setFinalText] = useState("");
-  const [interim, setInterim] = useState("");
-  const [lang, setLang] = useState("ar-DZ");
-  const [uiLang, setUiLang] = useState("ar");
-  const [error, setError] = useState("");
+// خريطة اللغات المدعومة للتعرف الصوتي
+const LANGUAGES = [
+  { code: "ar-SA", name: "العربية", flag: "🇸🇦" },
+  { code: "en-US", name: "English (US)", flag: "🇺🇸" },
+  { code: "fr-FR", name: "Français", flag: "🇫🇷" },
+  { code: "de-DE", name: "Deutsch", flag: "🇩🇪" },
+  { code: "es-ES", name: "Español", flag: "🇪🇸" },
+];
+
+export default function SpeechToText() {
+  const [searchParams] = useSearchParams();
+  const urlLang = searchParams.get("lang");
+
+  // الحالات الأساسية
+  const [isListening, setIsListening] = useState(false);
+  const [transcript, setTranscript] = useState("");
+  const [interimTranscript, setInterimTranscript] = useState("");
+  const [selectedLang, setSelectedLang] = useState("en-US");
   const [copied, setCopied] = useState(false);
+  const [isSummarizing, setIsSummarizing] = useState(false);
+  const [summary, setSummary] = useState("");
 
   const recognitionRef = useRef<any>(null);
-  const shouldListenRef = useRef(false);
-  const restartTimerRef = useRef<NodeJS.Timeout | null>(null);
 
-  const baseLang = lang.split("-")[0];
-  const t = (key: string) => TRANSLATIONS[uiLang]?.[key] || TRANSLATIONS[baseLang]?.[key] || TRANSLATIONS["en"]?.[key] || key;
-
-  // Stop current recognition instance safely
-  const stopEngine = useCallback(() => {
-    shouldListenRef.current = false;
-    setListening(false);
-    setInterim("");
-
-    if (restartTimerRef.current) {
-      clearTimeout(restartTimerRef.current);
-      restartTimerRef.current = null;
-    }
-
-    if (recognitionRef.current) {
-      try {
-        recognitionRef.current.stop();
-      } catch {
-        // Ignore fallback if already stopped
-      }
-    }
-  }, []);
-
-  // Initialize Web Speech Recognition Engine
+  // 1. تحديد اللغة تلقائياً بناءً على معيار ?lang= المعطى في URL
   useEffect(() => {
-    if (typeof window === "undefined") return;
+    if (urlLang) {
+      const lower = urlLang.toLowerCase();
+      if (lower === "fr") setSelectedLang("fr-FR");
+      else if (lower === "en") setSelectedLang("en-US");
+      else if (lower === "ar") setSelectedLang("ar-SA");
+      else if (lower === "de") setSelectedLang("de-DE");
+      else if (lower === "es") setSelectedLang("es-ES");
+    }
+  }, [urlLang]);
 
-    const win = window as any;
+  // 2. إعداد Web Speech API
+  useEffect(() => {
     const SpeechRecognition =
-      win.SpeechRecognition || win.webkitSpeechRecognition;
+      (window as any).SpeechRecognition ||
+      (window as any).webkitSpeechRecognition;
 
-    if (!SpeechRecognition) {
-      setSupported(false);
+    if (SpeechRecognition) {
+      const recognition = new SpeechRecognition();
+      recognition.continuous = true;
+      recognition.interimResults = true;
+      recognition.lang = selectedLang;
+
+      recognition.onresult = (event: any) => {
+        let currentInterim = "";
+        let finalChunk = "";
+
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+          const transcriptChunk = event.results[i][0].transcript;
+          if (event.results[i].isFinal) {
+            finalChunk += transcriptChunk + " ";
+          } else {
+            currentInterim += transcriptChunk;
+          }
+        }
+
+        if (finalChunk) {
+          setTranscript((prev) => prev + finalChunk);
+        }
+        setInterimTranscript(currentInterim);
+      };
+
+      recognition.onerror = (event: any) => {
+        console.error("Speech recognition error:", event.error);
+        setIsListening(false);
+      };
+
+      recognition.onend = () => {
+        setIsListening(false);
+        setInterimTranscript("");
+      };
+
+      recognitionRef.current = recognition;
+    }
+  }, [selectedLang]);
+
+  // تشغيل / إيقاف التسجيل
+  const toggleListening = () => {
+    if (!recognitionRef.current) {
+      alert("Speech recognition is not supported in this browser.");
       return;
     }
 
-    setSupported(true);
-    const recognition = new SpeechRecognition();
-
-    recognition.continuous = true;
-    recognition.interimResults = true;
-    recognition.lang = lang;
-    recognition.maxAlternatives = 1;
-
-    recognition.onstart = () => {
-      setError("");
-      setListening(true);
-    };
-
-    recognition.onresult = (event: any) => {
-      let interimTranscript = "";
-      let finalTranscript = "";
-
-      for (let i = event.resultIndex; i < event.results.length; i++) {
-        const result = event.results[i];
-        const transcript = result[0]?.transcript || "";
-
-        if (result.isFinal) {
-          finalTranscript += transcript + " ";
-        } else {
-          interimTranscript += transcript;
-        }
-      }
-
-      if (finalTranscript.trim()) {
-        setFinalText((previous) =>
-          previous
-            ? `${previous.trim()} ${finalTranscript.trim()}`
-            : finalTranscript.trim()
-        );
-      }
-
-      setInterim(interimTranscript);
-    };
-
-    recognition.onerror = (event: any) => {
-      console.warn("Speech recognition event error:", event.error);
-
-      // الأخطاء المؤقتة: السكوت، انقطاع سيرفر متصفح كروم المؤقت، أو إلغاء الجلسة
-      // نترك أداء إعادة الاتصال لـ onend دون إيقاف التسجيل
-      if (
-        event.error === "no-speech" ||
-        event.error === "network" ||
-        event.error === "aborted"
-      ) {
-        return;
-      }
-
-      if (event.error === "not-allowed") {
-        setError("تم رفض إذن استخدام الميكروفون. يرجى السماح بالوصول للميكروفون من إعدادات المتصفح.");
-        shouldListenRef.current = false;
-        setListening(false);
-      } else if (event.error === "audio-capture") {
-        setError("لم يتم العثور على ميكروفون. يرجى توصيل ميكروفون والتأكد من عمله.");
-        shouldListenRef.current = false;
-        setListening(false);
-      } else {
-        setError("حدث خطأ أثناء التعرف على الصوت. جاري إعادة المحاولة...");
-      }
-    };
-
-    // Auto-Restart Mechanism On End Event (Resilient Loop)
-    recognition.onend = () => {
-      setInterim("");
-
-      // إذا كان المستخدم لا يزال يريد التسجيل، نعيد التشغيل فوراً
-      if (shouldListenRef.current) {
-        if (restartTimerRef.current) clearTimeout(restartTimerRef.current);
-
-        restartTimerRef.current = setTimeout(() => {
-          if (shouldListenRef.current && recognitionRef.current) {
-            try {
-              recognitionRef.current.start();
-            } catch (err: any) {
-              console.warn("Initial auto-restart failed, trying fallback retry:", err);
-              // محاولة ثانية بعد 400ms في حال كان المحرك بحاجة لوقت أطول لتفريغ الذاكرة
-              setTimeout(() => {
-                if (shouldListenRef.current && recognitionRef.current) {
-                  try {
-                    recognitionRef.current.start();
-                  } catch (retryErr) {
-                    console.error("Fallback auto-restart error:", retryErr);
-                  }
-                }
-              }, 400);
-            }
-          }
-        }, 250);
-      } else {
-        setListening(false);
-      }
-    };
-
-    recognitionRef.current = recognition;
-
-    return () => {
-      shouldListenRef.current = false;
-      if (restartTimerRef.current) clearTimeout(restartTimerRef.current);
-      try {
-        recognition.abort();
-      } catch {
-        // Safe fallback
-      }
-      recognitionRef.current = null;
-    };
-  }, [lang]);
-
-  // Start Recognition Handler
-  const start = useCallback(() => {
-    if (!recognitionRef.current) return;
-
-    setError("");
-    setInterim("");
-    shouldListenRef.current = true;
-
-    try {
-      recognitionRef.current.lang = lang;
+    if (isListening) {
+      recognitionRef.current.stop();
+      setIsListening(false);
+    } else {
+      recognitionRef.current.lang = selectedLang;
       recognitionRef.current.start();
-    } catch (err: any) {
-      if (err.name === "InvalidStateError") {
-        setListening(true);
-      } else {
-        console.error("Speech start error:", err);
-        shouldListenRef.current = false;
-        setListening(false);
-        setError("تعذر بدء التسجيل الصوتي. يرجى المحاولة مرة أخرى.");
-      }
-    }
-  }, [lang]);
-
-  const clearAll = () => {
-    setFinalText("");
-    setInterim("");
-    setError("");
-  };
-
-  const copyText = async () => {
-    const text = finalText.trim();
-    if (!text) return;
-
-    try {
-      await navigator.clipboard.writeText(text);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    } catch (error) {
-      console.error("Failed to copy text:", error);
+      setIsListening(true);
     }
   };
 
-  // Safe TXT Download with UTF-8 BOM Fix for Arabic Text
-  const downloadTxt = () => {
-    const text = finalText.trim();
-    if (!text) return;
-
-    const blob = new Blob(["\uFEFF" + text], { type: "text/plain;charset=utf-8" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-
-    link.href = url;
-    link.download = `${slug || "speech-to-text"}.txt`;
-
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
-    URL.revokeObjectURL(url);
+  // نسخ النص
+  const handleCopy = () => {
+    if (!transcript) return;
+    navigator.clipboard.writeText(transcript);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
   };
 
-  const handleLangChange = (newLang: string) => {
-    // When changing speech recognition language, safely stop engine and reset interim state
-    stopEngine();
-    setLang(newLang);
+  // مسح النص
+  const handleClear = () => {
+    setTranscript("");
+    setInterimTranscript("");
+    setSummary("");
   };
 
-  const handleUiLangChange = (newUiLang: string) => {
-    // Stop any active engines to avoid mismatches when UI language changes
-    stopEngine();
-    setUiLang(newUiLang);
+  // نطق النص (Text to Speech)
+  const handleSpeak = () => {
+    if (!transcript || !window.speechSynthesis) return;
+    const utterance = new SpeechSynthesisUtterance(transcript);
+    utterance.lang = selectedLang;
+    window.speechSynthesis.speak(utterance);
   };
-
-  const wordCount = finalText.trim() ? finalText.trim().split(/\s+/).length : 0;
-  const charCount = finalText.length;
-  const isRtl = uiLang === "ar";
 
   return (
-    <div className="flex min-h-[60vh] items-start">
-      <div className="mx-auto w-full max-w-3xl py-8">
-        <div className="rounded-xl border border-gray-100 bg-white p-6 shadow-lg dark:border-ink-800 dark:bg-ink-900">
-          <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
-            <h2 className="text-2xl font-semibold text-gray-800 dark:text-white">
-              {t('speech_to_text_title')}
-            </h2>
+    <div className="max-w-4xl mx-auto p-4 md:p-6 space-y-6">
+      {/* Header */}
+      <div className="text-center space-y-2">
+        <h1 className="text-3xl font-extrabold text-gray-900">
+          Speech to Text Converter
+        </h1>
+        <p className="text-gray-500">
+          Convert your spoken voice into clean, accurate written text in real-time.
+        </p>
+      </div>
 
-            {listening && (
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-red-100 px-3 py-1 text-xs font-semibold text-red-600 dark:bg-red-950/60 dark:text-red-400">
-                <Radio className="h-3.5 w-3.5 animate-pulse" />
-                {t('listening_now')}
-              </span>
+      {/* Controls Bar */}
+      <div className="flex flex-wrap items-center justify-between gap-4 bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
+        {/* Language Selector */}
+        <div className="flex items-center gap-2">
+          <Globe className="w-5 h-5 text-gray-400" />
+          <select
+            value={selectedLang}
+            onChange={(e) => setSelectedLang(e.target.value)}
+            disabled={isListening}
+            className="bg-gray-50 border border-gray-200 text-gray-700 text-sm rounded-lg p-2.5 focus:ring-blue-500 focus:border-blue-500"
+          >
+            {LANGUAGES.map((lang) => (
+              <option key={lang.code} value={lang.code}>
+                {lang.flag} {lang.name}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {/* Action Buttons */}
+        <div className="flex items-center gap-2">
+          <button
+            onClick={handleSpeak}
+            disabled={!transcript}
+            className="p-2.5 text-gray-600 hover:bg-gray-100 rounded-lg disabled:opacity-50 transition-colors"
+            title="Read Aloud"
+          >
+            <Volume2 className="w-5 h-5" />
+          </button>
+          <button
+            onClick={handleCopy}
+            disabled={!transcript}
+            className="p-2.5 text-gray-600 hover:bg-gray-100 rounded-lg disabled:opacity-50 transition-colors"
+            title="Copy Text"
+          >
+            {copied ? <Check className="w-5 h-5 text-green-600" /> : <Copy className="w-5 h-5" />}
+          </button>
+          <button
+            onClick={handleClear}
+            disabled={!transcript && !interimTranscript}
+            className="p-2.5 text-red-600 hover:bg-red-50 rounded-lg disabled:opacity-50 transition-colors"
+            title="Clear Text"
+          >
+            <Trash2 className="w-5 h-5" />
+          </button>
+        </div>
+      </div>
+
+      {/* Main Recording Area */}
+      <div className="relative min-h-[250px] bg-white border border-gray-200 rounded-2xl p-6 shadow-sm flex flex-col justify-between">
+        <div className="prose max-w-none text-gray-800 text-lg leading-relaxed space-y-2">
+          {transcript || interimTranscript ? (
+            <p>
+              <span>{transcript}</span>
+              <span className="text-gray-400 italic">{interimTranscript}</span>
+            </p>
+          ) : (
+            <p className="text-gray-400 italic">
+              Click the microphone button below and start speaking...
+            </p>
+          )}
+        </div>
+
+        {/* Record Button */}
+        <div className="flex justify-center pt-8">
+          <button
+            onClick={toggleListening}
+            className={`relative inline-flex items-center justify-center p-5 rounded-full font-bold text-white transition-all shadow-lg ${
+              isListening
+                ? "bg-red-600 hover:bg-red-700 ring-4 ring-red-200 animate-pulse"
+                : "bg-blue-600 hover:bg-blue-700 hover:scale-105"
+            }`}
+          >
+            {isListening ? (
+              <Square className="w-6 h-6 fill-current" />
+            ) : (
+              <Mic className="w-6 h-6" />
             )}
-          </div>
-
-          <div className="mb-4 inline-flex items-center gap-2 rounded-lg border border-green-200 bg-green-50 px-3 py-1.5 text-sm text-green-700 dark:border-green-800 dark:bg-green-950/40 dark:text-green-300">
-            <span>🔒 {t('privacy_notice')}</span>
-          </div>
-
-          {!supported && (
-            <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700 dark:border-red-800 dark:bg-red-950/40 dark:text-red-300 flex items-center gap-2">
-              <AlertCircle className="h-5 w-5 shrink-0" />
-              {t('speech_not_supported')}
-            </div>
-          )}
-
-          {supported && (
-            <div className="space-y-4">
-              {/* Controls Header */}
-              <div className="flex flex-wrap items-center gap-3">
-                <div className="flex items-center gap-2">
-                  <label className="text-sm font-medium text-gray-700 dark:text-gray-200">
-                    {t('speaking_language_label')}
-                  </label>
-
-                  <select
-                    value={lang}
-                    onChange={(e) => handleLangChange(e.target.value)}
-                    disabled={listening}
-                    className="rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm text-gray-800 focus:border-blue-500 focus:outline-none dark:border-ink-700 dark:bg-ink-800 dark:text-white"
-                  >
-                    <option value="ar-DZ">العربية (الجزائر)</option>
-                    <option value="ar-SA">العربية (السعودية)</option>
-                    <option value="ar-EG">العربية (مصر)</option>
-                    <option value="fr-FR">Français (FR)</option>
-                    <option value="en-US">English (US)</option>
-                    <option value="en-GB">English (UK)</option>
-                    <option value="de-DE">Deutsch (DE)</option>
-                    <option value="es-ES">Español (ES)</option>
-                    <option value="it-IT">Italiano (IT)</option>
-                  </select>
-
-                  {/* UI Language Selector */}
-                  <select
-                    value={uiLang}
-                    onChange={(e) => handleUiLangChange(e.target.value)}
-                    className="rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm text-gray-800 focus:border-blue-500 focus:outline-none dark:border-ink-700 dark:bg-ink-800 dark:text-white"
-                    aria-label="UI language"
-                  >
-                    <option value="ar">العربية</option>
-                    <option value="en">English</option>
-                    <option value="fr">Français</option>
-                    <option value="es">Español</option>
-                    <option value="de">Deutsch</option>
-                    <option value="it">Italiano</option>
-                  </select>
-                </div>
-              </div>
-
-              {/* Action Buttons */}
-              <div className="flex flex-wrap items-center gap-3">
-                <button
-                  type="button"
-                  onClick={listening ? stopEngine : start}
-                  className={`inline-flex items-center gap-2 rounded-lg px-4 py-2 font-medium text-white transition-all ${
-                    listening
-                      ? "bg-red-600 hover:bg-red-700 shadow-md shadow-red-200 dark:shadow-none"
-                      : "bg-blue-600 hover:bg-blue-700"
-                  }`}
-                >
-                  {listening ? (
-                    <>
-                      <StopCircle className="h-4 w-4" />
-                      {t('stop')}
-                    </>
-                  ) : (
-                    <>
-                      <Mic className="h-4 w-4" />
-                      {t('start_listening')}
-                    </>
-                  )}
-                </button>
-
-                <button
-                  type="button"
-                  onClick={clearAll}
-                  disabled={!finalText && !interim}
-                  className="inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm text-gray-600 hover:bg-gray-100 disabled:opacity-50 dark:text-gray-300 dark:hover:bg-ink-800 transition-colors"
-                >
-                  <Trash2 className="h-4 w-4" />
-                  {t('clear')}
-                </button>
-
-                <div className="mr-auto flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={copyText}
-                    disabled={!finalText.trim()}
-                    className="inline-flex items-center gap-1.5 rounded-lg border border-gray-300 px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-ink-700 dark:text-gray-200 dark:hover:bg-ink-800 transition-colors"
-                  >
-                    {copied ? (
-                      <>
-                        <Check className="h-4 w-4 text-green-600" />
-                        <span className="text-green-600">{t('copied_success')}</span>
-                      </>
-                    ) : (
-                      <>
-                        <Copy className="h-4 w-4" />
-                        {t('copy')}
-                      </>
-                    )}
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={downloadTxt}
-                    disabled={!finalText.trim()}
-                    className="inline-flex items-center gap-1.5 rounded-lg border border-gray-300 px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-ink-700 dark:text-gray-200 dark:hover:bg-ink-800 transition-colors"
-                  >
-                    <Download className="h-4 w-4" />
-                    {t('download_txt')}
-                  </button>
-                </div>
-              </div>
-
-              {/* Error Alert */}
-              {error && (
-                <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700 dark:border-red-800 dark:bg-red-950/40 dark:text-red-300">
-                  {t(error) || error}
-                </div>
-              )}
-
-              {/* Text Area Input */}
-              <div className="relative">
-                <textarea
-                  value={finalText}
-                  onChange={(e) => setFinalText(e.target.value)}
-                  rows={10}
-                  placeholder={listening ? t('listening_placeholder') : t('start_placeholder')}
-                  className="w-full rounded-lg border border-gray-300 p-3 text-base text-gray-800 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-ink-700 dark:bg-ink-800 dark:text-white transition-all"
-                  dir={isRtl ? "rtl" : "ltr"}
-                />
-
-                {/* Interim Live Stream Indicator */}
-                {interim && (
-                    <div className="mt-2 flex items-center gap-2 rounded-md bg-blue-50 p-2.5 text-sm text-blue-700 dark:bg-ink-800 dark:text-blue-300 border border-blue-100 dark:border-ink-700">
-                      <Radio className="h-4 w-4 shrink-0 animate-spin text-blue-500" />
-                      <span className="font-medium">{t('preview')}: </span>
-                      <span className="italic">{interim}</span>
-                    </div>
-                )}
-              </div>
-
-              {/* Text Stats Bar */}
-              <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400 px-1">
-                <span className="flex items-center gap-1">
-                  <FileText className="h-3.5 w-3.5" />
-                  {t('words_label')}: {wordCount} | {t('chars_label')}: {charCount}
-                </span>
-              </div>
-
-              <div className="mt-6">
-                <AdSlot variant="inline" />
-              </div>
-            </div>
-          )}
+          </button>
         </div>
       </div>
     </div>
