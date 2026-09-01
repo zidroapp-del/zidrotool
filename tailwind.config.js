@@ -1,0 +1,107 @@
+/** @type {import('tailwindcss').Config} */
+export default {
+  darkMode: "class",
+  content: ["./index.html", "./src/**/*.{ts,tsx}"],
+  theme: {
+    extend: {
+      colors: {
+        brand: {
+          50: "#eff6ff",
+          100: "#dbeafe",
+          200: "#bfdbfe",
+          300: "#93c5fd",
+          400: "#60a5fa",
+          500: "#3b82f6",
+          600: "#2563eb",
+          700: "#1d4ed8",
+          800: "#1e40af",
+          900: "#1e3a8a",
+          950: "#172554",
+        },
+        accent: {
+          50: "#ecfeff",
+          100: "#cffafe",
+          200: "#a5f3fc",
+          300: "#67e8f9",
+          400: "#22d3ee",
+          500: "#06b6d4",
+          600: "#0891b2",
+          700: "#0e7490",
+          800: "#155e75",
+          900: "#164e63",
+        },
+        ink: {
+          50: "#f8fafc",
+          100: "#f1f5f9",
+          200: "#e2e8f0",
+          300: "#cbd5e1",
+          400: "#94a3b8",
+          500: "#64748b",
+          600: "#475569",
+          700: "#334155",
+          800: "#1e293b",
+          900: "#0f172a",
+          950: "#020617",
+        },
+        success: { DEFAULT: "#16a34a", 50: "#f0fdf4", 600: "#15803d", 700: "#166534" },
+        warning: { DEFAULT: "#d97706", 50: "#fffbeb", 600: "#b45309", 700: "#92400e" },
+        danger: { DEFAULT: "#dc2626", 50: "#fef2f2", 600: "#c81e1e", 700: "#b91c1c" },
+      },
+      fontFamily: {
+        sans: ["Inter", "system-ui", "-apple-system", "Segoe UI", "Roboto", "sans-serif"],
+        mono: ["JetBrains Mono", "ui-monospace", "SFMono-Regular", "Menlo", "monospace"],
+      },
+      boxShadow: {
+        card: "0 1px 2px 0 rgb(15 23 42 / 0.04), 0 1px 3px 0 rgb(15 23 42 / 0.06)",
+        "card-hover": "0 8px 24px -8px rgb(15 23 42 / 0.12), 0 2px 6px -2px rgb(15 23 42 / 0.08)",
+        glow: "0 0 0 1px rgb(59 130 246 / 0.1), 0 8px 32px -8px rgb(59 130 246 / 0.25)",
+      },
+      borderRadius: {
+        "2xl": "1rem",
+        "3xl": "1.25rem",
+      },
+      keyframes: {
+        "fade-in": { from: { opacity: "0" }, to: { opacity: "1" } },
+        "slide-up": {
+          from: { opacity: "0", transform: "translateY(12px)" },
+          to: { opacity: "1", transform: "translateY(0)" },
+        },
+        "slide-down": {
+          from: { opacity: "0", transform: "translateY(-12px)" },
+          to: { opacity: "1", transform: "translateY(0)" },
+        },
+        "scale-in": {
+          from: { opacity: "0", transform: "scale(0.95)" },
+          to: { opacity: "1", transform: "scale(1)" },
+        },
+        shimmer: { "0%": { backgroundPosition: "-200% 0" }, "100%": { backgroundPosition: "200% 0" } },
+        "shake": { "0%,100%": { transform: "translateX(0)" }, "20%": { transform: "translateX(-6px)" }, "40%": { transform: "translateX(6px)" }, "60%": { transform: "translateX(-4px)" }, "80%": { transform: "translateX(4px)" } },
+        "bounce-once": { "0%": { transform: "scale(0.8)", opacity: "0" }, "50%": { transform: "scale(1.1)" }, "100%": { transform: "scale(1)", opacity: "1" } },
+        marquee: { from: { transform: "translateX(0)" }, to: { transform: "translateX(-50%)" } },
+        "pulse-soft": {
+          "0%, 100%": { opacity: "1" },
+          "50%": { opacity: "0.6" },
+        },
+        "glow-pulse": {
+          "0%, 100%": { boxShadow: "0 0 20px -5px rgb(59 130 246 / 0.3)" },
+          "50%": { boxShadow: "0 0 30px -5px rgb(59 130 246 / 0.5)" },
+        },
+      },
+      animation: {
+        "fade-in": "fade-in 0.4s ease-out",
+        "slide-up": "slide-up 0.4s cubic-bezier(0.16,1,0.3,1)",
+        "slide-down": "slide-down 0.25s cubic-bezier(0.16,1,0.3,1)",
+        "scale-in": "scale-in 0.2s cubic-bezier(0.16,1,0.3,1)",
+        shimmer: "shimmer 1.8s linear infinite",
+        shake: "shake 0.4s ease-in-out",
+        "bounce-once": "bounce-once 0.5s cubic-bezier(0.16,1,0.3,1)",
+        "pulse-soft": "pulse-soft 2s ease-in-out infinite",
+        "glow-pulse": "glow-pulse 2.5s ease-in-out infinite",
+      },
+      transitionTimingFunction: {
+        "smooth-out": "cubic-bezier(0.16, 1, 0.3, 1)",
+      },
+    },
+  },
+  plugins: [],
+};
