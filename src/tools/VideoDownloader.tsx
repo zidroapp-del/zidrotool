@@ -3,9 +3,17 @@ import { Download, Loader2, Link2, Video } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useToast } from "@/components/Toast";
 
+type VideoPlatform =
+  | "facebook"
+  | "tiktok"
+  | "youtube"
+  | "instagram"
+  | "x"
+  | "auto";
+
 interface VideoDownloaderProps {
   slug?: string;
-  platform?: "facebook" | "tiktok" | "auto";
+  platforms?: VideoPlatform[];
 }
 
 interface DownloadResult {
@@ -14,26 +22,141 @@ interface DownloadResult {
   thumbnail?: string;
   filename?: string;
   provider?: string;
+  author?: string;
+  duration?: number | null;
+}
+
+function detectPlatformFromUrl(
+  value: string
+): VideoPlatform | null {
+  try {
+    const url = new URL(value.trim());
+    const hostname = url.hostname.toLowerCase().replace(/^www\./, "");
+
+    // TikTok
+    if (
+      hostname === "tiktok.com" ||
+      hostname.endsWith(".tiktok.com")
+    ) {
+      return "tiktok";
+    }
+
+    // YouTube
+    if (
+      hostname === "youtube.com" ||
+      hostname.endsWith(".youtube.com") ||
+      hostname === "youtu.be"
+    ) {
+      return "youtube";
+    }
+
+    // Facebook
+    if (
+      hostname === "facebook.com" ||
+      hostname.endsWith(".facebook.com") ||
+      hostname === "fb.watch"
+    ) {
+      return "facebook";
+    }
+
+    // Instagram
+    if (
+      hostname === "instagram.com" ||
+      hostname.endsWith(".instagram.com")
+    ) {
+      return "instagram";
+    }
+
+    // X / Twitter
+    if (
+      hostname === "x.com" ||
+      hostname.endsWith(".x.com") ||
+      hostname === "twitter.com" ||
+      hostname.endsWith(".twitter.com")
+    ) {
+      return "x";
+    }
+
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+function getToolPrimaryPlatform(
+  platforms?: VideoPlatform[]
+): VideoPlatform {
+  return platforms?.[0] || "auto";
+}
+
+function getToolTitle(
+  platforms?: VideoPlatform[],
+  t?: (key: string) => string
+) {
+  const primary = getToolPrimaryPlatform(platforms);
+
+  switch (primary) {
+    case "facebook":
+      return t
+        ? t("tool.facebook-video-downloader.name")
+        : "Facebook Video Downloader";
+
+    case "tiktok":
+      return t
+        ? t("tool.tiktok-downloader.name")
+        : "TikTok Downloader";
+
+    case "youtube":
+      return "YouTube Video Downloader";
+
+    case "instagram":
+      return "Instagram Video Downloader";
+
+    case "x":
+      return "X Video Downloader";
+
+    default:
+      return "Video Downloader";
+  }
 }
 
 export default function VideoDownloader({
   slug,
-  platform: requestedPlatform,
+  platforms,
 }: VideoDownloaderProps) {
-  const platform: "facebook" | "tiktok" | "auto" =
-    requestedPlatform ||
-    (slug === "tiktok-downloader"
-      ? "tiktok"
-      : slug === "facebook-video-downloader"
-      ? "facebook"
-      : "auto");
-
   const { t } = useTranslation();
   const { error } = useToast();
 
+  const primaryPlatform = getToolPrimaryPlatform(platforms);
+
   const [url, setUrl] = useState("");
   const [busy, setBusy] = useState(false);
-  const [result, setResult] = useState<DownloadResult | null>(null);
+  const [result, setResult] =
+    useState<DownloadResult | null>(null);
+
+  const allowedPlatforms =
+    platforms && platforms.length > 0
+      ? platforms
+      : ["auto"];
+
+  const validateAndDetectPlatform = (
+    value: string
+  ): VideoPlatform | null => {
+    const detected = detectPlatformFromUrl(value);
+
+    if (!detected) {
+      return null;
+    }
+
+    if (
+      allowedPlatforms.includes("auto") ||
+      allowedPlatforms.includes(detected)
+    ) {
+      return detected;
+    }
+
+    return null;
+  };
 
   const submit = async () => {
     const value = url.trim();
@@ -43,33 +166,73 @@ export default function VideoDownloader({
       return;
     }
 
+    const detectedPlatform =
+      validateAndDetectPlatform(value);
+
+    if (!detectedPlatform) {
+      if (
+        primaryPlatform === "tiktok" &&
+        allowedPlatforms.includes("youtube")
+      ) {
+        error(
+          "Please enter a valid TikTok or YouTube URL."
+        );
+      } else if (
+        primaryPlatform === "facebook" &&
+        allowedPlatforms.includes("instagram")
+      ) {
+        error(
+          "Please enter a valid Facebook or Instagram URL."
+        );
+      } else {
+        error("Please enter a valid video URL.");
+      }
+
+      return;
+    }
+
     setBusy(true);
     setResult(null);
 
     try {
+      const params = new URLSearchParams({
+        platform: detectedPlatform,
+        url: value,
+        download: "0",
+      });
+
       const response = await fetch(
-        `/api/video-download?platform=${encodeURIComponent(
-          platform
-        )}&url=${encodeURIComponent(value)}`,
+        `/api/video-download?${params.toString()}`,
         {
+          method: "GET",
           cache: "no-store",
         }
       );
 
-      const data = await response.json().catch(() => ({}));
+      const data = await response
+        .json()
+        .catch(() => ({}));
 
       if (!response.ok || !data.downloadUrl) {
-        throw new Error(data.error || "Download service unavailable.");
+        throw new Error(
+          data.error ||
+            "Download service unavailable."
+        );
       }
 
       setResult(data as DownloadResult);
     } catch (err) {
-      console.error("Video download error:", err);
+      console.error(
+        "Video download error:",
+        err
+      );
 
       error(
         err instanceof Error
           ? err.message
-          : t("tool.videoDownloader.unavailable")
+          : t(
+              "tool.videoDownloader.unavailable"
+            )
       );
     } finally {
       setBusy(false);
@@ -84,20 +247,55 @@ export default function VideoDownloader({
       return;
     }
 
-    const downloadUrl = `/api/video-download?url=${encodeURIComponent(
-  value
-)}&platform=${encodeURIComponent(platform)}&download=1`;
+    const detectedPlatform =
+      validateAndDetectPlatform(value);
+
+    if (!detectedPlatform) {
+      error("Please enter a valid video URL.");
+      return;
+    }
+
+    const params = new URLSearchParams({
+      url: value,
+      platform: detectedPlatform,
+      download: "1",
+    });
+
+    const downloadUrl =
+      `/api/video-download?${params.toString()}`;
 
     const a = document.createElement("a");
+
     a.href = downloadUrl;
     a.download =
       result?.filename ||
-      `${platform === "auto" ? "video" : platform}-video.mp4`;
+      `${detectedPlatform}-video.mp4`;
+
     a.rel = "noopener noreferrer";
 
     document.body.appendChild(a);
     a.click();
     a.remove();
+  };
+
+  const getSupportedText = () => {
+    if (
+      platforms?.includes("tiktok") &&
+      platforms?.includes("youtube")
+    ) {
+      return "Supports TikTok and YouTube videos.";
+    }
+
+    if (
+      platforms?.includes("facebook") &&
+      platforms?.includes("instagram")
+    ) {
+      return "Supports Facebook and Instagram videos.";
+    }
+
+    return t(
+      "tool.videoDownloader.helper"
+    );
   };
 
   return (
@@ -110,26 +308,22 @@ export default function VideoDownloader({
 
           <div>
             <h2 className="font-semibold text-ink-900 dark:text-ink-100">
-              {platform === "auto"
-                ? "Universal Video Downloader"
-                : t(
-                    platform === "tiktok"
-                      ? "tool.tiktok-downloader.name"
-                      : "tool.facebook-video-downloader.name"
-                  )}
+              {getToolTitle(platforms, t)}
             </h2>
 
             <p className="mt-1 text-sm text-ink-500 dark:text-ink-400">
-              {t("tool.videoDownloader.helper")}
+              {getSupportedText()}
             </p>
           </div>
         </div>
 
         <label
           className="mt-5 block text-sm font-medium text-ink-700 dark:text-ink-300"
-          htmlFor={`${platform}-video-url`}
+          htmlFor={`${slug || primaryPlatform}-video-url`}
         >
-          {t("tool.videoDownloader.urlLabel")}
+          {t(
+            "tool.videoDownloader.urlLabel"
+          )}
         </label>
 
         <div className="mt-2 flex flex-col gap-2 sm:flex-row">
@@ -137,15 +331,27 @@ export default function VideoDownloader({
             <Link2 className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-400" />
 
             <input
-              id={`${platform}-video-url`}
+              id={`${slug || primaryPlatform}-video-url`}
               value={url}
-              onChange={(e) => setUrl(e.target.value)}
+              onChange={(e) =>
+                setUrl(e.target.value)
+              }
               onKeyDown={(e) => {
                 if (e.key === "Enter") {
                   void submit();
                 }
               }}
-              placeholder={t("tool.videoDownloader.urlPlaceholder")}
+              placeholder={
+                platforms?.includes("tiktok") &&
+                platforms?.includes("youtube")
+                  ? "Paste TikTok or YouTube URL"
+                  : platforms?.includes("facebook") &&
+                    platforms?.includes("instagram")
+                  ? "Paste Facebook or Instagram URL"
+                  : t(
+                      "tool.videoDownloader.urlPlaceholder"
+                    )
+              }
               className="input w-full pl-10"
               type="url"
               autoComplete="off"
@@ -155,25 +361,33 @@ export default function VideoDownloader({
           <button
             type="button"
             onClick={submit}
-            disabled={busy || !url.trim()}
+            disabled={
+              busy || !url.trim()
+            }
             className="btn-primary sm:min-w-36"
           >
             {busy ? (
               <>
                 <Loader2 className="h-4 w-4 animate-spin" />
-                {t("tool.videoDownloader.processing")}
+                {t(
+                  "tool.videoDownloader.processing"
+                )}
               </>
             ) : (
               <>
                 <Download className="h-4 w-4" />
-                {t("tool.videoDownloader.fetch")}
+                {t(
+                  "tool.videoDownloader.fetch"
+                )}
               </>
             )}
           </button>
         </div>
 
         <p className="mt-3 text-xs leading-5 text-ink-400">
-          {t("tool.videoDownloader.legal")}
+          {t(
+            "tool.videoDownloader.legal"
+          )}
         </p>
       </div>
 
@@ -192,16 +406,35 @@ export default function VideoDownloader({
 
             <div className="min-w-0 flex-1">
               <p className="font-semibold text-success-800 dark:text-success-300">
-                {result.title || t("tool.videoDownloader.ready")}
+                {result.title ||
+                  t(
+                    "tool.videoDownloader.ready"
+                  )}
               </p>
 
               <p className="truncate text-sm text-success-700/80 dark:text-success-400/80">
-                {result.filename || t("tool.videoDownloader.videoFile")}
-                {result.provider ? ` · ${result.provider}` : ""}
+                {result.filename ||
+                  t(
+                    "tool.videoDownloader.videoFile"
+                  )}
+
+                {result.provider
+                  ? ` · ${result.provider}`
+                  : ""}
               </p>
+
+              {result.author && (
+                <p className="mt-1 text-xs text-success-700/70 dark:text-success-400/70">
+                  {result.author}
+                </p>
+              )}
             </div>
 
-            <button type="button" onClick={download} className="btn-primary">
+            <button
+              type="button"
+              onClick={download}
+              className="btn-primary"
+            >
               <Download className="h-4 w-4" />
               {t("tool.download")}
             </button>
