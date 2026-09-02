@@ -19,7 +19,7 @@ function json(res, status, body) {
   res.setHeader("Content-Type", "application/json; charset=utf-8");
   res.setHeader("Cache-Control", "no-store");
   res.setHeader("Access-Control-Allow-Origin", "*");
-  res.setHeader("Access-Control-Allow-Methods", "GET, OPTIONS");
+  res.setHeader("Access-Control-Allow-Methods", "GET, HEAD, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
 
   if (typeof res.json === "function") {
@@ -191,15 +191,9 @@ async function callCobalt(baseUrl, sourceUrl) {
 
   return {
     downloadUrl,
-    filename:
-      data?.filename ||
-      "video.mp4",
-    title:
-      data?.filename ||
-      "Video",
-    thumbnail:
-      data?.thumbnail ||
-      null,
+    filename: data?.filename || "video.mp4",
+    title: data?.filename || "Video",
+    thumbnail: data?.thumbnail || null,
     provider: "cobalt",
   };
 }
@@ -389,19 +383,121 @@ function getProviders() {
   return providers;
 }
 
+function safeFilename(filename) {
+  return String(filename || "video.mp4")
+    .replace(/[<>:"/\\|?*\x00-\x1F]/g, "_")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, 180) || "video.mp4";
+}
+
+async function downloadVideo(res, downloadUrl, filename) {
+  console.log("Starting video download:", {
+    filename,
+  });
+
+  const response = await fetch(downloadUrl, {
+    method: "GET",
+    redirect: "follow",
+    signal: AbortSignal.timeout(60000),
+    headers: {
+      Accept: "video/mp4,video/*,*/*",
+      "User-Agent":
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/150 Safari/537.36",
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error(
+      `Video server returned HTTP ${response.status}`
+    );
+  }
+
+  if (!response.body) {
+    throw new Error(
+      "Video server returned an empty response."
+    );
+  }
+
+  const contentType =
+    response.headers.get("content-type") ||
+    "video/mp4";
+
+  const contentLength =
+    response.headers.get("content-length");
+
+  const finalFilename = safeFilename(filename);
+
+  res.statusCode = 200;
+
+  res.setHeader(
+    "Content-Type",
+    contentType
+  );
+
+  res.setHeader(
+    "Content-Disposition",
+    `attachment; filename="${finalFilename}"`
+  );
+
+  res.setHeader(
+    "Cache-Control",
+    "no-store, no-cache, must-revalidate"
+  );
+
+  res.setHeader(
+    "Access-Control-Allow-Origin",
+    "*"
+  );
+
+  if (contentLength) {
+    res.setHeader(
+      "Content-Length",
+      contentLength
+    );
+  }
+
+  const reader = response.body.getReader();
+
+  try {
+    while (true) {
+      const { done, value } =
+        await reader.read();
+
+      if (done) {
+        break;
+      }
+
+      if (value) {
+        res.write(Buffer.from(value));
+      }
+    }
+  } finally {
+    reader.releaseLock();
+  }
+
+  res.end();
+}
+
 export default async function handler(req, res) {
   if (req.method === "OPTIONS") {
     return json(res, 204, {});
   }
 
-  if (req.method !== "GET") {
+  if (
+    req.method !== "GET" &&
+    req.method !== "HEAD"
+  ) {
     return json(res, 405, {
       error: "Method not allowed",
     });
   }
 
-  const { url, platform = "auto" } =
-    req.query || {};
+  const {
+    url,
+    platform = "auto",
+    download = "0",
+  } = req.query || {};
 
   if (
     !url ||
@@ -418,27 +514,17 @@ export default async function handler(req, res) {
   const detectedPlatform =
     detectPlatform(sourceUrl);
 
-  /*
-   * Do NOT fail only because the frontend
-   * selected platform differs from detection.
-   *
-   * This prevents false 400 errors on TikTok,
-   * Facebook, etc.
-   */
   if (
     !platformMatches(
       platform,
       detectedPlatform
     )
   ) {
-    console.warn(
-      "Platform mismatch:",
-      {
-        requested: platform,
-        detected: detectedPlatform,
-        url: sourceUrl,
-      }
-    );
+    console.warn("Platform mismatch:", {
+      requested: platform,
+      detected: detectedPlatform,
+      url: sourceUrl,
+    });
   }
 
   const providers = getProviders();
@@ -473,6 +559,37 @@ export default async function handler(req, res) {
       );
 
       if (result?.downloadUrl) {
+        const shouldDownload =
+          String(download) === "1";
+
+        if (shouldDownload) {
+          if (req.method === "HEAD") {
+            res.statusCode = 200;
+            res.setHeader(
+              "Content-Type",
+              "video/mp4"
+            );
+            res.setHeader(
+              "Content-Disposition",
+              `attachment; filename="${safeFilename(
+                result.filename || "video.mp4"
+              )}"`
+            );
+            res.setHeader(
+              "Cache-Control",
+              "no-store"
+            );
+            return res.end();
+          }
+
+          return await downloadVideo(
+            res,
+            result.downloadUrl,
+            result.filename ||
+              `${detectedPlatform}-video.mp4`
+          );
+        }
+
         return json(res, 200, {
           success: true,
           platform: detectedPlatform,

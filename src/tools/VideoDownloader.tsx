@@ -84,9 +84,9 @@ export default function VideoDownloader({
       return;
     }
 
-    const downloadUrl = `/api/download?url=${encodeURIComponent(
-      value
-    )}&platform=${encodeURIComponent(platform)}&download=1`;
+    const downloadUrl = `/api/video-download?url=${encodeURIComponent(
+  value
+)}&platform=${encodeURIComponent(platform)}&download=1`;
 
     const a = document.createElement("a");
     a.href = downloadUrl;
