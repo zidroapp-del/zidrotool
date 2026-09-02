@@ -23,11 +23,17 @@ function json(res, status, body) {
   );
 
   res.setHeader("Cache-Control", "no-store");
-  res.setHeader("Access-Control-Allow-Origin", "*");
+
+  res.setHeader(
+    "Access-Control-Allow-Origin",
+    "*"
+  );
+
   res.setHeader(
     "Access-Control-Allow-Methods",
     "GET, HEAD, OPTIONS"
   );
+
   res.setHeader(
     "Access-Control-Allow-Headers",
     "Content-Type"
@@ -54,7 +60,9 @@ function normalizeBaseUrl(value) {
 
     if (
       !/^https?:$/.test(u.protocol) ||
-      PLACEHOLDER_HOSTS.has(u.hostname.toLowerCase())
+      PLACEHOLDER_HOSTS.has(
+        u.hostname.toLowerCase()
+      )
     ) {
       return "";
     }
@@ -87,7 +95,9 @@ function isSupportedUrl(rawUrl) {
 
 function detectPlatform(rawUrl) {
   try {
-    const host = new URL(rawUrl).hostname.toLowerCase();
+    const host = new URL(rawUrl)
+      .hostname
+      .toLowerCase();
 
     if (
       host === "tiktok.com" ||
@@ -155,9 +165,10 @@ function platformMatches(requested, detected) {
   return false;
 }
 
-/**
+/* =========================================================
  * Cobalt provider
- */
+ * ========================================================= */
+
 async function callCobalt(baseUrl, sourceUrl) {
   const url = normalizeBaseUrl(baseUrl);
 
@@ -229,9 +240,10 @@ async function callCobalt(baseUrl, sourceUrl) {
   };
 }
 
-/**
+/* =========================================================
  * Apify provider
- */
+ * ========================================================= */
+
 async function callApify(sourceUrl) {
   const token = String(
     process.env.APIFY_TOKEN || ""
@@ -336,9 +348,10 @@ async function callApify(sourceUrl) {
   };
 }
 
-/**
+/* =========================================================
  * yt-dlp provider
- */
+ * ========================================================= */
+
 async function callYtDlp(baseUrl, sourceUrl) {
   const url = normalizeBaseUrl(baseUrl);
 
@@ -365,11 +378,9 @@ async function callYtDlp(baseUrl, sourceUrl) {
 
   const response = await fetch(endpoint, {
     method: "GET",
-
     headers: {
       Accept: "application/json",
     },
-
     signal: AbortSignal.timeout(60000),
   });
 
@@ -456,9 +467,10 @@ async function callYtDlp(baseUrl, sourceUrl) {
   };
 }
 
-/**
+/* =========================================================
  * Provider configuration
- */
+ * ========================================================= */
+
 function getProviders() {
   const providers = [];
 
@@ -503,9 +515,10 @@ function getProviders() {
   return providers;
 }
 
-/**
+/* =========================================================
  * Safe filename
- */
+ * ========================================================= */
+
 function safeFilename(filename) {
   return String(
     filename || "video.mp4"
@@ -519,18 +532,22 @@ function safeFilename(filename) {
     .slice(0, 180) || "video.mp4";
 }
 
-/**
- * Stream the actual video
- */
+/* =========================================================
+ * Stream actual video
+ * ========================================================= */
+
 async function downloadVideo(
   res,
   downloadUrl,
-  filename
+  filename,
+  sourceUrl,
+  platform
 ) {
   console.log(
     "Starting video download:",
     {
       filename,
+      platform,
     }
   );
 
@@ -543,23 +560,60 @@ async function downloadVideo(
     );
   }
 
+  /*
+   * Different platforms sometimes require
+   * different Referer headers.
+   */
+  let referer = "https://www.google.com/";
+
+  if (platform === "tiktok") {
+    referer = "https://www.tiktok.com/";
+  } else if (platform === "instagram") {
+    referer = "https://www.instagram.com/";
+  } else if (platform === "facebook") {
+    referer = "https://www.facebook.com/";
+  } else if (platform === "youtube") {
+    referer = "https://www.youtube.com/";
+  } else if (platform === "x") {
+    referer = "https://x.com/";
+  }
+
   const response = await fetch(
     downloadUrl,
     {
       method: "GET",
-
       redirect: "follow",
 
       headers: {
-        Accept:
-          "video/mp4,video/*,*/*",
-
         "User-Agent":
-          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/150 Safari/537.36",
+          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36",
+
+        Accept:
+          "video/mp4,video/webm,video/*,*/*;q=0.8",
+
+        Referer: referer,
+
+        "Accept-Language":
+          "en-US,en;q=0.9",
       },
 
       signal:
         AbortSignal.timeout(120000),
+    }
+  );
+
+  console.log(
+    "Video source response:",
+    {
+      status: response.status,
+      contentType:
+        response.headers.get(
+          "content-type"
+        ),
+      contentLength:
+        response.headers.get(
+          "content-length"
+        ),
     }
   );
 
@@ -579,6 +633,26 @@ async function downloadVideo(
     response.headers.get(
       "content-type"
     ) || "video/mp4";
+
+  /*
+   * Prevent accidentally returning HTML/JSON
+   * as a .mp4 file.
+   */
+  if (
+    contentType.includes("text/html") ||
+    contentType.includes("application/json")
+  ) {
+    const preview = await response.text();
+
+    console.error(
+      "Video URL returned non-video content:",
+      preview.slice(0, 500)
+    );
+
+    throw new Error(
+      "Video source returned non-video content."
+    );
+  }
 
   const contentLength =
     response.headers.get(
@@ -625,6 +699,8 @@ async function downloadVideo(
   const reader =
     response.body.getReader();
 
+  let totalBytes = 0;
+
   try {
     while (true) {
       const {
@@ -637,39 +713,52 @@ async function downloadVideo(
       }
 
       if (value) {
-        res.write(
-          Buffer.from(value)
-        );
+        const chunk =
+          Buffer.from(value);
+
+        totalBytes += chunk.length;
+
+        res.write(chunk);
       }
     }
   } finally {
     reader.releaseLock();
   }
 
+  console.log(
+    "Video download completed:",
+    {
+      filename: finalFilename,
+      bytes: totalBytes,
+    }
+  );
+
+  if (totalBytes === 0) {
+    throw new Error(
+      "Video stream contained zero bytes."
+    );
+  }
+
   res.end();
 }
 
-/**
+/* =========================================================
  * Main Vercel handler
- */
+ * ========================================================= */
+
 export default async function handler(
   req,
   res
 ) {
-  /**
-   * CORS preflight
-   */
+  /* CORS preflight */
+
   if (req.method === "OPTIONS") {
-    return json(
-      res,
-      204,
-      {}
-    );
+    res.statusCode = 204;
+    return res.end();
   }
 
-  /**
-   * Allowed methods
-   */
+  /* Allowed methods */
+
   if (
     req.method !== "GET" &&
     req.method !== "HEAD"
@@ -684,18 +773,16 @@ export default async function handler(
     );
   }
 
-  /**
-   * Query params
-   */
+  /* Query params */
+
   const {
     url,
     platform = "auto",
     download = "0",
   } = req.query || {};
 
-  /**
-   * Validate URL
-   */
+  /* Validate URL */
+
   if (
     !url ||
     !isSupportedUrl(
@@ -721,9 +808,8 @@ export default async function handler(
   const detectedPlatform =
     detectPlatform(sourceUrl);
 
-  /**
-   * Platform mismatch is only a warning.
-   */
+  /* Platform warning */
+
   if (
     !platformMatches(
       platform,
@@ -741,9 +827,8 @@ export default async function handler(
     );
   }
 
-  /**
-   * Get configured providers
-   */
+  /* Providers */
+
   const providers =
     getProviders();
 
@@ -763,9 +848,8 @@ export default async function handler(
 
   const failures = [];
 
-  /**
-   * Try providers one by one.
-   */
+  /* Try providers */
+
   for (
     const [
       name,
@@ -779,6 +863,7 @@ export default async function handler(
         {
           platform:
             detectedPlatform,
+
           download:
             String(download) === "1",
         }
@@ -790,134 +875,132 @@ export default async function handler(
           sourceUrl
         );
 
-      /**
-       * Provider succeeded.
-       */
       if (
         result?.downloadUrl
       ) {
         const shouldDownload =
           String(download) === "1";
 
-        /**
-         * Download mode
-         */
-        if (shouldDownload) {
-          /**
-           * HEAD:
-           * return headers only.
-           */
-          if (
-            req.method === "HEAD"
-          ) {
-            res.statusCode =
-              200;
+        /* Normal extraction */
 
-            res.setHeader(
-              "Content-Type",
-              "video/mp4"
-            );
+        if (!shouldDownload) {
+          return json(
+            res,
+            200,
+            {
+              success: true,
 
-            res.setHeader(
-              "Content-Disposition",
-              `attachment; filename="${safeFilename(
-                result.filename ||
-                  "video.mp4"
-              )}"`
-            );
+              platform:
+                detectedPlatform,
 
-            res.setHeader(
-              "Cache-Control",
-              "no-store"
-            );
+              requestedPlatform:
+                platform,
 
-            return res.end();
-          }
-
-          /**
-           * GET:
-           * stream actual video.
-           */
-          try {
-            return await downloadVideo(
-              res,
-              result.downloadUrl,
-              result.filename ||
-                `${detectedPlatform}-video.mp4`
-            );
-          } catch (downloadError) {
-            console.error(
-              "Video streaming failed:",
-              {
-                provider: name,
-                error:
-                  downloadError
-                    ?.message ||
-                  String(
-                    downloadError
-                  ),
-              }
-            );
-
-            failures.push(
-              `${name}:download`
-            );
-
-            /**
-             * Important:
-             * We do NOT try another provider
-             * after headers/body may have started.
-             */
-            if (
-              res.headersSent
-            ) {
-              try {
-                res.end();
-              } catch {
-                // Ignore response close errors.
-              }
-
-              return;
+              ...result,
             }
-
-            return json(
-              res,
-              502,
-              {
-                error:
-                  "The video was found, but the download server could not stream it.",
-
-                code:
-                  "VIDEO_STREAM_FAILED",
-
-                platform:
-                  detectedPlatform,
-
-                provider:
-                  name,
-              }
-            );
-          }
+          );
         }
 
-        /**
-         * Normal extraction mode.
-         */
-        return json(
-          res,
-          200,
-          {
-            success: true,
+        /* HEAD */
 
-            platform:
-              detectedPlatform,
+        if (
+          req.method === "HEAD"
+        ) {
+          res.statusCode = 200;
 
-            requestedPlatform:
-              platform,
+          res.setHeader(
+            "Content-Type",
+            "video/mp4"
+          );
 
-            ...result,
+          res.setHeader(
+            "Content-Disposition",
+            `attachment; filename="${safeFilename(
+              result.filename ||
+                "video.mp4"
+            )}"`
+          );
+
+          res.setHeader(
+            "Cache-Control",
+            "no-store"
+          );
+
+          return res.end();
+        }
+
+        /* GET download */
+
+        try {
+          return await downloadVideo(
+            res,
+            result.downloadUrl,
+            result.filename ||
+              `${detectedPlatform}-video.mp4`,
+            sourceUrl,
+            detectedPlatform
+          );
+        } catch (
+          downloadError
+        ) {
+          console.error(
+            "Video streaming failed:",
+            {
+              provider: name,
+
+              error:
+                downloadError
+                  ?.message ||
+                String(
+                  downloadError
+                ),
+            }
+          );
+
+          failures.push(
+            `${name}:download`
+          );
+
+          /*
+           * If response already started,
+           * don't send another JSON response.
+           */
+
+          if (
+            res.headersSent
+          ) {
+            try {
+              res.end();
+            } catch {
+              // Ignore.
+            }
+
+            return;
           }
-        );
+
+          return json(
+            res,
+            502,
+            {
+              error:
+                "The video was found, but the download server could not stream it.",
+
+              code:
+                "VIDEO_STREAM_FAILED",
+
+              platform:
+                detectedPlatform,
+
+              provider:
+                name,
+
+              details:
+                downloadError
+                  ?.message ||
+                "Unknown streaming error",
+            }
+          );
+        }
       }
 
       failures.push(name);
@@ -931,9 +1014,8 @@ export default async function handler(
     }
   }
 
-  /**
-   * All providers failed.
-   */
+  /* All providers failed */
+
   return json(
     res,
     502,
