@@ -16,11 +16,22 @@ const SUPPORTED_HOSTS = [
 
 function json(res, status, body) {
   res.statusCode = status;
-  res.setHeader("Content-Type", "application/json; charset=utf-8");
+
+  res.setHeader(
+    "Content-Type",
+    "application/json; charset=utf-8"
+  );
+
   res.setHeader("Cache-Control", "no-store");
   res.setHeader("Access-Control-Allow-Origin", "*");
-  res.setHeader("Access-Control-Allow-Methods", "GET, HEAD, OPTIONS");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+  res.setHeader(
+    "Access-Control-Allow-Methods",
+    "GET, HEAD, OPTIONS"
+  );
+  res.setHeader(
+    "Access-Control-Allow-Headers",
+    "Content-Type"
+  );
 
   if (typeof res.json === "function") {
     return res.json(body);
@@ -34,7 +45,9 @@ function normalizeBaseUrl(value) {
     .trim()
     .replace(/\/+$/, "");
 
-  if (!raw) return "";
+  if (!raw) {
+    return "";
+  }
 
   try {
     const u = new URL(raw);
@@ -64,7 +77,8 @@ function isSupportedUrl(rawUrl) {
 
     return SUPPORTED_HOSTS.some(
       (allowed) =>
-        host === allowed || host.endsWith(`.${allowed}`)
+        host === allowed ||
+        host.endsWith(`.${allowed}`)
     );
   } catch {
     return false;
@@ -141,10 +155,15 @@ function platformMatches(requested, detected) {
   return false;
 }
 
+/**
+ * Cobalt provider
+ */
 async function callCobalt(baseUrl, sourceUrl) {
   const url = normalizeBaseUrl(baseUrl);
 
-  if (!url) return null;
+  if (!url) {
+    return null;
+  }
 
   const headers = {
     "Content-Type": "application/json",
@@ -152,7 +171,8 @@ async function callCobalt(baseUrl, sourceUrl) {
   };
 
   if (process.env.COBALT_API_KEY) {
-    headers.Authorization = `Api-Key ${process.env.COBALT_API_KEY}`;
+    headers.Authorization =
+      `Api-Key ${process.env.COBALT_API_KEY}`;
   }
 
   const response = await fetch(url, {
@@ -165,16 +185,21 @@ async function callCobalt(baseUrl, sourceUrl) {
       youtubeVideoCodec: "h264",
       filenameStyle: "basic",
     }),
-    signal: AbortSignal.timeout(15000),
+    signal: AbortSignal.timeout(30000),
   });
 
-  const data = await response.json().catch(() => ({}));
+  const data = await response
+    .json()
+    .catch(() => ({}));
 
   if (!response.ok) {
-    console.error("Cobalt provider response:", {
-      status: response.status,
-      data,
-    });
+    console.error(
+      "Cobalt provider response:",
+      {
+        status: response.status,
+        data,
+      }
+    );
 
     return null;
   }
@@ -191,13 +216,22 @@ async function callCobalt(baseUrl, sourceUrl) {
 
   return {
     downloadUrl,
-    filename: data?.filename || "video.mp4",
-    title: data?.filename || "Video",
-    thumbnail: data?.thumbnail || null,
+    filename:
+      data?.filename ||
+      "video.mp4",
+    title:
+      data?.filename ||
+      "Video",
+    thumbnail:
+      data?.thumbnail ||
+      null,
     provider: "cobalt",
   };
 }
 
+/**
+ * Apify provider
+ */
 async function callApify(sourceUrl) {
   const token = String(
     process.env.APIFY_TOKEN || ""
@@ -213,11 +247,11 @@ async function callApify(sourceUrl) {
   ).trim();
 
   const endpoint =
-    `https://api.apify.com/v2/acts/` +
-    `${encodeURIComponent(actor)}` +
-    `/run-sync-get-dataset-items` +
+    "https://api.apify.com/v2/acts/" +
+    encodeURIComponent(actor) +
+    "/run-sync-get-dataset-items" +
     `?token=${encodeURIComponent(token)}` +
-    `&format=json`;
+    "&format=json";
 
   const response = await fetch(endpoint, {
     method: "POST",
@@ -228,16 +262,21 @@ async function callApify(sourceUrl) {
     body: JSON.stringify({
       url: sourceUrl,
     }),
-    signal: AbortSignal.timeout(45000),
+    signal: AbortSignal.timeout(60000),
   });
 
-  const data = await response.json().catch(() => []);
+  const data = await response
+    .json()
+    .catch(() => []);
 
   if (!response.ok) {
-    console.error("Apify provider response:", {
-      status: response.status,
-      data,
-    });
+    console.error(
+      "Apify provider response:",
+      {
+        status: response.status,
+        data,
+      }
+    );
 
     return null;
   }
@@ -265,88 +304,168 @@ async function callApify(sourceUrl) {
     return null;
   }
 
-  const platform = detectPlatform(sourceUrl);
+  const platform =
+    detectPlatform(sourceUrl);
 
   return {
     downloadUrl,
+
     filename:
       item?.filename ||
       `${platform}-video.mp4`,
+
     title:
       item?.title ||
       `${platform} video`,
+
     thumbnail:
       item?.thumbnail ||
       item?.thumbnail_url ||
       null,
+
     provider: "apify",
+
     author:
       item?.author ||
       item?.uploader ||
       null,
+
     duration:
       item?.duration ||
       null,
   };
 }
 
+/**
+ * yt-dlp provider
+ */
 async function callYtDlp(baseUrl, sourceUrl) {
   const url = normalizeBaseUrl(baseUrl);
 
   if (!url) {
+    console.error(
+      "YTDLP_API_URL is not configured correctly."
+    );
+
     return null;
   }
 
   const endpoint =
-    `${url}/extract?url=${encodeURIComponent(sourceUrl)}`;
+    `${url}/extract?url=${encodeURIComponent(
+      sourceUrl
+    )}`;
+
+  console.log(
+    "Calling yt-dlp provider:",
+    {
+      baseUrl: url,
+      sourceUrl,
+    }
+  );
 
   const response = await fetch(endpoint, {
     method: "GET",
+
     headers: {
       Accept: "application/json",
     },
-    signal: AbortSignal.timeout(30000),
+
+    signal: AbortSignal.timeout(60000),
   });
 
-  const data = await response.json().catch(() => ({}));
+  const rawText = await response.text();
 
-  if (!response.ok || !data?.video_url) {
-    console.error("yt-dlp provider response:", {
-      status: response.status,
-      data,
-    });
+  let data = {};
+
+  try {
+    data = JSON.parse(rawText);
+  } catch {
+    console.error(
+      "yt-dlp returned invalid JSON:",
+      {
+        status: response.status,
+        body: rawText.slice(0, 1000),
+      }
+    );
 
     return null;
   }
 
-  const platform = detectPlatform(sourceUrl);
+  console.log(
+    "yt-dlp provider response:",
+    {
+      status: response.status,
+      success: data?.success,
+      hasVideoUrl:
+        Boolean(data?.video_url),
+      platform: data?.platform,
+      title: data?.title,
+      error:
+        data?.detail ||
+        data?.error ||
+        null,
+    }
+  );
+
+  if (
+    !response.ok ||
+    !data?.video_url
+  ) {
+    console.error(
+      "yt-dlp extraction failed:",
+      {
+        status: response.status,
+        data,
+      }
+    );
+
+    return null;
+  }
+
+  const platform =
+    detectPlatform(sourceUrl);
+
+  const ext =
+    String(data.ext || "mp4")
+      .replace(/[^a-zA-Z0-9]/g, "")
+      .toLowerCase() || "mp4";
 
   return {
     downloadUrl: data.video_url,
+
     filename:
-      `${platform}-video.${data.ext || "mp4"}`,
+      `${platform}-video.${ext}`,
+
     title:
       data.title ||
       `${platform} video`,
+
     thumbnail:
       data.thumbnail ||
       null,
+
     provider: "yt-dlp",
+
     author:
       data.author ||
       null,
+
     duration:
       data.duration ||
       null,
   };
 }
 
+/**
+ * Provider configuration
+ */
 function getProviders() {
   const providers = [];
 
-  const cobaltUrl = normalizeBaseUrl(
-    process.env.COBALT_API_URL
-  );
+  const cobaltUrl =
+    normalizeBaseUrl(
+      process.env.COBALT_API_URL
+    );
 
   if (cobaltUrl) {
     providers.push([
@@ -356,9 +475,10 @@ function getProviders() {
     ]);
   }
 
-  const ytDlpUrl = normalizeBaseUrl(
-    process.env.YTDLP_API_URL
-  );
+  const ytDlpUrl =
+    normalizeBaseUrl(
+      process.env.YTDLP_API_URL
+    );
 
   if (ytDlpUrl) {
     providers.push([
@@ -383,29 +503,65 @@ function getProviders() {
   return providers;
 }
 
+/**
+ * Safe filename
+ */
 function safeFilename(filename) {
-  return String(filename || "video.mp4")
-    .replace(/[<>:"/\\|?*\x00-\x1F]/g, "_")
+  return String(
+    filename || "video.mp4"
+  )
+    .replace(
+      /[<>:"/\\|?*\x00-\x1F]/g,
+      "_"
+    )
     .replace(/\s+/g, " ")
     .trim()
     .slice(0, 180) || "video.mp4";
 }
 
-async function downloadVideo(res, downloadUrl, filename) {
-  console.log("Starting video download:", {
-    filename,
-  });
+/**
+ * Stream the actual video
+ */
+async function downloadVideo(
+  res,
+  downloadUrl,
+  filename
+) {
+  console.log(
+    "Starting video download:",
+    {
+      filename,
+    }
+  );
 
-  const response = await fetch(downloadUrl, {
-    method: "GET",
-    redirect: "follow",
-    signal: AbortSignal.timeout(60000),
-    headers: {
-      Accept: "video/mp4,video/*,*/*",
-      "User-Agent":
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/150 Safari/537.36",
-    },
-  });
+  if (
+    !downloadUrl ||
+    !/^https?:\/\//i.test(downloadUrl)
+  ) {
+    throw new Error(
+      "Invalid video download URL."
+    );
+  }
+
+  const response = await fetch(
+    downloadUrl,
+    {
+      method: "GET",
+
+      redirect: "follow",
+
+      headers: {
+        Accept:
+          "video/mp4,video/*,*/*",
+
+        "User-Agent":
+          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/150 Safari/537.36",
+      },
+
+      signal:
+        AbortSignal.timeout(120000),
+    }
+  );
 
   if (!response.ok) {
     throw new Error(
@@ -420,13 +576,17 @@ async function downloadVideo(res, downloadUrl, filename) {
   }
 
   const contentType =
-    response.headers.get("content-type") ||
-    "video/mp4";
+    response.headers.get(
+      "content-type"
+    ) || "video/mp4";
 
   const contentLength =
-    response.headers.get("content-length");
+    response.headers.get(
+      "content-length"
+    );
 
-  const finalFilename = safeFilename(filename);
+  const finalFilename =
+    safeFilename(filename);
 
   res.statusCode = 200;
 
@@ -450,6 +610,11 @@ async function downloadVideo(res, downloadUrl, filename) {
     "*"
   );
 
+  res.setHeader(
+    "Access-Control-Allow-Methods",
+    "GET, HEAD, OPTIONS"
+  );
+
   if (contentLength) {
     res.setHeader(
       "Content-Length",
@@ -457,19 +622,24 @@ async function downloadVideo(res, downloadUrl, filename) {
     );
   }
 
-  const reader = response.body.getReader();
+  const reader =
+    response.body.getReader();
 
   try {
     while (true) {
-      const { done, value } =
-        await reader.read();
+      const {
+        done,
+        value,
+      } = await reader.read();
 
       if (done) {
         break;
       }
 
       if (value) {
-        res.write(Buffer.from(value));
+        res.write(
+          Buffer.from(value)
+        );
       }
     }
   } finally {
@@ -479,123 +649,275 @@ async function downloadVideo(res, downloadUrl, filename) {
   res.end();
 }
 
-export default async function handler(req, res) {
+/**
+ * Main Vercel handler
+ */
+export default async function handler(
+  req,
+  res
+) {
+  /**
+   * CORS preflight
+   */
   if (req.method === "OPTIONS") {
-    return json(res, 204, {});
+    return json(
+      res,
+      204,
+      {}
+    );
   }
 
+  /**
+   * Allowed methods
+   */
   if (
     req.method !== "GET" &&
     req.method !== "HEAD"
   ) {
-    return json(res, 405, {
-      error: "Method not allowed",
-    });
+    return json(
+      res,
+      405,
+      {
+        error:
+          "Method not allowed",
+      }
+    );
   }
 
+  /**
+   * Query params
+   */
   const {
     url,
     platform = "auto",
     download = "0",
   } = req.query || {};
 
+  /**
+   * Validate URL
+   */
   if (
     !url ||
-    !isSupportedUrl(String(url))
+    !isSupportedUrl(
+      String(url)
+    )
   ) {
-    return json(res, 400, {
-      error:
-        "Enter a valid public Facebook, TikTok, Instagram, YouTube, or X video URL.",
-      code: "INVALID_VIDEO_URL",
-    });
+    return json(
+      res,
+      400,
+      {
+        error:
+          "Enter a valid public Facebook, TikTok, Instagram, YouTube, or X video URL.",
+
+        code:
+          "INVALID_VIDEO_URL",
+      }
+    );
   }
 
-  const sourceUrl = String(url);
+  const sourceUrl =
+    String(url);
+
   const detectedPlatform =
     detectPlatform(sourceUrl);
 
+  /**
+   * Platform mismatch is only a warning.
+   */
   if (
     !platformMatches(
       platform,
       detectedPlatform
     )
   ) {
-    console.warn("Platform mismatch:", {
-      requested: platform,
-      detected: detectedPlatform,
-      url: sourceUrl,
-    });
+    console.warn(
+      "Platform mismatch:",
+      {
+        requested: platform,
+        detected:
+          detectedPlatform,
+        url: sourceUrl,
+      }
+    );
   }
 
-  const providers = getProviders();
+  /**
+   * Get configured providers
+   */
+  const providers =
+    getProviders();
 
   if (!providers.length) {
-    return json(res, 503, {
-      error:
-        "Video download is not configured yet. Add YTDLP_API_URL, APIFY_TOKEN, or configure a permitted Cobalt instance.",
-      code:
-        "VIDEO_PROVIDER_NOT_CONFIGURED",
-    });
+    return json(
+      res,
+      503,
+      {
+        error:
+          "Video download is not configured yet. Add YTDLP_API_URL, APIFY_TOKEN, or configure a permitted Cobalt instance.",
+
+        code:
+          "VIDEO_PROVIDER_NOT_CONFIGURED",
+      }
+    );
   }
 
   const failures = [];
 
-  for (const [
-    name,
-    providerConfig,
-    fn,
-  ] of providers) {
+  /**
+   * Try providers one by one.
+   */
+  for (
+    const [
+      name,
+      providerConfig,
+      fn,
+    ] of providers
+  ) {
     try {
       console.log(
         `Trying video provider: ${name}`,
         {
-          platform: detectedPlatform,
+          platform:
+            detectedPlatform,
+          download:
+            String(download) === "1",
         }
       );
 
-      const result = await fn(
-        providerConfig,
-        sourceUrl
-      );
+      const result =
+        await fn(
+          providerConfig,
+          sourceUrl
+        );
 
-      if (result?.downloadUrl) {
+      /**
+       * Provider succeeded.
+       */
+      if (
+        result?.downloadUrl
+      ) {
         const shouldDownload =
           String(download) === "1";
 
+        /**
+         * Download mode
+         */
         if (shouldDownload) {
-          if (req.method === "HEAD") {
-            res.statusCode = 200;
+          /**
+           * HEAD:
+           * return headers only.
+           */
+          if (
+            req.method === "HEAD"
+          ) {
+            res.statusCode =
+              200;
+
             res.setHeader(
               "Content-Type",
               "video/mp4"
             );
+
             res.setHeader(
               "Content-Disposition",
               `attachment; filename="${safeFilename(
-                result.filename || "video.mp4"
+                result.filename ||
+                  "video.mp4"
               )}"`
             );
+
             res.setHeader(
               "Cache-Control",
               "no-store"
             );
+
             return res.end();
           }
 
-          return await downloadVideo(
-            res,
-            result.downloadUrl,
-            result.filename ||
-              `${detectedPlatform}-video.mp4`
-          );
+          /**
+           * GET:
+           * stream actual video.
+           */
+          try {
+            return await downloadVideo(
+              res,
+              result.downloadUrl,
+              result.filename ||
+                `${detectedPlatform}-video.mp4`
+            );
+          } catch (downloadError) {
+            console.error(
+              "Video streaming failed:",
+              {
+                provider: name,
+                error:
+                  downloadError
+                    ?.message ||
+                  String(
+                    downloadError
+                  ),
+              }
+            );
+
+            failures.push(
+              `${name}:download`
+            );
+
+            /**
+             * Important:
+             * We do NOT try another provider
+             * after headers/body may have started.
+             */
+            if (
+              res.headersSent
+            ) {
+              try {
+                res.end();
+              } catch {
+                // Ignore response close errors.
+              }
+
+              return;
+            }
+
+            return json(
+              res,
+              502,
+              {
+                error:
+                  "The video was found, but the download server could not stream it.",
+
+                code:
+                  "VIDEO_STREAM_FAILED",
+
+                platform:
+                  detectedPlatform,
+
+                provider:
+                  name,
+              }
+            );
+          }
         }
 
-        return json(res, 200, {
-          success: true,
-          platform: detectedPlatform,
-          requestedPlatform: platform,
-          ...result,
-        });
+        /**
+         * Normal extraction mode.
+         */
+        return json(
+          res,
+          200,
+          {
+            success: true,
+
+            platform:
+              detectedPlatform,
+
+            requestedPlatform:
+              platform,
+
+            ...result,
+          }
+        );
       }
 
       failures.push(name);
@@ -609,12 +931,24 @@ export default async function handler(req, res) {
     }
   }
 
-  return json(res, 502, {
-    error:
-      "The configured video providers could not extract this URL. Try another public URL or check the provider service.",
-    code:
-      "VIDEO_EXTRACTION_FAILED",
-    platform: detectedPlatform,
-    providersTried: failures,
-  });
+  /**
+   * All providers failed.
+   */
+  return json(
+    res,
+    502,
+    {
+      error:
+        "The configured video providers could not extract this URL. Try another public URL or check the provider service.",
+
+      code:
+        "VIDEO_EXTRACTION_FAILED",
+
+      platform:
+        detectedPlatform,
+
+      providersTried:
+        failures,
+    }
+  );
 }
