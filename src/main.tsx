@@ -7,6 +7,7 @@ import { App } from "@/App";
 import { ThemeProvider } from "@/lib/theme";
 import { AuthProvider } from "@/lib/auth";
 import { ToastProvider } from "@/components/Toast";
+import { Analytics } from "@vercel/analytics/react";
 import "@/index.css";
 
 if ("serviceWorker" in navigator && import.meta.env.PROD) {
