@@ -91,7 +91,7 @@ const markdownFiles = import.meta.glob("/content/blog/*.md", {
   eager: true,
 }) as Record<string, string>;
 
-function parseFrontmatter(rawContent: string) {
+export function parseFrontmatter(rawContent: string) {
   // A few legacy posts contain a stray "Markdown" marker before the YAML fence.
   // Normalize it so every post gets the same metadata pipeline.
   const normalized = rawContent.replace(/^\uFEFF/, "").replace(/^Markdown\s*\n(?=---)/i, "");

@@ -123,10 +123,6 @@ export function Footer() {
           </span>
 
           <span>{t("footer.rights")}</span>
-
-          <span className="rounded-md border border-ink-200 px-1.5 py-0.5 font-mono text-[10px] text-ink-400 dark:border-ink-700">
-            v{SITE_CONFIG.version}
-          </span>
         </div>
 
         <div className="flex items-center gap-1">

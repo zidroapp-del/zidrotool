@@ -4,7 +4,6 @@ import { Layout } from "@/components/Layout";
 import { SkeletonGrid } from "@/components/Skeletons";
 import { Analytics } from "@vercel/analytics/react";
 import { CookieConsent, useCookieConsent } from "@/components/CookieConsent";
-import { AdInterstitial } from "@/components/AdInterstitial";
 
 // Helper لتفادي أخطاء Export Default / Named Export مع React.lazy
 const safeLazy = (importFn: () => Promise<any>, exportName?: string) =>
@@ -158,7 +157,6 @@ export function App() {
       </Suspense>
       {cookieConsent === "all" && <Analytics />}
       <CookieConsent />
-      <AdInterstitial />
     </>
   );
 }

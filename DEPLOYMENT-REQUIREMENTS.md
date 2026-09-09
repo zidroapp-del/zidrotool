@@ -15,6 +15,8 @@ Set these in **Vercel → Project → Settings → Environment Variables**:
 
 Do not put server-side API keys in `VITE_*` variables. `VITE_*` values are exposed to the browser.
 
+- `VITE_ADS_ENABLED` — set to `true` only after a real, approved advertising provider is wired into `AdInterstitial`/`AdSlot`. It defaults to unset/`false`, so the interstitial ad modal never renders and no placeholder ad content is shown to users or to Google — this avoids Google's Interstitial/UX penalties from showing an empty "ad space" placeholder.
+
 ## 2. YouTube
 
 The YouTube tools now use this order:

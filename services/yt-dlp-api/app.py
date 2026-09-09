@@ -102,8 +102,8 @@ def get_platform(url: str) -> str:
     return "video"
 
 
-def get_ydl_options() -> dict:
-    return {
+def get_ydl_options(platform: str | None = None) -> dict:
+    opts = {
         "quiet": True,
         "no_warnings": True,
         "noplaylist": True,
@@ -117,8 +117,9 @@ def get_ydl_options() -> dict:
         ),
 
         "socket_timeout": 30,
-        "retries": 2,
-        "fragment_retries": 2,
+        "retries": 3,
+        "fragment_retries": 3,
+        "extractor_retries": 2,
 
         "geo_bypass": True,
 
@@ -134,9 +135,31 @@ def get_ydl_options() -> dict:
         },
     }
 
+    if platform == "youtube":
+        # Officially-documented yt-dlp extractor argument (not a bypass of
+        # any protection): it asks yt-dlp to try extracting through the
+        # same set of official client surfaces YouTube itself ships apps
+        # for. Datacenter/cloud IPs are more likely to hit YouTube's
+        # server-side "Sign in to confirm you're not a bot" wall on the
+        # default web client; trying android/web_safari first sometimes
+        # avoids it, but this is not guaranteed — see error handling below,
+        # which reports honestly when it still fails.
+        opts["extractor_args"] = {
+            "youtube": {
+                "player_client": ["android", "web_safari", "web"],
+            }
+        }
+
+    return opts
+
+
+def is_youtube_bot_check(message: str) -> bool:
+    lowered = (message or "").lower()
+    return "confirm you" in lowered and "bot" in lowered or "sign in to confirm" in lowered
+
 
 def extract(url: str) -> dict:
-    opts = get_ydl_options()
+    opts = get_ydl_options(get_platform(url))
 
     with yt_dlp.YoutubeDL(opts) as ydl:
         info = ydl.extract_info(
@@ -317,12 +340,29 @@ def extract_endpoint(
         return extract(url)
 
     except Exception as exc:
+        message = str(exc)
+        bot_check = is_youtube_bot_check(message)
+
         print(
             "yt-dlp extraction failed:",
             type(exc).__name__,
-            str(exc),
+            message,
+            {"bot_check": bot_check, "url": url},
             flush=True,
         )
+
+        if bot_check:
+            raise HTTPException(
+                status_code=502,
+                detail=(
+                    "YouTube is currently showing a bot-verification wall "
+                    "to this server. This is a known limitation of running "
+                    "yt-dlp from cloud/datacenter IP addresses and is not "
+                    "something this service can force past. Please try "
+                    "again later."
+                ),
+                headers={"X-ZidroTool-Error-Code": "YOUTUBE_BOT_CHECK"},
+            )
 
         raise HTTPException(
             status_code=502,
@@ -353,7 +393,7 @@ def download_endpoint(
     platform = get_platform(url)
 
     try:
-        opts = get_ydl_options()
+        opts = get_ydl_options(platform)
 
         # Download directly to stdout.
         # yt-dlp writes the media bytes to stdout,
@@ -369,6 +409,13 @@ def download_endpoint(
             "/best"
         )
 
+        # NOTE: we deliberately do NOT use `with yt_dlp.YoutubeDL(...)` here.
+        # The actual byte streaming below happens later, while FastAPI sends
+        # the StreamingResponse — well after this function returns. Closing
+        # `ydl` via `__exit__` before that point could tear down the
+        # session/opener that `result` reads from and break mid-download.
+        # Instead we close it explicitly in the generator's `finally`, once
+        # streaming is actually done.
         ydl = yt_dlp.YoutubeDL(opts)
 
         info = ydl.extract_info(
@@ -428,6 +475,11 @@ def download_endpoint(
                 except Exception:
                     pass
 
+                try:
+                    ydl.close()
+                except Exception:
+                    pass
+
         return StreamingResponse(
             stream(),
             media_type="video/mp4",
@@ -442,16 +494,33 @@ def download_endpoint(
         )
 
     except Exception as exc:
+        message = str(exc)
+        bot_check = is_youtube_bot_check(message)
+
         print(
             "yt-dlp download failed:",
             {
                 "type": type(exc).__name__,
-                "error": str(exc),
+                "error": message,
                 "platform": platform,
                 "url": url,
+                "bot_check": bot_check,
             },
             flush=True,
         )
+
+        if bot_check:
+            raise HTTPException(
+                status_code=502,
+                detail=(
+                    "YouTube is currently showing a bot-verification wall "
+                    "to this server. This is a known limitation of running "
+                    "yt-dlp from cloud/datacenter IP addresses and is not "
+                    "something this service can force past. Please try "
+                    "again later."
+                ),
+                headers={"X-ZidroTool-Error-Code": "YOUTUBE_BOT_CHECK"},
+            )
 
         raise HTTPException(
             status_code=502,

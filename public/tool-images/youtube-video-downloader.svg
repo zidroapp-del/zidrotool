@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" role="img" aria-label="YouTube Video Downloader">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1" gradientTransform="rotate(69 .5 .5)"><stop stop-color="#2563eb"/><stop offset="1" stop-color="#8b5cf6"/></linearGradient>
+    <radialGradient id="glow"><stop stop-color="#fef3c7" stop-opacity=".28"/><stop offset="1" stop-color="#fef3c7" stop-opacity="0"/></radialGradient>
+    <filter id="shadow"><feDropShadow dx="0" dy="18" stdDeviation="18" flood-color="#020617" flood-opacity=".45"/></filter>
+  </defs>
+  <rect width="1200" height="630" fill="#07111f"/>
+  <rect x="18" y="18" width="1164" height="594" rx="38" fill="url(#bg)" opacity=".94"/>
+  <circle cx="170" cy="120" r="230" fill="url(#glow)"/><circle cx="1060" cy="500" r="280" fill="url(#glow)"/>
+  <circle cx="294" cy="100" r="9" fill="#fef3c7" opacity=".18"/><circle cx="186" cy="238" r="8" fill="#fef3c7" opacity=".18"/><circle cx="182" cy="105" r="3" fill="#fef3c7" opacity=".18"/><circle cx="293" cy="285" r="4" fill="#fef3c7" opacity=".18"/><circle cx="99" cy="83" r="6" fill="#fef3c7" opacity=".18"/><circle cx="331" cy="211" r="6" fill="#fef3c7" opacity=".18"/><circle cx="282" cy="244" r="5" fill="#fef3c7" opacity=".18"/><circle cx="200" cy="223" r="8" fill="#fef3c7" opacity=".18"/>
+  <g filter="url(#shadow)">
+    <rect x="72" y="88" width="470" height="454" rx="34" fill="#07111f" fill-opacity=".72" stroke="#ffffff" stroke-opacity=".16"/>
+    <rect x="610" y="132" width="510" height="320" rx="28" fill="#07111f" fill-opacity=".56" stroke="#ffffff" stroke-opacity=".14"/>
+  </g>
+  <g transform="translate(122 138)">
+    <rect width="178" height="178" rx="42" fill="#ffffff" fill-opacity=".12" stroke="#ffffff" stroke-opacity=".22"/>
+    <text x="89" y="112" text-anchor="middle" font-family="Inter,Arial,sans-serif" font-size="62" font-weight="800" fill="#fff">↔</text>
+  </g>
+  <text x="122" y="372" font-family="Inter,Arial,sans-serif" font-size="30" font-weight="800" fill="#fff">ZidroTool</text>
+  <text x="122" y="410" font-family="Inter,Arial,sans-serif" font-size="22" font-weight="600" fill="#dbeafe">YouTube Video Downloader</text>
+  <text x="122" y="452" font-family="Inter,Arial,sans-serif" font-size="15" fill="#bfdbfe">Fast • private • browser-first</text>
+  <g><rect x="650" y="210" width="178" height="14" rx="7" fill="#fef3c7" opacity="0.24"/><rect x="732" y="228" width="93" height="14" rx="7" fill="#fef3c7" opacity="0.32"/><rect x="814" y="210" width="98" height="14" rx="7" fill="#fef3c7" opacity="0.4"/><rect x="896" y="228" width="182" height="14" rx="7" fill="#fef3c7" opacity="0.48"/><rect x="978" y="210" width="135" height="14" rx="7" fill="#fef3c7" opacity="0.56"/></g>
+  <path d="M650 312 C760 250 820 385 920 300 S1050 235 1090 320" fill="none" stroke="#fff" stroke-opacity=".28" stroke-width="3"/>
+  <circle cx="650" cy="312" r="8" fill="#fff" opacity=".8"/><circle cx="1090" cy="320" r="8" fill="#fff" opacity=".8"/>
+  <rect x="650" y="374" width="390" height="48" rx="16" fill="#fff" fill-opacity=".08"/>
+  <text x="675" y="405" font-family="Inter,Arial,sans-serif" font-size="16" fill="#e2e8f0">Online tool • no install required</text>
+</svg>

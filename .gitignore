@@ -24,6 +24,14 @@ env/
 # TypeScript
 *.tsbuildinfo
 
+# Test/temp media from local downloader testing
+*.mp4
+*.webm
+*.mkv
+*.mov
+/tmp/
+/downloads/
+
 # Logs
 *.log
 npm-debug.log*

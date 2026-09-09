@@ -10,6 +10,7 @@ const SUPPORTED_HOSTS = [
   "instagram.com",
   "youtube.com",
   "youtu.be",
+  "youtube-nocookie.com",
   "x.com",
   "twitter.com",
 ];
@@ -97,7 +98,9 @@ function detectPlatform(rawUrl) {
     if (
       host === "youtube.com" ||
       host.endsWith(".youtube.com") ||
-      host === "youtu.be"
+      host === "youtu.be" ||
+      host === "youtube-nocookie.com" ||
+      host.endsWith(".youtube-nocookie.com")
     ) {
       return "youtube";
     }
@@ -143,6 +146,16 @@ function safeFilename(filename) {
       .trim()
       .slice(0, 180) || "video.mp4"
   );
+}
+
+/**
+ * A provider failed, but with a specific, useful reason (e.g. the Render
+ * yt-dlp service's honest "YouTube is showing a bot-verification wall"
+ * message). Callers thread this through so the final response to the
+ * frontend carries the real cause instead of a generic fallback string.
+ */
+function providerError(status, code, detail) {
+  return { __providerError: true, status: status || null, code: code || null, detail: detail || null };
 }
 
 function getYtDlpBaseUrl() {
@@ -238,7 +251,11 @@ async function callYtDlpExtract(baseUrl, sourceUrl) {
       data,
     });
 
-    return null;
+    return providerError(
+      response.status,
+      response.headers.get("x-zidrotool-error-code"),
+      data?.detail || data?.error || null,
+    );
   }
 
   const platform = detectPlatform(sourceUrl);
@@ -316,9 +333,23 @@ async function streamFromYtDlp(
       body: errorPreview.slice(0, 1000),
     });
 
-    throw new Error(
-      `Render video server returned HTTP ${response.status}`
+    let detail = null;
+
+    try {
+      detail = JSON.parse(errorPreview)?.detail || null;
+    } catch {
+      // Body wasn't JSON; no structured detail available.
+    }
+
+    const err = new Error(
+      detail || `Render video server returned HTTP ${response.status}`
     );
+
+    err.status = response.status;
+    err.code = response.headers.get("x-zidrotool-error-code") || null;
+    err.detail = detail;
+
+    throw err;
   }
 
   if (!response.body) {
@@ -440,7 +471,7 @@ async function callCobalt(baseUrl, sourceUrl) {
       data,
     });
 
-    return null;
+    return providerError(response.status, null, data?.error?.code || data?.text || null);
   }
 
   const downloadUrl =
@@ -450,7 +481,7 @@ async function callCobalt(baseUrl, sourceUrl) {
     null;
 
   if (!downloadUrl) {
-    return null;
+    return providerError(response.status, null, "Cobalt returned no download URL.");
   }
 
   return {
@@ -501,7 +532,7 @@ async function callApify(token, sourceUrl) {
       data,
     });
 
-    return null;
+    return providerError(response.status, null, data?.error?.message || null);
   }
 
   const item = Array.isArray(data)
@@ -514,7 +545,7 @@ async function callApify(token, sourceUrl) {
     : data;
 
   if (!item) {
-    return null;
+    return providerError(response.status, null, "Apify returned no results for this URL.");
   }
 
   const downloadUrl =
@@ -524,7 +555,7 @@ async function callApify(token, sourceUrl) {
     null;
 
   if (!downloadUrl) {
-    return null;
+    return providerError(response.status, null, "Apify result had no downloadable URL.");
   }
 
   const platform = detectPlatform(sourceUrl);
@@ -699,6 +730,7 @@ export default async function handler(req, res) {
     const ytDlpProvider = providers.find(
       (provider) => provider.type === "ytdlp"
     );
+    let lastError = null;
 
     if (req.method === "HEAD") {
       res.statusCode = 200;
@@ -743,6 +775,11 @@ export default async function handler(req, res) {
           }
         );
 
+        lastError = {
+          code: error?.code || null,
+          detail: error?.detail || error?.message || null,
+        };
+
         if (res.headersSent) {
           try {
             res.end();
@@ -781,6 +818,11 @@ export default async function handler(req, res) {
           );
         }
 
+        if (result?.__providerError) {
+          lastError = { code: result.code, detail: result.detail };
+          continue;
+        }
+
         if (!result?.downloadUrl) {
           continue;
         }
@@ -800,6 +842,11 @@ export default async function handler(req, res) {
           }
         );
 
+        lastError = {
+          code: error?.code || null,
+          detail: error?.detail || error?.message || null,
+        };
+
         if (res.headersSent) {
           try {
             res.end();
@@ -814,8 +861,9 @@ export default async function handler(req, res) {
 
     return json(res, 502, {
       error:
+        lastError?.detail ||
         "The video was found, but the configured download servers could not stream it.",
-      code: "VIDEO_STREAM_FAILED",
+      code: lastError?.code || "VIDEO_STREAM_FAILED",
       platform: detectedPlatform,
     });
   }
@@ -827,6 +875,7 @@ export default async function handler(req, res) {
    */
 
   const failures = [];
+  let lastError = null;
 
   for (const provider of providers) {
     try {
@@ -862,6 +911,10 @@ export default async function handler(req, res) {
         });
       }
 
+      if (result?.__providerError) {
+        lastError = { code: result.code, detail: result.detail };
+      }
+
       failures.push(provider.name);
     } catch (error) {
       console.error(
@@ -873,14 +926,22 @@ export default async function handler(req, res) {
         }
       );
 
+      lastError = {
+        code: error?.code || null,
+        detail: error?.detail || error?.message || null,
+      };
+
       failures.push(provider.name);
     }
   }
 
   return json(res, 502, {
     error:
+      lastError?.detail ||
       "The configured video providers could not extract this URL. Try another public URL or check the provider service.",
-    code: "VIDEO_EXTRACTION_FAILED",
+    code:
+      lastError?.code ||
+      "VIDEO_EXTRACTION_FAILED",
     platform: detectedPlatform,
     providersTried: failures,
   });

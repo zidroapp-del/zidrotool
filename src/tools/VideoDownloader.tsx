@@ -45,7 +45,9 @@ function detectPlatformFromUrl(
     if (
       hostname === "youtube.com" ||
       hostname.endsWith(".youtube.com") ||
-      hostname === "youtu.be"
+      hostname === "youtu.be" ||
+      hostname === "youtube-nocookie.com" ||
+      hostname.endsWith(".youtube-nocookie.com")
     ) {
       return "youtube";
     }
@@ -107,16 +109,24 @@ function getToolTitle(
         : "TikTok Downloader";
 
     case "youtube":
-      return "YouTube Video Downloader";
+      return t
+        ? t("tool.videoDownloader.titleYoutube")
+        : "YouTube Video Downloader";
 
     case "instagram":
-      return "Instagram Video Downloader";
+      return t
+        ? t("tool.videoDownloader.titleInstagram")
+        : "Instagram Video Downloader";
 
     case "x":
-      return "X Video Downloader";
+      return t
+        ? t("tool.videoDownloader.titleX")
+        : "X Video Downloader";
 
     default:
-      return "Video Downloader";
+      return t
+        ? t("tool.videoDownloader.titleDefault")
+        : "Video Downloader";
   }
 }
 
@@ -175,17 +185,17 @@ export default function VideoDownloader({
         allowedPlatforms.includes("youtube")
       ) {
         error(
-          "Please enter a valid TikTok or YouTube URL."
+          t("tool.videoDownloader.invalidUrlTiktokYoutube")
         );
       } else if (
         primaryPlatform === "facebook" &&
         allowedPlatforms.includes("instagram")
       ) {
         error(
-          "Please enter a valid Facebook or Instagram URL."
+          t("tool.videoDownloader.invalidUrlFacebookInstagram")
         );
       } else {
-        error("Please enter a valid video URL.");
+        error(t("tool.videoDownloader.invalidUrlGeneric"));
       }
 
       return;
@@ -216,7 +226,7 @@ export default function VideoDownloader({
       if (!response.ok || !data.downloadUrl) {
         throw new Error(
           data.error ||
-            "Download service unavailable."
+            t("tool.videoDownloader.unavailable")
         );
       }
 
@@ -251,7 +261,7 @@ export default function VideoDownloader({
       validateAndDetectPlatform(value);
 
     if (!detectedPlatform) {
-      error("Please enter a valid video URL.");
+      error(t("tool.videoDownloader.invalidUrlGeneric"));
       return;
     }
 
@@ -283,14 +293,14 @@ export default function VideoDownloader({
       platforms?.includes("tiktok") &&
       platforms?.includes("youtube")
     ) {
-      return "Supports TikTok and YouTube videos.";
+      return t("tool.videoDownloader.supportsTiktokYoutube");
     }
 
     if (
       platforms?.includes("facebook") &&
       platforms?.includes("instagram")
     ) {
-      return "Supports Facebook and Instagram videos.";
+      return t("tool.videoDownloader.supportsFacebookInstagram");
     }
 
     return t(
@@ -344,10 +354,10 @@ export default function VideoDownloader({
               placeholder={
                 platforms?.includes("tiktok") &&
                 platforms?.includes("youtube")
-                  ? "Paste TikTok or YouTube URL"
+                  ? t("tool.videoDownloader.placeholderTiktokYoutube")
                   : platforms?.includes("facebook") &&
                     platforms?.includes("instagram")
-                  ? "Paste Facebook or Instagram URL"
+                  ? t("tool.videoDownloader.placeholderFacebookInstagram")
                   : t(
                       "tool.videoDownloader.urlPlaceholder"
                     )

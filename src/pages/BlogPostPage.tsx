@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
-import { getPostBySlug, getRelatedPosts, getAuthor, getBlogCoverImage } from "@/data/blog";
+import { getPostBySlug, getRelatedPosts, getAuthor, getBlogCoverImage, parseFrontmatter } from "@/data/blog";
 import { useTranslation } from "react-i18next";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -161,7 +161,12 @@ export default function BlogPostPage() {
       supabase.from("cms_articles").select("*").eq("slug", slug).eq("status", "published").maybeSingle().then(({ data }) => {
         if (!active || !data) return;
         const base: any = getPostBySlug(slug);
-        setCmsPost({ ...(base || {}), slug: data.slug, title: data.title, excerpt: data.excerpt, content: data.content, body: data.content, category: data.category, tags: data.tags || [], date: data.published_at || base?.date, seoTitle: data.seo_title, seoDesc: data.meta_description, coverImage: data.cover_image || getBlogCoverImage(data.slug), dateModified: data.updated_at });
+        // Defensive: if an editor pastes content that still has a YAML front-matter
+        // block (e.g. copied from a .md file), strip it here so it never renders
+        // as raw text. Ordinary CMS content without a "---" block passes through
+        // unchanged.
+        const { content: cleanContent } = parseFrontmatter(String(data.content || ""));
+        setCmsPost({ ...(base || {}), slug: data.slug, title: data.title, excerpt: data.excerpt, content: cleanContent, body: cleanContent, category: data.category, tags: data.tags || [], date: data.published_at || base?.date, seoTitle: data.seo_title, seoDesc: data.meta_description, coverImage: data.cover_image || getBlogCoverImage(data.slug), dateModified: data.updated_at });
       });
     }
     return () => { active = false; };

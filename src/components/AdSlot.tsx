@@ -1,49 +1,87 @@
-import { useTranslation } from "react-i18next";
+import { useEffect, useRef } from "react";
+import { useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
+import {
+  getAdsenseClientId,
+  getAdsenseSlotId,
+  isAdsenseConfigured,
+  pushAdsenseAd,
+  type AdSlotVariant,
+} from "@/lib/adsense";
 
 interface AdSlotProps {
-  variant?: "header" | "sidebar" | "inline" | "footer";
+  variant?: AdSlotVariant;
   className?: string;
 }
 
-export function AdSlot({ variant = "inline", className }: AdSlotProps) {
-  const { t } = useTranslation();
-  const label =
-    variant === "header"
-      ? t("ad.header")
-      : variant === "sidebar"
-        ? t("ad.sidebar")
-        : variant === "footer"
-          ? t("ad.footer")
-          : t("ad.inline");
+const HEIGHTS: Record<AdSlotVariant, string> = {
+  header: "min-h-[60px] sm:min-h-[90px]",
+  sidebar: "min-h-[250px] sm:min-h-[300px]",
+  inline: "min-h-[90px] sm:min-h-[120px]",
+  footer: "min-h-[90px]",
+};
 
-  const heights: Record<string, string> = {
-    header: "min-h-[60px] sm:min-h-[90px]",
-    sidebar: "min-h-[250px] sm:min-h-[300px]",
-    inline: "min-h-[90px] sm:min-h-[120px]",
-    footer: "min-h-[90px]",
-  };
+/**
+ * Renders a single AdSense unit. If AdSense is not configured (no publisher
+ * client id and slot id for this placement), this renders nothing at all —
+ * no placeholder box, no "Ad" label, no reserved space. There is only one ad
+ * provider in this app: AdSense.
+ *
+ * Keyed internally by the current route so that navigating to a new page in
+ * this single-page app always mounts a brand-new <ins> element rather than
+ * reusing one AdSense has already filled — reusing the same element across
+ * routes is what triggers AdSense's "already have ads in them" console error.
+ */
+export function AdSlot({ variant = "inline", className }: AdSlotProps) {
+  const { pathname } = useLocation();
+  const configured = isAdsenseConfigured(variant);
+  const clientId = getAdsenseClientId();
+  const slotId = getAdsenseSlotId(variant);
+
+  if (!configured || !clientId || !slotId) return null;
+
+  return (
+    <AdSenseUnit
+      key={pathname}
+      variant={variant}
+      clientId={clientId}
+      slotId={slotId}
+      className={className}
+    />
+  );
+}
+
+interface AdSenseUnitProps {
+  variant: AdSlotVariant;
+  clientId: string;
+  slotId: string;
+  className?: string;
+}
+
+function AdSenseUnit({ variant, clientId, slotId, className }: AdSenseUnitProps) {
+  const insRef = useRef<HTMLModElement>(null);
+  const pushedRef = useRef(false);
+
+  useEffect(() => {
+    if (pushedRef.current) return;
+    pushedRef.current = true;
+    void pushAdsenseAd();
+  }, []);
 
   return (
     <div
-      className={cn(
-        "group relative flex items-center justify-center overflow-hidden rounded-xl border border-dashed border-ink-300/50 text-center transition-colors duration-300 hover:border-ink-400/50 dark:border-ink-700/60 dark:hover:border-ink-600/60",
-        heights[variant],
-        className,
-      )}
+      className={cn("overflow-hidden", HEIGHTS[variant], className)}
       role="complementary"
-      aria-label={t("ad.label")}
     >
-      <div className="absolute inset-0 bg-gradient-to-br from-ink-50/40 via-transparent to-ink-50/30 transition-opacity duration-300 group-hover:opacity-60 dark:from-ink-800/30 dark:to-ink-900/20" />
-      <div className="relative px-4">
-        <div className="mx-auto mb-1 flex h-5 w-5 items-center justify-center rounded-md border border-ink-300/50 text-[8px] font-bold uppercase tracking-wider text-ink-400 dark:border-ink-600/50 dark:text-ink-600">
-          Ad
-        </div>
-        <p className="text-[10px] font-semibold uppercase tracking-wider text-ink-400 dark:text-ink-600">
-          {t("ad.label")}
-        </p>
-        <p className="mt-0.5 text-xs text-ink-400 dark:text-ink-500">{label}</p>
-      </div>
+      <ins
+        ref={insRef}
+        className="adsbygoogle"
+        style={{ display: "block", width: "100%", height: "100%" }}
+        data-ad-client={clientId}
+        data-ad-slot={slotId}
+        data-ad-format="auto"
+        data-full-width-responsive="true"
+      />
     </div>
   );
 }
