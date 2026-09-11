@@ -1,9 +1,8 @@
-import importlib.util
 import os
 import re
 import shutil
-import sys
 import time
+from typing import Any
 from urllib.parse import urlparse
 
 import yt_dlp
@@ -27,6 +26,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
+# ---------------------------------------------------------
+# Supported platforms
+# ---------------------------------------------------------
 
 ALLOWED_HOSTS = {
     "youtube.com",
@@ -54,14 +57,6 @@ ALLOWED_HOSTS = {
 }
 
 
-USER_AGENT = (
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-    "AppleWebKit/537.36 "
-    "(KHTML, like Gecko) "
-    "Chrome/150.0.0.0 Safari/537.36"
-)
-
-
 def host_allowed(host: str) -> bool:
     host = (host or "").lower().split(":", 1)[0]
 
@@ -71,6 +66,24 @@ def host_allowed(host: str) -> bool:
         for allowed in ALLOWED_HOSTS
     )
 
+
+def validate_url(url: str) -> None:
+    parsed = urlparse(url)
+
+    if (
+        parsed.scheme not in {"http", "https"}
+        or not parsed.hostname
+        or not host_allowed(parsed.hostname)
+    ):
+        raise HTTPException(
+            status_code=400,
+            detail="Unsupported or invalid video URL.",
+        )
+
+
+# ---------------------------------------------------------
+# Helpers
+# ---------------------------------------------------------
 
 def clean_title(value: str | None) -> str:
     value = (value or "").strip()
@@ -85,13 +98,16 @@ def clean_title(value: str | None) -> str:
 
 
 def get_platform(url: str) -> str:
-    host = (urlparse(url).hostname or "").lower()
-
-    if "tiktok.com" in host:
-        return "tiktok"
+    host = (
+        urlparse(url).hostname
+        or ""
+    ).lower()
 
     if "youtube.com" in host or "youtu.be" in host:
         return "youtube"
+
+    if "tiktok.com" in host:
+        return "tiktok"
 
     if "facebook.com" in host or "fb.watch" in host:
         return "facebook"
@@ -105,48 +121,40 @@ def get_platform(url: str) -> str:
     return "video"
 
 
-def get_js_runtime() -> tuple[str | None, str | None]:
+def find_deno() -> str | None:
     """
-    Detect an installed JavaScript runtime.
+    Render normally exposes Deno through PATH.
 
-    yt-dlp currently needs an external JS runtime for
-    full YouTube support.
-
-    Priority:
-      1. Deno
-      2. Node
-      3. Bun
+    We also support the known Render path shown by the
+    diagnostic endpoint.
     """
 
-    deno = shutil.which("deno")
-    if deno:
-        return "deno", deno
+    candidates = [
+        os.getenv("DENO_PATH"),
+        shutil.which("deno"),
+        "/root/.deno/bin/deno",
+        "/usr/local/bin/deno",
+    ]
 
-    node = shutil.which("node")
-    if node:
-        return "node", node
+    for path in candidates:
+        if path and os.path.isfile(path):
+            return path
 
-    bun = shutil.which("bun")
-    if bun:
-        return "bun", bun
-
-    return None, None
+    return None
 
 
-def get_ydl_options(platform: str | None = None) -> dict:
-    opts = {
+def build_base_options() -> dict[str, Any]:
+    user_agent = (
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+        "AppleWebKit/537.36 "
+        "(KHTML, like Gecko) "
+        "Chrome/150.0.0.0 Safari/537.36"
+    )
+
+    options: dict[str, Any] = {
         "quiet": True,
         "no_warnings": True,
         "noplaylist": True,
-
-        # Prefer a single-file MP4 with audio.
-        # This avoids requiring ffmpeg for the current
-        # direct-stream implementation.
-        "format": (
-            "best[ext=mp4][vcodec!=none][acodec!=none]"
-            "/best[ext=mp4][vcodec!=none]"
-            "/best"
-        ),
 
         "socket_timeout": 30,
         "retries": 3,
@@ -156,299 +164,327 @@ def get_ydl_options(platform: str | None = None) -> dict:
         "geo_bypass": True,
 
         "http_headers": {
-            "User-Agent": USER_AGENT,
+            "User-Agent": user_agent,
             "Accept-Language": "en-US,en;q=0.9",
         },
+
+        # Prefer a progressive MP4 so ffmpeg is not required
+        # for the normal download path.
+        "format": (
+            "best[ext=mp4][vcodec!=none][acodec!=none]"
+            "/best[ext=mp4][vcodec!=none]"
+            "/best"
+        ),
     }
 
-    # ---------------------------------------------------------
-    # JavaScript runtime / EJS
-    # ---------------------------------------------------------
+    # Explicitly tell yt-dlp which JS runtime is available.
+    #
+    # Deno is recommended by yt-dlp for EJS.
+    deno_path = find_deno()
 
-    runtime_name, runtime_path = get_js_runtime()
-
-    if runtime_name:
-        opts["js_runtimes"] = {
-            runtime_name: {
-                "path": runtime_path,
+    if deno_path:
+        options["js_runtimes"] = {
+            "deno": {
+                "path": deno_path,
             }
         }
+    else:
+        options["js_runtimes"] = {
+            "deno": {},
+        }
 
-    # ---------------------------------------------------------
-    # YouTube
-    # ---------------------------------------------------------
+    # yt-dlp-ejs is installed, but allowing the GitHub source
+    # gives yt-dlp another way to obtain EJS components if
+    # needed.
+    options["remote_components"] = {
+        "ejs:github",
+    }
 
+    return options
+
+
+# ---------------------------------------------------------
+# YouTube
+# ---------------------------------------------------------
+
+def build_youtube_options() -> dict[str, Any]:
+    """
+    Build YouTube options separately.
+
+    We do NOT hard-force only android/web_safari.
+
+    The current yt-dlp YouTube extractor changes its client
+    strategy over time, so keeping the default client strategy
+    is safer than permanently forcing an outdated combination.
+    """
+
+    options = build_base_options()
+
+    # Let current yt-dlp choose its supported default clients.
+    #
+    # This is intentional.
+    # Do not force:
+    # android + web_safari + web
+    #
+    # Those clients have different PO-token / SABR constraints.
+    options["extractor_args"] = {
+        "youtube": {
+            "player_client": ["default"],
+        }
+    }
+
+    return options
+
+
+def build_options(platform: str) -> dict[str, Any]:
     if platform == "youtube":
-        opts["extractor_args"] = {
-            "youtube": {
-                "player_client": [
-                    "web",
-                    "android",
-                    "web_safari",
-                ],
-            }
-        }
+        return build_youtube_options()
 
-        # Allow yt-dlp to use EJS scripts if necessary.
-        #
-        # This does NOT bypass authentication or DRM.
-        # It only enables yt-dlp's official challenge-solving
-        # mechanism.
-        if runtime_name in {"deno", "bun"}:
-            opts["remote_components"] = {
-                "ejs": ["github"],
-            }
+    return build_base_options()
 
-    return opts
 
+# ---------------------------------------------------------
+# Error detection
+# ---------------------------------------------------------
 
 def is_youtube_bot_check(message: str) -> bool:
     lowered = (message or "").lower()
 
     return (
-        ("confirm you" in lowered and "bot" in lowered)
+        (
+            "confirm you" in lowered
+            and "bot" in lowered
+        )
         or "sign in to confirm" in lowered
-        or "failed to extract any player response" in lowered
+        or "not a bot" in lowered
+        or "captcha" in lowered
     )
 
 
-def validate_url(url: str) -> None:
-    parsed = urlparse(url)
+def is_player_response_error(message: str) -> bool:
+    lowered = (message or "").lower()
 
-    if (
-        parsed.scheme not in {"http", "https"}
-        or not host_allowed(parsed.hostname or "")
-    ):
-        raise HTTPException(
-            status_code=400,
-            detail="Unsupported or invalid video URL.",
-        )
+    return (
+        "failed to extract any player response" in lowered
+        or "unable to extract initial player response" in lowered
+        or "failed to extract player response" in lowered
+    )
 
 
-def extract(url: str) -> dict:
+# ---------------------------------------------------------
+# yt-dlp extraction
+# ---------------------------------------------------------
+
+def extract_info(url: str) -> dict[str, Any]:
     platform = get_platform(url)
-    opts = get_ydl_options(platform)
+    options = build_options(platform)
 
-    with yt_dlp.YoutubeDL(opts) as ydl:
+    with yt_dlp.YoutubeDL(options) as ydl:
         info = ydl.extract_info(
             url,
             download=False,
         )
 
-        if info is None:
+    if not info:
+        raise RuntimeError(
+            "No video information was returned."
+        )
+
+    if info.get("_type") == "playlist":
+        entries = [
+            entry
+            for entry in (info.get("entries") or [])
+            if entry
+        ]
+
+        if not entries:
             raise RuntimeError(
-                "No video information was returned."
+                "No video was found."
             )
 
-        if info.get("_type") == "playlist":
-            entries = [
-                entry
-                for entry in (info.get("entries") or [])
-                if entry
-            ]
+        info = entries[0]
 
-            if not entries:
-                raise RuntimeError(
-                    "No video was found."
-                )
+    video_url = info.get("url")
 
-            info = entries[0]
+    # Some extractors expose the selected URL only
+    # through the formats list.
+    if not video_url:
+        formats = info.get("formats") or []
 
-        video_url = info.get("url")
+        candidates = []
 
-        # If yt-dlp didn't select a direct URL,
-        # find a usable progressive format.
-        if not video_url:
-            formats = info.get("formats") or []
+        for fmt in formats:
+            fmt_url = fmt.get("url")
 
-            candidates = []
+            if not fmt_url:
+                continue
 
-            for fmt in formats:
-                fmt_url = fmt.get("url")
+            if fmt.get("vcodec") in {
+                None,
+                "none",
+            }:
+                continue
 
-                if not fmt_url:
-                    continue
-
-                if fmt.get("vcodec") in {
-                    None,
-                    "none",
-                }:
-                    continue
-
-                protocol = (
-                    fmt.get("protocol")
-                    or ""
-                ).lower()
-
-                if protocol in {
-                    "m3u8",
-                    "m3u8_native",
-                    "http_dash_segments",
-                }:
-                    continue
-
-                score = 0
-
-                if (
-                    (fmt.get("ext") or "").lower()
-                    == "mp4"
-                ):
-                    score += 100
-
-                if fmt.get("acodec") not in {
-                    None,
-                    "none",
-                }:
-                    score += 50
-
-                score += min(
-                    int(fmt.get("height") or 0),
-                    10000,
-                ) / 100
-
-                candidates.append(
-                    (
-                        score,
-                        fmt_url,
-                        fmt,
-                    )
-                )
-
-            if candidates:
-                candidates.sort(
-                    key=lambda item: item[0],
-                    reverse=True,
-                )
-
-                video_url = candidates[0][1]
-
-        if not video_url:
-            raise RuntimeError(
-                "No direct video URL was returned."
-            )
-
-        return {
-            "success": True,
-            "video_url": video_url,
-
-            "title": clean_title(
-                info.get("title")
-            ),
-
-            "author": (
-                info.get("uploader")
-                or info.get("channel")
+            protocol = (
+                fmt.get("protocol")
                 or ""
-            ),
+            ).lower()
 
-            "thumbnail": (
-                info.get("thumbnail")
-                or None
-            ),
+            if protocol in {
+                "m3u8",
+                "m3u8_native",
+                "http_dash_segments",
+            }:
+                continue
 
-            "duration": info.get(
-                "duration"
-            ),
+            score = 0
 
-            "platform": (
-                info.get("extractor_key")
-                or info.get("extractor")
-                or platform
-            ),
+            if (
+                (fmt.get("ext") or "").lower()
+                == "mp4"
+            ):
+                score += 100
 
-            "ext": (
-                info.get("ext")
-                or "mp4"
-            ),
+            if fmt.get("acodec") not in {
+                None,
+                "none",
+            }:
+                score += 50
 
-            "webpage_url": (
-                info.get("webpage_url")
-                or url
-            ),
+            height = fmt.get("height") or 0
 
-            "timestamp": int(time.time()),
-        }
+            try:
+                score += float(height) / 10000
+            except (TypeError, ValueError):
+                pass
+
+            candidates.append(
+                (
+                    score,
+                    fmt_url,
+                    fmt,
+                )
+            )
+
+        if candidates:
+            candidates.sort(
+                key=lambda item: item[0],
+                reverse=True,
+            )
+
+            video_url = candidates[0][1]
+
+    if not video_url:
+        raise RuntimeError(
+            "No direct video URL was returned."
+        )
+
+    return {
+        "success": True,
+
+        "video_url": video_url,
+
+        "title": clean_title(
+            info.get("title")
+        ),
+
+        "author": (
+            info.get("uploader")
+            or info.get("channel")
+            or ""
+        ),
+
+        "thumbnail": (
+            info.get("thumbnail")
+            or None
+        ),
+
+        "duration": info.get(
+            "duration"
+        ),
+
+        "platform": (
+            info.get("extractor_key")
+            or info.get("extractor")
+            or platform
+        ),
+
+        "ext": (
+            info.get("ext")
+            or "mp4"
+        ),
+
+        "webpage_url": (
+            info.get("webpage_url")
+            or url
+        ),
+
+        "timestamp": int(time.time()),
+    }
 
 
-# ============================================================
-# BASIC ENDPOINTS
-# ============================================================
+# ---------------------------------------------------------
+# Root / health / diagnostics
+# ---------------------------------------------------------
 
 @app.get("/")
 def root():
+    deno = find_deno()
+
     return {
         "ok": True,
         "service": "ZidroTool yt-dlp API",
         "version": APP_VERSION,
+        "yt_dlp": yt_dlp.version.__version__,
+        "deno_available": bool(deno),
+        "deno_path": deno,
     }
 
 
 @app.get("/health")
 def health():
-    runtime_name, runtime_path = get_js_runtime()
-
     return {
         "ok": True,
         "service": "ZidroTool yt-dlp API",
         "version": APP_VERSION,
-        "yt_dlp": getattr(
-            yt_dlp.version,
-            "__version__",
-            "unknown",
-        ),
-        "js_runtime": runtime_name,
-        "js_runtime_path": runtime_path,
     }
 
-
-# ============================================================
-# TEMPORARY DEBUG ENDPOINT
-# ============================================================
 
 @app.get("/debug")
 def debug():
     """
-    Temporary diagnostic endpoint.
+    Diagnostic endpoint.
 
-    Remove this endpoint after the Render/YouTube issue
-    has been diagnosed.
+    Useful because Render Free does not provide Shell access.
     """
 
-    runtime_name, runtime_path = get_js_runtime()
+    deno_path = find_deno()
+
+    try:
+        import yt_dlp_ejs
+
+        ejs_version = getattr(
+            yt_dlp_ejs,
+            "__version__",
+            "installed",
+        )
+    except Exception:
+        ejs_version = None
 
     return {
-        "python": sys.version,
-
-        "yt_dlp": getattr(
-            yt_dlp.version,
-            "__version__",
-            "unknown",
-        ),
-
-        "yt_dlp_ejs_installed": (
-            importlib.util.find_spec(
-                "yt_dlp_ejs"
-            )
-            is not None
-        ),
-
-        "js_runtime": runtime_name,
-        "js_runtime_path": runtime_path,
-
-        "node": shutil.which("node"),
-        "deno": shutil.which("deno"),
-        "bun": shutil.which("bun"),
-
-        "environment": {
-            "PORT": os.getenv("PORT"),
-            "RENDER": os.getenv("RENDER"),
-        },
+        "python": os.sys.version,
+        "yt_dlp": yt_dlp.version.__version__,
+        "yt_dlp_ejs": ejs_version,
+        "deno": deno_path,
+        "deno_available": bool(deno_path),
+        "render": os.getenv("RENDER"),
+        "port": os.getenv("PORT"),
     }
 
 
-# ============================================================
-# EXTRACT
-# ============================================================
+# ---------------------------------------------------------
+# Extract endpoint
+# ---------------------------------------------------------
 
 @app.get("/extract")
 def extract_endpoint(
@@ -463,18 +499,10 @@ def extract_endpoint(
     platform = get_platform(url)
 
     try:
-        return extract(url)
+        return extract_info(url)
 
     except Exception as exc:
         message = str(exc)
-
-        bot_check = is_youtube_bot_check(
-            message
-        )
-
-        runtime_name, runtime_path = (
-            get_js_runtime()
-        )
 
         print(
             "yt-dlp extraction failed:",
@@ -483,46 +511,58 @@ def extract_endpoint(
                 "error": message,
                 "platform": platform,
                 "url": url,
-                "bot_check": bot_check,
-                "js_runtime": runtime_name,
-                "js_runtime_path": runtime_path,
-                "yt_dlp": getattr(
-                    yt_dlp.version,
-                    "__version__",
-                    "unknown",
+                "bot_check": is_youtube_bot_check(message),
+                "player_response_error": (
+                    is_player_response_error(message)
                 ),
             },
             flush=True,
         )
 
-        if bot_check:
+        if is_youtube_bot_check(message):
             raise HTTPException(
                 status_code=502,
                 detail=(
-                    "YouTube extraction failed on the "
-                    "Render server. yt-dlp could not obtain "
-                    "a usable YouTube player response. "
-                    "Check the JavaScript runtime and EJS "
-                    "configuration on the server."
+                    "YouTube is currently showing a "
+                    "bot-verification wall to this server."
                 ),
                 headers={
                     "X-ZidroTool-Error-Code":
-                        "YOUTUBE_EXTRACTION_FAILED"
+                        "YOUTUBE_BOT_CHECK"
+                },
+            )
+
+        if is_player_response_error(message):
+            raise HTTPException(
+                status_code=502,
+                detail=(
+                    "YouTube did not return a usable "
+                    "player response to the Render server. "
+                    "yt-dlp, EJS and Deno are installed, "
+                    "but YouTube is currently refusing or "
+                    "withholding the player response."
+                ),
+                headers={
+                    "X-ZidroTool-Error-Code":
+                        "YOUTUBE_PLAYER_RESPONSE"
                 },
             )
 
         raise HTTPException(
             status_code=502,
             detail=(
-                "Video provider could not "
-                "extract this URL."
+                "Video provider could not extract this URL."
             ),
+            headers={
+                "X-ZidroTool-Error-Code":
+                    "VIDEO_EXTRACTION_FAILED"
+            },
         )
 
 
-# ============================================================
-# DOWNLOAD
-# ============================================================
+# ---------------------------------------------------------
+# Download endpoint
+# ---------------------------------------------------------
 
 @app.get("/download")
 def download_endpoint(
@@ -533,10 +573,9 @@ def download_endpoint(
     )
 ):
     """
-    Download/stream the selected video directly from Render.
+    Stream the extracted media through Render.
 
-    The browser receives the file from Render instead of
-    trying to fetch a temporary provider URL directly.
+    The browser should download this response directly.
     """
 
     validate_url(url)
@@ -547,19 +586,12 @@ def download_endpoint(
     result = None
 
     try:
-        opts = get_ydl_options(platform)
+        options = build_options(platform)
 
-        # We stream the selected single format ourselves.
-        opts["quiet"] = True
-        opts["no_warnings"] = True
-
-        opts["format"] = (
-            "best[ext=mp4][vcodec!=none][acodec!=none]"
-            "/best[ext=mp4][vcodec!=none]"
-            "/best"
-        )
-
-        ydl = yt_dlp.YoutubeDL(opts)
+        # We do not use stdout for the actual response.
+        # We first extract the media URL and then stream it
+        # using yt-dlp's request opener.
+        ydl = yt_dlp.YoutubeDL(options)
 
         info = ydl.extract_info(
             url,
@@ -585,9 +617,9 @@ def download_endpoint(
 
             info = entries[0]
 
-        video_url = info.get("url")
+        media_url = info.get("url")
 
-        if not video_url:
+        if not media_url:
             formats = info.get("formats") or []
 
             candidates = []
@@ -630,10 +662,12 @@ def download_endpoint(
                 }:
                     score += 50
 
-                score += min(
-                    int(fmt.get("height") or 0),
-                    10000,
-                ) / 100
+                try:
+                    score += float(
+                        fmt.get("height") or 0
+                    ) / 10000
+                except (TypeError, ValueError):
+                    pass
 
                 candidates.append(
                     (
@@ -649,11 +683,11 @@ def download_endpoint(
                     reverse=True,
                 )
 
-                video_url = candidates[0][1]
+                media_url = candidates[0][1]
 
-        if not video_url:
+        if not media_url:
             raise RuntimeError(
-                "No direct video URL returned."
+                "No direct media URL was returned."
             )
 
         title = clean_title(
@@ -677,11 +711,27 @@ def download_endpoint(
             f"{platform}-video.{ext}"
         )
 
-        # Use yt-dlp's opener so extractor headers/session
-        # are preserved as much as possible.
+        # Use yt-dlp's opener so relevant HTTP headers
+        # from the extractor session are retained.
         result = ydl.urlopen(
-            video_url
+            media_url
         )
+
+        content_type = (
+            result.headers.get("Content-Type")
+            or "video/mp4"
+        )
+
+        # Avoid accidentally returning HTML/JSON as a video.
+        lowered_content_type = content_type.lower()
+
+        if (
+            "text/html" in lowered_content_type
+            or "application/json" in lowered_content_type
+        ):
+            raise RuntimeError(
+                "The provider returned a non-video response."
+            )
 
         def stream():
             try:
@@ -702,37 +752,35 @@ def download_endpoint(
                     pass
 
                 try:
-                    ydl.close()
+                    if ydl is not None:
+                        ydl.close()
                 except Exception:
                     pass
 
+        headers = {
+            "Content-Disposition": (
+                f'attachment; filename="{filename}"'
+            ),
+            "Cache-Control": "no-store",
+            "X-ZidroTool-Platform": platform,
+            "X-ZidroTool-Title": title,
+        }
+
+        content_length = (
+            result.headers.get("Content-Length")
+        )
+
+        if content_length:
+            headers["Content-Length"] = content_length
+
         return StreamingResponse(
             stream(),
-            media_type=(
-                "video/mp4"
-                if ext == "mp4"
-                else f"video/{ext}"
-            ),
-            headers={
-                "Content-Disposition": (
-                    f'attachment; filename="{filename}"'
-                ),
-                "Cache-Control": "no-store",
-                "X-ZidroTool-Platform": platform,
-                "X-ZidroTool-Title": title,
-            },
+            media_type=content_type,
+            headers=headers,
         )
 
     except Exception as exc:
         message = str(exc)
-
-        bot_check = is_youtube_bot_check(
-            message
-        )
-
-        runtime_name, runtime_path = (
-            get_js_runtime()
-        )
 
         print(
             "yt-dlp download failed:",
@@ -741,43 +789,43 @@ def download_endpoint(
                 "error": message,
                 "platform": platform,
                 "url": url,
-                "bot_check": bot_check,
-                "js_runtime": runtime_name,
-                "js_runtime_path": runtime_path,
+                "bot_check": is_youtube_bot_check(message),
             },
             flush=True,
         )
 
-        if result is not None:
-            try:
+        try:
+            if result is not None:
                 result.close()
-            except Exception:
-                pass
+        except Exception:
+            pass
 
-        if ydl is not None:
-            try:
+        try:
+            if ydl is not None:
                 ydl.close()
-            except Exception:
-                pass
+        except Exception:
+            pass
 
-        if bot_check:
+        if is_youtube_bot_check(message):
             raise HTTPException(
                 status_code=502,
                 detail=(
-                    "YouTube download failed on the "
-                    "Render server. yt-dlp could not obtain "
-                    "a usable player response."
+                    "YouTube is currently showing a "
+                    "bot-verification wall to this server."
                 ),
                 headers={
                     "X-ZidroTool-Error-Code":
-                        "YOUTUBE_DOWNLOAD_FAILED"
+                        "YOUTUBE_BOT_CHECK"
                 },
             )
 
         raise HTTPException(
             status_code=502,
             detail=(
-                "Video provider could not "
-                "download this URL."
+                "Video provider could not download this URL."
             ),
+            headers={
+                "X-ZidroTool-Error-Code":
+                    "VIDEO_DOWNLOAD_FAILED"
+            },
         )
