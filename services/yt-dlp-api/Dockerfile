@@ -11,10 +11,23 @@ RUN apt-get update \
         curl \
         unzip \
         ca-certificates \
+        git \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Deno for yt-dlp YouTube JavaScript challenge solving
 RUN curl -fsSL https://deno.land/install.sh | sh
+
+# Install BgUtils PO Token provider source.
+# The yt-dlp plugin will use this as its local script provider.
+RUN git clone \
+        --depth 1 \
+        --branch 2.0.0 \
+        https://github.com/Brainicism/bgutil-ytdlp-pot-provider.git \
+        /root/bgutil-ytdlp-pot-provider
+
+# Install the provider's Deno dependencies.
+RUN cd /root/bgutil-ytdlp-pot-provider/server \
+    && deno install --allow-scripts=npm:canvas --frozen
 
 WORKDIR /app
 
