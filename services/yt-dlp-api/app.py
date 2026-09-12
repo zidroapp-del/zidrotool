@@ -10,9 +10,12 @@ from fastapi.responses import StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
 
 
+APP_VERSION = "1.2.0"
+
+
 app = FastAPI(
     title="ZidroTool yt-dlp API",
-    version="1.2.0",
+    version=APP_VERSION,
 )
 
 app.add_middleware(
@@ -25,24 +28,32 @@ app.add_middleware(
 
 
 ALLOWED_HOSTS = {
+    # YouTube
     "youtube.com",
     "www.youtube.com",
     "m.youtube.com",
     "youtu.be",
+    "www.youtu.be",
     "youtube-nocookie.com",
+    "www.youtube-nocookie.com",
 
+    # TikTok
     "tiktok.com",
     "www.tiktok.com",
     "m.tiktok.com",
+    "vm.tiktok.com",
 
+    # Facebook
     "facebook.com",
     "www.facebook.com",
     "m.facebook.com",
     "fb.watch",
 
+    # Instagram
     "instagram.com",
     "www.instagram.com",
 
+    # X / Twitter
     "x.com",
     "www.x.com",
     "twitter.com",
@@ -78,14 +89,15 @@ def get_platform(url: str) -> str:
         or ""
     ).lower()
 
-    if "tiktok.com" in host:
-        return "tiktok"
-
     if (
         "youtube.com" in host
         or "youtu.be" in host
+        or "youtube-nocookie.com" in host
     ):
         return "youtube"
+
+    if "tiktok.com" in host:
+        return "tiktok"
 
     if (
         "facebook.com" in host
@@ -111,8 +123,13 @@ def get_ydl_options(platform: str | None = None) -> dict:
         "no_warnings": True,
         "noplaylist": True,
 
-        # Prefer a progressive MP4 so we do not need
-        # ffmpeg to merge separate audio/video streams.
+        # TikTok:
+        # Use curl-cffi browser impersonation so yt-dlp can
+        # use a Chrome-like TLS/HTTP fingerprint.
+        "impersonate": "chrome",
+
+        # Prefer a progressive MP4.
+        # This avoids requiring ffmpeg to merge audio/video.
         "format": (
             "best[ext=mp4][vcodec!=none][acodec!=none]"
             "/best[ext=mp4][vcodec!=none]"
@@ -193,6 +210,7 @@ def extract(url: str) -> dict:
 
         if not video_url:
             formats = info.get("formats") or []
+
             candidates = []
 
             for fmt in formats:
@@ -306,17 +324,17 @@ def validate_url(url: str):
     parsed = urlparse(url)
 
     if (
-        parsed.scheme not in {
-            "http",
-            "https",
-        }
+        parsed.scheme
+        not in {"http", "https"}
         or not host_allowed(
             parsed.hostname or ""
         )
     ):
         raise HTTPException(
             status_code=400,
-            detail="Unsupported or invalid video URL.",
+            detail=(
+                "Unsupported or invalid video URL."
+            ),
         )
 
 
@@ -325,7 +343,7 @@ def root():
     return {
         "ok": True,
         "service": "ZidroTool yt-dlp API",
-        "version": "1.2.0",
+        "version": APP_VERSION,
     }
 
 
@@ -333,6 +351,7 @@ def root():
 def health():
     return {
         "ok": True,
+        "version": APP_VERSION,
     }
 
 
@@ -341,17 +360,21 @@ def debug():
     return {
         "ok": True,
         "service": "ZidroTool yt-dlp API",
-        "version": "1.2.0",
+        "version": APP_VERSION,
+
         "yt_dlp": getattr(
             yt_dlp,
             "__version__",
             "unknown",
         ),
+
         "python": os.sys.version,
+
         "render": os.getenv(
             "RENDER",
             "false",
         ),
+
         "port": os.getenv(
             "PORT",
             "",
@@ -365,7 +388,7 @@ def extract_endpoint(
         ...,
         min_length=8,
         max_length=4096,
-    )
+    ),
 ):
     validate_url(url)
 
@@ -393,7 +416,7 @@ def extract_endpoint(
             flush=True,
         )
 
-        if bot_check:
+        if platform == "youtube" and bot_check:
             raise HTTPException(
                 status_code=502,
                 detail=(
@@ -442,7 +465,7 @@ def download_endpoint(
         ...,
         min_length=8,
         max_length=4096,
-    )
+    ),
 ):
     """
     Download/stream the video directly from Render.
@@ -466,6 +489,9 @@ def download_endpoint(
             ),
         )
 
+    ydl = None
+    result = None
+
     try:
         opts = get_ydl_options(platform)
 
@@ -473,6 +499,7 @@ def download_endpoint(
         opts["quiet"] = True
         opts["no_warnings"] = True
 
+        # Force a single-file format.
         opts["format"] = (
             "best[ext=mp4][vcodec!=none][acodec!=none]"
             "/best[ext=mp4][vcodec!=none]"
@@ -496,6 +523,11 @@ def download_endpoint(
             info.get("title")
         )
 
+        if not info.get("url"):
+            raise RuntimeError(
+                "No direct video URL returned."
+            )
+
         ext = (
             info.get("ext")
             or "mp4"
@@ -513,6 +545,8 @@ def download_endpoint(
             f"{platform}-video.{ext}"
         )
 
+        # TikTok CDN links can require the exact headers
+        # returned by yt-dlp for the selected format.
         stream_headers = dict(
             opts.get("http_headers") or {}
         )
@@ -573,17 +607,29 @@ def download_endpoint(
 
         print(
             "yt-dlp download failed:",
+            type(exc).__name__,
+            message,
             {
-                "type": type(exc).__name__,
-                "error": message,
                 "platform": platform,
-                "url": url,
                 "bot_check": bot_check,
+                "url": url,
             },
             flush=True,
         )
 
-        if bot_check:
+        if result is not None:
+            try:
+                result.close()
+            except Exception:
+                pass
+
+        if ydl is not None:
+            try:
+                ydl.close()
+            except Exception:
+                pass
+
+        if platform == "youtube" and bot_check:
             raise HTTPException(
                 status_code=502,
                 detail=(
