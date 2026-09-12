@@ -1,5 +1,5 @@
 fastapi==0.116.1
 uvicorn[standard]==0.35.0
-yt-dlp==2026.8.19-vendor-DL5dB6wS
+yt-dlp==2026.8.19
 yt-dlp-ejs==0.8.0
 curl-cffi==0.15.0
