@@ -1,13 +1,12 @@
 import os
 import re
-import time
 from urllib.parse import urlparse
 from urllib.request import Request
 
 import yt_dlp
 from fastapi import FastAPI, HTTPException, Query
-from fastapi.responses import StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import StreamingResponse
 
 
 APP_VERSION = "1.2.0"
@@ -22,7 +21,7 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
     allow_credentials=False,
-    allow_methods=["GET"],
+    allow_methods=["*"],
     allow_headers=["*"],
 )
 
@@ -62,25 +61,18 @@ ALLOWED_HOSTS = {
 
 
 def host_allowed(host: str) -> bool:
-    host = (host or "").lower().split(":", 1)[0]
+    host = (host or "").lower().strip(".")
+
+    if not host:
+        return False
+
+    if host in ALLOWED_HOSTS:
+        return True
 
     return any(
-        host == allowed
-        or host.endswith("." + allowed)
+        host.endswith("." + allowed)
         for allowed in ALLOWED_HOSTS
     )
-
-
-def clean_title(value: str | None) -> str:
-    value = (value or "").strip()
-
-    value = re.sub(
-        r'[<>:"/\\|?*\x00-\x1F]',
-        "_",
-        value,
-    )
-
-    return value[:240] or "video"
 
 
 def get_platform(url: str) -> str:
@@ -109,27 +101,29 @@ def get_platform(url: str) -> str:
         return "instagram"
 
     if (
-        "x.com" in host
-        or "twitter.com" in host
+        "twitter.com" in host
+        or "x.com" in host
     ):
         return "x"
 
-    return "video"
+    return "unknown"
 
 
-def get_ydl_options(platform: str | None = None) -> dict:
-    opts = {
+def get_ydl_options(
+    platform: str | None = None,
+) -> dict:
+    options = {
         "quiet": True,
         "no_warnings": True,
         "noplaylist": True,
 
-        # TikTok:
-        # Use curl-cffi browser impersonation so yt-dlp can
-        # use a Chrome-like TLS/HTTP fingerprint.
+        # Use curl-cffi browser impersonation.
+        # This is especially important for TikTok.
         "impersonate": "chrome",
 
         # Prefer a progressive MP4.
-        # This avoids requiring ffmpeg to merge audio/video.
+        # This avoids requiring ffmpeg to merge
+        # separate audio/video streams.
         "format": (
             "best[ext=mp4][vcodec!=none][acodec!=none]"
             "/best[ext=mp4][vcodec!=none]"
@@ -155,7 +149,7 @@ def get_ydl_options(platform: str | None = None) -> dict:
     }
 
     if platform == "youtube":
-        opts["extractor_args"] = {
+        options["extractor_args"] = {
             "youtube": {
                 "player_client": [
                     "android",
@@ -165,46 +159,50 @@ def get_ydl_options(platform: str | None = None) -> dict:
             }
         }
 
-    return opts
+    return options
 
 
-def is_youtube_bot_check(message: str) -> bool:
-    lowered = (message or "").lower()
+def is_youtube_bot_check(
+    message: str,
+) -> bool:
+    text = (message or "").lower()
 
-    return (
-        ("confirm you" in lowered and "bot" in lowered)
-        or "sign in to confirm" in lowered
+    patterns = [
+        "sign in to confirm",
+        "confirm you're not a bot",
+        "confirm you are not a bot",
+        "not a bot",
+        "bot verification",
+        "bot check",
+        "captcha",
+        "automated queries",
+        "automated request",
+        "cookies to continue",
+        "use this application",
+    ]
+
+    return any(
+        pattern in text
+        for pattern in patterns
     )
 
 
 def extract(url: str) -> dict:
     platform = get_platform(url)
+
     opts = get_ydl_options(platform)
 
-    with yt_dlp.YoutubeDL(opts) as ydl:
-        info = ydl.extract_info(
-            url,
-            download=False,
-        )
-
-        if info is None:
-            raise RuntimeError(
-                "No video information was returned."
+    try:
+        with yt_dlp.YoutubeDL(opts) as ydl:
+            info = ydl.extract_info(
+                url,
+                download=False,
             )
 
-        if info.get("_type") == "playlist":
-            entries = [
-                x
-                for x in (info.get("entries") or [])
-                if x
-            ]
-
-            if not entries:
-                raise RuntimeError(
-                    "No video was found."
-                )
-
-            info = entries[0]
+        if not info:
+            raise RuntimeError(
+                "yt-dlp returned no information."
+            )
 
         video_url = info.get("url")
 
@@ -219,51 +217,54 @@ def extract(url: str) -> dict:
                 if not fmt_url:
                     continue
 
-                if fmt.get("vcodec") in (
-                    None,
-                    "none",
-                ):
-                    continue
+                ext = (
+                    fmt.get("ext")
+                    or ""
+                ).lower()
 
                 protocol = (
                     fmt.get("protocol")
                     or ""
                 ).lower()
 
-                if protocol in {
-                    "m3u8",
-                    "m3u8_native",
-                    "http_dash_segments",
-                }:
+                vcodec = (
+                    fmt.get("vcodec")
+                    or "none"
+                )
+
+                acodec = (
+                    fmt.get("acodec")
+                    or "none"
+                )
+
+                if vcodec == "none":
+                    continue
+
+                if (
+                    "m3u8" in protocol
+                    or "m3u8" in fmt_url
+                ):
                     continue
 
                 score = 0
 
-                if (
-                    fmt.get("ext")
-                    or ""
-                ).lower() == "mp4":
+                if ext == "mp4":
                     score += 100
 
-                if fmt.get("acodec") not in (
-                    None,
-                    "none",
-                ):
+                if acodec != "none":
                     score += 50
 
-                score += (
-                    int(
-                        fmt.get("height")
-                        or 0
+                try:
+                    score += int(
+                        fmt.get("height") or 0
                     )
-                    / 10000
-                )
+                except Exception:
+                    pass
 
                 candidates.append(
                     (
                         score,
                         fmt_url,
-                        fmt,
                     )
                 )
 
@@ -277,47 +278,112 @@ def extract(url: str) -> dict:
 
         if not video_url:
             raise RuntimeError(
-                "No direct video URL was returned."
+                "No direct video URL returned."
             )
 
         return {
             "success": True,
             "video_url": video_url,
-
-            "title": clean_title(
+            "title": (
                 info.get("title")
+                or "video"
             ),
-
             "author": (
                 info.get("uploader")
                 or info.get("channel")
                 or ""
             ),
-
             "thumbnail": (
                 info.get("thumbnail")
-                or None
+                or ""
             ),
-
-            "duration": info.get(
-                "duration"
+            "duration": (
+                info.get("duration")
             ),
-
-            "platform": (
-                info.get("extractor_key")
-                or info.get("extractor")
-                or platform
+            "platform": platform,
+            "ext": (
+                info.get("ext")
+                or "mp4"
             ),
-
-            "ext": info.get("ext") or "mp4",
-
             "webpage_url": (
                 info.get("webpage_url")
                 or url
             ),
-
-            "timestamp": int(time.time()),
+            "timestamp": (
+                info.get("timestamp")
+            ),
         }
+
+    except Exception as exc:
+        message = str(exc)
+
+        # IMPORTANT:
+        # Some exceptions can have an empty str(exc).
+        # repr(exc) lets us see the actual exception.
+        exc_type = type(exc).__name__
+        message_for_log = repr(exc)
+
+        bot_check = is_youtube_bot_check(
+            message
+        )
+
+        print(
+            "yt-dlp extraction failed:",
+            exc_type,
+            message_for_log,
+            {
+                "platform": platform,
+                "bot_check": bot_check,
+                "url": url,
+            },
+            flush=True,
+        )
+
+        if (
+            platform == "youtube"
+            and bot_check
+        ):
+            raise HTTPException(
+                status_code=502,
+                detail=(
+                    "YouTube is currently showing a "
+                    "bot-verification wall to this server. "
+                    "This is a known limitation of running "
+                    "yt-dlp from cloud/datacenter IP addresses "
+                    "and is not something this service can "
+                    "force past. Please try again later."
+                ),
+                headers={
+                    "X-ZidroTool-Error-Code":
+                        "YOUTUBE_BOT_CHECK"
+                },
+            )
+
+        if platform == "tiktok":
+            raise HTTPException(
+                status_code=502,
+                detail=(
+                    "TikTok/yt-dlp extraction failed: "
+                    f"{exc_type}: "
+                    f"{message_for_log[:1000]}"
+                ),
+                headers={
+                    "X-ZidroTool-Error-Code":
+                        "TIKTOK_EXTRACTION_FAILED"
+                },
+            )
+
+        raise HTTPException(
+            status_code=502,
+            detail=(
+                "Video provider could not "
+                "extract this URL."
+            ),
+            headers={
+                "X-ZidroTool-Error-Code":
+                    "VIDEO_EXTRACTION_FAILED"
+            },
+        )
 
 
 def validate_url(url: str):
@@ -395,56 +461,35 @@ def extract_endpoint(
     platform = get_platform(url)
 
     try:
-        return extract(url)
-
-    except Exception as exc:
-        message = str(exc)
-
-        bot_check = is_youtube_bot_check(
-            message
-        )
-
         print(
-            "yt-dlp extraction failed:",
-            type(exc).__name__,
-            message,
+            "yt-dlp extraction request:",
             {
                 "platform": platform,
-                "bot_check": bot_check,
                 "url": url,
             },
             flush=True,
         )
 
-        if platform == "youtube" and bot_check:
-            raise HTTPException(
-                status_code=502,
-                detail=(
-                    "YouTube is currently showing a "
-                    "bot-verification wall to this server. "
-                    "This is a known limitation of running "
-                    "yt-dlp from cloud/datacenter IP addresses "
-                    "and is not something this service can "
-                    "force past. Please try again later."
-                ),
-                headers={
-                    "X-ZidroTool-Error-Code":
-                        "YOUTUBE_BOT_CHECK"
-                },
-            )
+        result = extract(url)
 
-        if platform == "tiktok":
-            raise HTTPException(
-                status_code=502,
-                detail=(
-                    "TikTok/yt-dlp extraction failed: "
-                    f"{message[:500]}"
-                ),
-                headers={
-                    "X-ZidroTool-Error-Code":
-                        "TIKTOK_EXTRACTION_FAILED"
-                },
-            )
+        return result
+
+    except HTTPException:
+        raise
+
+    except Exception as exc:
+        message = str(exc)
+
+        print(
+            "extract endpoint failed:",
+            type(exc).__name__,
+            repr(exc),
+            {
+                "platform": platform,
+                "url": url,
+            },
+            flush=True,
+        )
 
         raise HTTPException(
             status_code=502,
@@ -452,10 +497,6 @@ def extract_endpoint(
                 "Video provider could not "
                 "extract this URL."
             ),
-            headers={
-                "X-ZidroTool-Error-Code":
-                    "VIDEO_EXTRACTION_FAILED"
-            },
         )
 
 
@@ -469,24 +510,25 @@ def download_endpoint(
 ):
     """
     Download/stream the video directly from Render.
-
-    This is important because Vercel should not fetch
-    temporary TikTok media URLs directly.
     """
 
     validate_url(url)
 
     platform = get_platform(url)
 
+    # YouTube file downloads remain disabled.
+    # Metadata extraction is still supported.
     if platform == "youtube":
         raise HTTPException(
             status_code=404,
             detail=(
-                "YouTube video file downloads are not "
-                "offered by this service. YouTube metadata "
-                "(title, author, duration, thumbnail) is "
-                "still available via /extract."
+                "YouTube file downloads are "
+                "currently disabled."
             ),
+            headers={
+                "X-ZidroTool-Error-Code":
+                    "YOUTUBE_DOWNLOAD_DISABLED"
+            },
         )
 
     ydl = None
@@ -495,7 +537,6 @@ def download_endpoint(
     try:
         opts = get_ydl_options(platform)
 
-        opts["outtmpl"] = "-"
         opts["quiet"] = True
         opts["no_warnings"] = True
 
@@ -506,7 +547,6 @@ def download_endpoint(
             "/best"
         )
 
-        # Keep YoutubeDL alive until streaming finishes.
         ydl = yt_dlp.YoutubeDL(opts)
 
         info = ydl.extract_info(
@@ -516,86 +556,160 @@ def download_endpoint(
 
         if not info:
             raise RuntimeError(
-                "No video information returned."
+                "yt-dlp returned no information."
             )
 
-        title = clean_title(
-            info.get("title")
-        )
+        video_url = info.get("url")
 
-        if not info.get("url"):
+        if not video_url:
+            formats = info.get("formats") or []
+
+            candidates = []
+
+            for fmt in formats:
+                fmt_url = fmt.get("url")
+
+                if not fmt_url:
+                    continue
+
+                ext = (
+                    fmt.get("ext")
+                    or ""
+                ).lower()
+
+                protocol = (
+                    fmt.get("protocol")
+                    or ""
+                ).lower()
+
+                vcodec = (
+                    fmt.get("vcodec")
+                    or "none"
+                )
+
+                acodec = (
+                    fmt.get("acodec")
+                    or "none"
+                )
+
+                if vcodec == "none":
+                    continue
+
+                if (
+                    "m3u8" in protocol
+                    or "m3u8" in fmt_url
+                ):
+                    continue
+
+                score = 0
+
+                if ext == "mp4":
+                    score += 100
+
+                if acodec != "none":
+                    score += 50
+
+                try:
+                    score += int(
+                        fmt.get("height") or 0
+                    )
+                except Exception:
+                    pass
+
+                candidates.append(
+                    (
+                        score,
+                        fmt_url,
+                    )
+                )
+
+            if candidates:
+                candidates.sort(
+                    key=lambda item: item[0],
+                    reverse=True,
+                )
+
+                video_url = candidates[0][1]
+
+        if not video_url:
             raise RuntimeError(
                 "No direct video URL returned."
             )
 
+        title = (
+            info.get("title")
+            or "video"
+        )
+
         ext = (
             info.get("ext")
             or "mp4"
-        ).lower()
-
-        if ext not in {
-            "mp4",
-            "webm",
-            "mkv",
-            "mov",
-        }:
-            ext = "mp4"
-
-        filename = (
-            f"{platform}-video.{ext}"
         )
 
-        # TikTok CDN links can require the exact headers
-        # returned by yt-dlp for the selected format.
+        filename = (
+            re.sub(
+                r"[^A-Za-z0-9._-]+",
+                "_",
+                title,
+            ).strip("_")
+            or f"{platform}-video"
+        )
+
+        filename = (
+            f"{filename}.{ext}"
+        )
+
+        # TikTok CDN links can require the exact
+        # headers returned by yt-dlp.
         stream_headers = dict(
             opts.get("http_headers") or {}
         )
 
-        stream_headers.update(
-            info.get("http_headers") or {}
+        info_headers = (
+            info.get("http_headers")
+            or {}
         )
 
-        result = ydl.urlopen(
-            Request(
-                info["url"],
-                headers=stream_headers,
+        stream_headers.update(
+            info_headers
+        )
+
+        request = Request(
+            video_url,
+            headers=stream_headers,
+        )
+
+        result = ydl.urlopen(request)
+
+        content_type = (
+            result.headers.get(
+                "Content-Type"
+            )
+            or "video/mp4"
+        )
+
+        content_length = (
+            result.headers.get(
+                "Content-Length"
             )
         )
 
-        def stream():
-            try:
-                while True:
-                    chunk = result.read(
-                        1024 * 1024
-                    )
+        response_headers = {
+            "Content-Disposition": (
+                f'attachment; filename="{filename}"'
+            ),
+            "Cache-Control": "no-store",
+        }
 
-                    if not chunk:
-                        break
-
-                    yield chunk
-
-            finally:
-                try:
-                    result.close()
-                except Exception:
-                    pass
-
-                try:
-                    ydl.close()
-                except Exception:
-                    pass
+        if content_length:
+            response_headers[
+                "Content-Length"
+            ] = content_length
 
         return StreamingResponse(
-            stream(),
-            media_type="video/mp4",
-            headers={
-                "Content-Disposition": (
-                    f'attachment; filename="{filename}"'
-                ),
-                "Cache-Control": "no-store",
-                "X-ZidroTool-Platform": platform,
-                "X-ZidroTool-Title": title,
-            },
+            result,
+            media_type=content_type,
+            headers=response_headers,
         )
 
     except Exception as exc:
@@ -629,7 +743,10 @@ def download_endpoint(
             except Exception:
                 pass
 
-        if platform == "youtube" and bot_check:
+        if (
+            platform == "youtube"
+            and bot_check
+        ):
             raise HTTPException(
                 status_code=502,
                 detail=(
@@ -646,8 +763,9 @@ def download_endpoint(
             raise HTTPException(
                 status_code=502,
                 detail=(
-                    "TikTok/yt-dlp download failed: "
-                    f"{message[:500]}"
+                    "TikTok download failed: "
+                    f"{type(exc).__name__}: "
+                    f"{repr(exc)[:1000]}"
                 ),
                 headers={
                     "X-ZidroTool-Error-Code":
@@ -658,8 +776,7 @@ def download_endpoint(
         raise HTTPException(
             status_code=502,
             detail=(
-                "Video provider could not "
-                "download this URL."
+                "Video download failed."
             ),
             headers={
                 "X-ZidroTool-Error-Code":
