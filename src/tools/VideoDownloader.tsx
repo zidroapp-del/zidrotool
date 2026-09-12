@@ -24,6 +24,7 @@ interface DownloadResult {
   provider?: string;
   author?: string;
   duration?: number | null;
+  platform?: VideoPlatform;
 }
 
 function detectPlatformFromUrl(
@@ -265,6 +266,12 @@ export default function VideoDownloader({
       return;
     }
 
+    if (detectedPlatform === "youtube") {
+      // YouTube video file downloads have been removed; only metadata
+      // (title/author/duration/thumbnail) is offered for YouTube.
+      return;
+    }
+
     const params = new URLSearchParams({
       url: value,
       platform: detectedPlatform,
@@ -440,14 +447,16 @@ export default function VideoDownloader({
               )}
             </div>
 
-            <button
-              type="button"
-              onClick={download}
-              className="btn-primary"
-            >
-              <Download className="h-4 w-4" />
-              {t("tool.download")}
-            </button>
+            {result.platform !== "youtube" && (
+              <button
+                type="button"
+                onClick={download}
+                className="btn-primary"
+              >
+                <Download className="h-4 w-4" />
+                {t("tool.download")}
+              </button>
+            )}
           </div>
         </div>
       )}

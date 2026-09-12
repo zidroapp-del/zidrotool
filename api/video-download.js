@@ -727,6 +727,18 @@ export default async function handler(req, res) {
    */
 
   if (shouldDownload) {
+    if (detectedPlatform === "youtube") {
+      // YouTube video file downloads have been intentionally removed.
+      // Metadata (download=0) is untouched; this only blocks the
+      // file-streaming path, before any provider is even attempted.
+      return json(res, 404, {
+        error:
+          "YouTube video file downloads are not offered by this tool. YouTube metadata (title, author, duration, thumbnail) is still available.",
+        code: "YOUTUBE_DOWNLOAD_REMOVED",
+        platform: detectedPlatform,
+      });
+    }
+
     const ytDlpProvider = providers.find(
       (provider) => provider.type === "ytdlp"
     );
