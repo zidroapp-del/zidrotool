@@ -9,9 +9,10 @@ from fastapi import FastAPI, HTTPException, Query
 from fastapi.responses import StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
 
+
 app = FastAPI(
     title="ZidroTool yt-dlp API",
-    version="1.1.0",
+    version="1.2.0",
 )
 
 app.add_middleware(
@@ -21,6 +22,7 @@ app.add_middleware(
     allow_methods=["GET"],
     allow_headers=["*"],
 )
+
 
 ALLOWED_HOSTS = {
     "youtube.com",
@@ -109,8 +111,8 @@ def get_ydl_options(platform: str | None = None) -> dict:
         "no_warnings": True,
         "noplaylist": True,
 
-        # Prefer a progressive MP4.
-        # This avoids requiring ffmpeg to merge audio/video.
+        # Prefer a progressive MP4 so we do not need
+        # ffmpeg to merge separate audio/video streams.
         "format": (
             "best[ext=mp4][vcodec!=none][acodec!=none]"
             "/best[ext=mp4][vcodec!=none]"
@@ -124,7 +126,6 @@ def get_ydl_options(platform: str | None = None) -> dict:
 
         "geo_bypass": True,
 
-        # Important for sites such as TikTok.
         "http_headers": {
             "User-Agent": (
                 "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
@@ -137,17 +138,13 @@ def get_ydl_options(platform: str | None = None) -> dict:
     }
 
     if platform == "youtube":
-        # Officially-documented yt-dlp extractor argument (not a bypass of
-        # any protection): it asks yt-dlp to try extracting through the
-        # same set of official client surfaces YouTube itself ships apps
-        # for. Datacenter/cloud IPs are more likely to hit YouTube's
-        # server-side "Sign in to confirm you're not a bot" wall on the
-        # default web client; trying android/web_safari first sometimes
-        # avoids it, but this is not guaranteed — see error handling below,
-        # which reports honestly when it still fails.
         opts["extractor_args"] = {
             "youtube": {
-                "player_client": ["android", "web_safari", "web"],
+                "player_client": [
+                    "android",
+                    "web_safari",
+                    "web",
+                ],
             }
         }
 
@@ -156,11 +153,16 @@ def get_ydl_options(platform: str | None = None) -> dict:
 
 def is_youtube_bot_check(message: str) -> bool:
     lowered = (message or "").lower()
-    return "confirm you" in lowered and "bot" in lowered or "sign in to confirm" in lowered
+
+    return (
+        ("confirm you" in lowered and "bot" in lowered)
+        or "sign in to confirm" in lowered
+    )
 
 
 def extract(url: str) -> dict:
-    opts = get_ydl_options(get_platform(url))
+    platform = get_platform(url)
+    opts = get_ydl_options(platform)
 
     with yt_dlp.YoutubeDL(opts) as ydl:
         info = ydl.extract_info(
@@ -191,7 +193,6 @@ def extract(url: str) -> dict:
 
         if not video_url:
             formats = info.get("formats") or []
-
             candidates = []
 
             for fmt in formats:
@@ -264,31 +265,39 @@ def extract(url: str) -> dict:
         return {
             "success": True,
             "video_url": video_url,
+
             "title": clean_title(
                 info.get("title")
             ),
+
             "author": (
                 info.get("uploader")
                 or info.get("channel")
                 or ""
             ),
+
             "thumbnail": (
                 info.get("thumbnail")
                 or None
             ),
+
             "duration": info.get(
                 "duration"
             ),
+
             "platform": (
                 info.get("extractor_key")
                 or info.get("extractor")
-                or get_platform(url)
+                or platform
             ),
+
             "ext": info.get("ext") or "mp4",
+
             "webpage_url": (
                 info.get("webpage_url")
                 or url
             ),
+
             "timestamp": int(time.time()),
         }
 
@@ -297,17 +306,17 @@ def validate_url(url: str):
     parsed = urlparse(url)
 
     if (
-        parsed.scheme
-        not in {"http", "https"}
+        parsed.scheme not in {
+            "http",
+            "https",
+        }
         or not host_allowed(
             parsed.hostname or ""
         )
     ):
         raise HTTPException(
             status_code=400,
-            detail=(
-                "Unsupported or invalid video URL."
-            ),
+            detail="Unsupported or invalid video URL.",
         )
 
 
@@ -316,7 +325,7 @@ def root():
     return {
         "ok": True,
         "service": "ZidroTool yt-dlp API",
-        "version": "1.1.0",
+        "version": "1.2.0",
     }
 
 
@@ -324,6 +333,29 @@ def root():
 def health():
     return {
         "ok": True,
+    }
+
+
+@app.get("/debug")
+def debug():
+    return {
+        "ok": True,
+        "service": "ZidroTool yt-dlp API",
+        "version": "1.2.0",
+        "yt_dlp": getattr(
+            yt_dlp,
+            "__version__",
+            "unknown",
+        ),
+        "python": os.sys.version,
+        "render": os.getenv(
+            "RENDER",
+            "false",
+        ),
+        "port": os.getenv(
+            "PORT",
+            "",
+        ),
     }
 
 
@@ -337,18 +369,27 @@ def extract_endpoint(
 ):
     validate_url(url)
 
+    platform = get_platform(url)
+
     try:
         return extract(url)
 
     except Exception as exc:
         message = str(exc)
-        bot_check = is_youtube_bot_check(message)
+
+        bot_check = is_youtube_bot_check(
+            message
+        )
 
         print(
             "yt-dlp extraction failed:",
             type(exc).__name__,
             message,
-            {"bot_check": bot_check, "url": url},
+            {
+                "platform": platform,
+                "bot_check": bot_check,
+                "url": url,
+            },
             flush=True,
         )
 
@@ -356,13 +397,30 @@ def extract_endpoint(
             raise HTTPException(
                 status_code=502,
                 detail=(
-                    "YouTube is currently showing a bot-verification wall "
-                    "to this server. This is a known limitation of running "
-                    "yt-dlp from cloud/datacenter IP addresses and is not "
-                    "something this service can force past. Please try "
-                    "again later."
+                    "YouTube is currently showing a "
+                    "bot-verification wall to this server. "
+                    "This is a known limitation of running "
+                    "yt-dlp from cloud/datacenter IP addresses "
+                    "and is not something this service can "
+                    "force past. Please try again later."
                 ),
-                headers={"X-ZidroTool-Error-Code": "YOUTUBE_BOT_CHECK"},
+                headers={
+                    "X-ZidroTool-Error-Code":
+                        "YOUTUBE_BOT_CHECK"
+                },
+            )
+
+        if platform == "tiktok":
+            raise HTTPException(
+                status_code=502,
+                detail=(
+                    "TikTok/yt-dlp extraction failed: "
+                    f"{message[:500]}"
+                ),
+                headers={
+                    "X-ZidroTool-Error-Code":
+                        "TIKTOK_EXTRACTION_FAILED"
+                },
             )
 
         raise HTTPException(
@@ -371,6 +429,10 @@ def extract_endpoint(
                 "Video provider could not "
                 "extract this URL."
             ),
+            headers={
+                "X-ZidroTool-Error-Code":
+                    "VIDEO_EXTRACTION_FAILED"
+            },
         )
 
 
@@ -394,43 +456,30 @@ def download_endpoint(
     platform = get_platform(url)
 
     if platform == "youtube":
-        # YouTube video file downloads have been intentionally removed.
-        # Metadata (title, author, duration, thumbnail) still works via
-        # /extract — this only blocks the file-streaming path below, and
-        # it does so before any download-specific yt-dlp code runs.
         raise HTTPException(
             status_code=404,
             detail=(
-                "YouTube video file downloads are not offered by this "
-                "service. YouTube metadata (title, author, duration, "
-                "thumbnail) is still available via /extract."
+                "YouTube video file downloads are not "
+                "offered by this service. YouTube metadata "
+                "(title, author, duration, thumbnail) is "
+                "still available via /extract."
             ),
         )
 
     try:
         opts = get_ydl_options(platform)
 
-        # Download directly to stdout.
-        # yt-dlp writes the media bytes to stdout,
-        # while logs remain disabled.
         opts["outtmpl"] = "-"
         opts["quiet"] = True
         opts["no_warnings"] = True
 
-        # Force a single-file format.
         opts["format"] = (
             "best[ext=mp4][vcodec!=none][acodec!=none]"
             "/best[ext=mp4][vcodec!=none]"
             "/best"
         )
 
-        # NOTE: we deliberately do NOT use `with yt_dlp.YoutubeDL(...)` here.
-        # The actual byte streaming below happens later, while FastAPI sends
-        # the StreamingResponse — well after this function returns. Closing
-        # `ydl` via `__exit__` before that point could tear down the
-        # session/opener that `result` reads from and break mid-download.
-        # Instead we close it explicitly in the generator's `finally`, once
-        # streaming is actually done.
+        # Keep YoutubeDL alive until streaming finishes.
         ydl = yt_dlp.YoutubeDL(opts)
 
         info = ydl.extract_info(
@@ -464,19 +513,10 @@ def download_endpoint(
             f"{platform}-video.{ext}"
         )
 
-        # Download the selected format.
-        #
-        # Note:
-        # yt-dlp attaches the headers a given CDN link actually needs
-        # (e.g. TikTok requires a matching Referer) onto `info["http_headers"]`
-        # once a format is resolved. Opening the bare URL string only sends
-        # the generic User-Agent from `opts`, which some platforms accept
-        # but TikTok's CDN does not: instead of a clean error it stalls the
-        # connection. Merge the format-specific headers in so the request
-        # looks the way yt-dlp itself would send it.
         stream_headers = dict(
             opts.get("http_headers") or {}
         )
+
         stream_headers.update(
             info.get("http_headers") or {}
         )
@@ -491,7 +531,9 @@ def download_endpoint(
         def stream():
             try:
                 while True:
-                    chunk = result.read(1024 * 1024)
+                    chunk = result.read(
+                        1024 * 1024
+                    )
 
                     if not chunk:
                         break
@@ -524,7 +566,10 @@ def download_endpoint(
 
     except Exception as exc:
         message = str(exc)
-        bot_check = is_youtube_bot_check(message)
+
+        bot_check = is_youtube_bot_check(
+            message
+        )
 
         print(
             "yt-dlp download failed:",
@@ -542,13 +587,26 @@ def download_endpoint(
             raise HTTPException(
                 status_code=502,
                 detail=(
-                    "YouTube is currently showing a bot-verification wall "
-                    "to this server. This is a known limitation of running "
-                    "yt-dlp from cloud/datacenter IP addresses and is not "
-                    "something this service can force past. Please try "
-                    "again later."
+                    "YouTube is currently showing a "
+                    "bot-verification wall to this server."
                 ),
-                headers={"X-ZidroTool-Error-Code": "YOUTUBE_BOT_CHECK"},
+                headers={
+                    "X-ZidroTool-Error-Code":
+                        "YOUTUBE_BOT_CHECK"
+                },
+            )
+
+        if platform == "tiktok":
+            raise HTTPException(
+                status_code=502,
+                detail=(
+                    "TikTok/yt-dlp download failed: "
+                    f"{message[:500]}"
+                ),
+                headers={
+                    "X-ZidroTool-Error-Code":
+                        "TIKTOK_DOWNLOAD_FAILED"
+                },
             )
 
         raise HTTPException(
@@ -557,4 +615,8 @@ def download_endpoint(
                 "Video provider could not "
                 "download this URL."
             ),
+            headers={
+                "X-ZidroTool-Error-Code":
+                    "VIDEO_DOWNLOAD_FAILED"
+            },
         )
