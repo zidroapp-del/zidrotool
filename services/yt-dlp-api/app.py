@@ -119,7 +119,7 @@ def get_ydl_options(
 
         # Use curl-cffi browser impersonation.
         # This is especially important for TikTok.
-        "impersonate": "chrome",
+        "impersonate": None,
 
         # Prefer a progressive MP4.
         # This avoids requiring ffmpeg to merge
