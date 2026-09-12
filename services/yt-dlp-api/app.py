@@ -117,10 +117,6 @@ def get_ydl_options(
         "no_warnings": True,
         "noplaylist": True,
 
-        # Use curl-cffi browser impersonation.
-        # This is especially important for TikTok.
-        "impersonate": None,
-
         # Prefer a progressive MP4.
         # This avoids requiring ffmpeg to merge
         # separate audio/video streams.
@@ -478,8 +474,6 @@ def extract_endpoint(
         raise
 
     except Exception as exc:
-        message = str(exc)
-
         print(
             "extract endpoint failed:",
             type(exc).__name__,
