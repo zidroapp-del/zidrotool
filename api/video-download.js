@@ -148,12 +148,6 @@ function safeFilename(filename) {
   );
 }
 
-/**
- * A provider failed, but with a specific, useful reason (e.g. the Render
- * yt-dlp service's honest "YouTube is showing a bot-verification wall"
- * message). Callers thread this through so the final response to the
- * frontend carries the real cause instead of a generic fallback string.
- */
 function providerError(status, code, detail) {
   return { __providerError: true, status: status || null, code: code || null, detail: detail || null };
 }
@@ -236,21 +230,7 @@ async function callYtDlpExtract(baseUrl, sourceUrl) {
     return null;
   }
 
-  console.log("yt-dlp /extract response:", {
-    status: response.status,
-    success: data?.success,
-    platform: data?.platform,
-    title: data?.title,
-    hasVideoUrl: Boolean(data?.video_url),
-    error: data?.detail || data?.error || null,
-  });
-
   if (!response.ok || !data?.video_url) {
-    console.error("yt-dlp metadata extraction failed:", {
-      status: response.status,
-      data,
-    });
-
     return providerError(
       response.status,
       response.headers.get("x-zidrotool-error-code"),
@@ -270,7 +250,7 @@ async function callYtDlpExtract(baseUrl, sourceUrl) {
     filename: `${platform}-video.${ext}`,
     title: data.title || `${platform} video`,
     thumbnail: data.thumbnail || null,
-    provider: "yt-dlp",
+    provider: data.provider || "yt-dlp",
     author: data.author || null,
     duration: data.duration || null,
     ext,
@@ -294,13 +274,6 @@ async function streamFromYtDlp(
   const endpoint =
     `${url}/download?url=${encodeURIComponent(sourceUrl)}`;
 
-  console.log("Streaming through Render yt-dlp:", {
-    baseUrl: url,
-    platform,
-    sourceUrl,
-    filename,
-  });
-
   const response = await fetch(endpoint, {
     method: "GET",
     redirect: "follow",
@@ -313,38 +286,21 @@ async function streamFromYtDlp(
   const contentType =
     response.headers.get("content-type") || "video/mp4";
 
-  console.log("Render /download response:", {
-    status: response.status,
-    contentType,
-    contentLength: response.headers.get("content-length"),
-  });
-
   if (!response.ok) {
     let errorPreview = "";
 
     try {
       errorPreview = await response.text();
-    } catch {
-      // Ignore.
-    }
-
-    console.error("Render yt-dlp download failed:", {
-      status: response.status,
-      body: errorPreview.slice(0, 1000),
-    });
+    } catch {}
 
     let detail = null;
-
     try {
       detail = JSON.parse(errorPreview)?.detail || null;
-    } catch {
-      // Body wasn't JSON; no structured detail available.
-    }
+    } catch {}
 
     const err = new Error(
       detail || `Render video server returned HTTP ${response.status}`
     );
-
     err.status = response.status;
     err.code = response.headers.get("x-zidrotool-error-code") || null;
     err.detail = detail;
@@ -353,25 +309,14 @@ async function streamFromYtDlp(
   }
 
   if (!response.body) {
-    throw new Error(
-      "Render video server returned an empty response."
-    );
+    throw new Error("Render video server returned an empty response.");
   }
 
   if (
     contentType.includes("text/html") ||
     contentType.includes("application/json")
   ) {
-    const preview = await response.text();
-
-    console.error(
-      "Render returned non-video content:",
-      preview.slice(0, 1000)
-    );
-
-    throw new Error(
-      "Render video server returned non-video content."
-    );
+    throw new Error("Render video server returned non-video content.");
   }
 
   const finalFilename = safeFilename(filename);
@@ -384,14 +329,10 @@ async function streamFromYtDlp(
     "Content-Disposition",
     `attachment; filename="${finalFilename}"`
   );
-  res.setHeader(
-    "Cache-Control",
-    "no-store, no-cache, must-revalidate"
-  );
+  res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate");
   res.setHeader("X-ZidroTool-Platform", platform);
 
   const contentLength = response.headers.get("content-length");
-
   if (contentLength) {
     res.setHeader("Content-Length", contentLength);
   }
@@ -402,14 +343,9 @@ async function streamFromYtDlp(
   try {
     while (true) {
       const { done, value } = await reader.read();
-
-      if (done) {
-        break;
-      }
-
+      if (done) break;
       if (value) {
         const chunk = Buffer.from(value);
-
         totalBytes += chunk.length;
         res.write(chunk);
       }
@@ -419,241 +355,7 @@ async function streamFromYtDlp(
   }
 
   if (totalBytes === 0) {
-    throw new Error(
-      "Render video stream contained zero bytes."
-    );
-  }
-
-  console.log("Video streaming completed:", {
-    platform,
-    filename: finalFilename,
-    bytes: totalBytes,
-  });
-
-  return res.end();
-}
-
-async function callCobalt(baseUrl, sourceUrl) {
-  const url = normalizeBaseUrl(baseUrl);
-
-  if (!url) {
-    return null;
-  }
-
-  const headers = {
-    "Content-Type": "application/json",
-    Accept: "application/json",
-  };
-
-  if (process.env.COBALT_API_KEY) {
-    headers.Authorization =
-      `Api-Key ${process.env.COBALT_API_KEY}`;
-  }
-
-  const response = await fetch(url, {
-    method: "POST",
-    headers,
-    body: JSON.stringify({
-      url: sourceUrl,
-      downloadMode: "auto",
-      videoQuality: "1080",
-      youtubeVideoCodec: "h264",
-      filenameStyle: "basic",
-    }),
-    signal: AbortSignal.timeout(DEFAULT_TIMEOUT),
-  });
-
-  const data = await response.json().catch(() => ({}));
-
-  if (!response.ok) {
-    console.error("Cobalt provider response:", {
-      status: response.status,
-      data,
-    });
-
-    return providerError(response.status, null, data?.error?.code || data?.text || null);
-  }
-
-  const downloadUrl =
-    data?.url ||
-    data?.downloadUrl ||
-    data?.picker?.[0]?.url ||
-    null;
-
-  if (!downloadUrl) {
-    return providerError(response.status, null, "Cobalt returned no download URL.");
-  }
-
-  return {
-    downloadUrl,
-    filename: data?.filename || "video.mp4",
-    title: data?.filename || "Video",
-    thumbnail: data?.thumbnail || null,
-    provider: "cobalt",
-  };
-}
-
-async function callApify(token, sourceUrl) {
-  const cleanToken = String(token || "").trim();
-
-  if (!cleanToken) {
-    return null;
-  }
-
-  const actor = String(
-    process.env.APIFY_VIDEO_ACTOR ||
-      "miccho27~social-video-downloader"
-  ).trim();
-
-  const endpoint =
-    "https://api.apify.com/v2/acts/" +
-    encodeURIComponent(actor) +
-    "/run-sync-get-dataset-items?token=" +
-    encodeURIComponent(cleanToken) +
-    "&format=json";
-
-  const response = await fetch(endpoint, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Accept: "application/json",
-    },
-    body: JSON.stringify({
-      url: sourceUrl,
-    }),
-    signal: AbortSignal.timeout(60000),
-  });
-
-  const data = await response.json().catch(() => []);
-
-  if (!response.ok) {
-    console.error("Apify provider response:", {
-      status: response.status,
-      data,
-    });
-
-    return providerError(response.status, null, data?.error?.message || null);
-  }
-
-  const item = Array.isArray(data)
-    ? data.find(
-        (x) =>
-          x?.video_url ||
-          x?.downloadUrl ||
-          x?.url
-      )
-    : data;
-
-  if (!item) {
-    return providerError(response.status, null, "Apify returned no results for this URL.");
-  }
-
-  const downloadUrl =
-    item?.video_url ||
-    item?.downloadUrl ||
-    item?.url ||
-    null;
-
-  if (!downloadUrl) {
-    return providerError(response.status, null, "Apify result had no downloadable URL.");
-  }
-
-  const platform = detectPlatform(sourceUrl);
-
-  return {
-    downloadUrl,
-    filename:
-      item?.filename ||
-      `${platform}-video.mp4`,
-    title:
-      item?.title ||
-      `${platform} video`,
-    thumbnail:
-      item?.thumbnail ||
-      item?.thumbnail_url ||
-      null,
-    provider: "apify",
-    author:
-      item?.author ||
-      item?.uploader ||
-      null,
-    duration: item?.duration || null,
-  };
-}
-
-async function streamFallback(
-  res,
-  result,
-  platform
-) {
-  const response = await fetch(result.downloadUrl, {
-    method: "GET",
-    redirect: "follow",
-    headers: {
-      Accept: "video/mp4,video/webm,video/*,*/*;q=0.8",
-    },
-    signal: AbortSignal.timeout(DOWNLOAD_TIMEOUT),
-  });
-
-  if (!response.ok || !response.body) {
-    throw new Error(
-      `Fallback video server returned HTTP ${response.status}`
-    );
-  }
-
-  const contentType =
-    response.headers.get("content-type") || "video/mp4";
-
-  if (
-    contentType.includes("text/html") ||
-    contentType.includes("application/json")
-  ) {
-    throw new Error(
-      "Fallback provider returned non-video content."
-    );
-  }
-
-  const filename = safeFilename(
-    result.filename || "video.mp4"
-  );
-
-  setCors(res);
-
-  res.statusCode = 200;
-  res.setHeader("Content-Type", contentType);
-  res.setHeader(
-    "Content-Disposition",
-    `attachment; filename="${filename}"`
-  );
-  res.setHeader(
-    "Cache-Control",
-    "no-store, no-cache, must-revalidate"
-  );
-  res.setHeader("X-ZidroTool-Platform", platform);
-
-  const contentLength =
-    response.headers.get("content-length");
-
-  if (contentLength) {
-    res.setHeader("Content-Length", contentLength);
-  }
-
-  const reader = response.body.getReader();
-
-  try {
-    while (true) {
-      const { done, value } = await reader.read();
-
-      if (done) {
-        break;
-      }
-
-      if (value) {
-        res.write(Buffer.from(value));
-      }
-    }
-  } finally {
-    reader.releaseLock();
+    throw new Error("Render video stream contained zero bytes.");
   }
 
   return res.end();
@@ -693,8 +395,7 @@ export default async function handler(req, res) {
 
   if (!platformMatches(platform, detectedPlatform)) {
     return json(res, 400, {
-      error:
-        "The requested platform does not match the video URL.",
+      error: "The requested platform does not match the video URL.",
       code: "PLATFORM_MISMATCH",
       platform: detectedPlatform,
       requestedPlatform: platform,
@@ -706,42 +407,26 @@ export default async function handler(req, res) {
 
   if (!providers.length) {
     return json(res, 503, {
-      error:
-        "Video download is not configured yet. Add YTDLP_API_URL, APIFY_TOKEN, or configure a permitted Cobalt instance.",
+      error: "Video download is not configured yet.",
       code: "VIDEO_PROVIDER_NOT_CONFIGURED",
     });
   }
-
-  console.log("Video request:", {
-    platform: detectedPlatform,
-    download: shouldDownload,
-    providers: providers.map(
-      (provider) => provider.name
-    ),
-  });
 
   /*
    * =======================================================
    * DOWNLOAD MODE
    * =======================================================
    */
-
   if (shouldDownload) {
     if (detectedPlatform === "youtube") {
-      // YouTube video file downloads have been intentionally removed.
-      // Metadata (download=0) is untouched; this only blocks the
-      // file-streaming path, before any provider is even attempted.
       return json(res, 404, {
-        error:
-          "YouTube video file downloads are not offered by this tool. YouTube metadata (title, author, duration, thumbnail) is still available.",
+        error: "YouTube video file downloads are not offered by this tool.",
         code: "YOUTUBE_DOWNLOAD_REMOVED",
         platform: detectedPlatform,
       });
     }
 
-    const ytDlpProvider = providers.find(
-      (provider) => provider.type === "ytdlp"
-    );
+    const ytDlpProvider = providers.find((p) => p.type === "ytdlp");
     let lastError = null;
 
     if (req.method === "HEAD") {
@@ -749,25 +434,14 @@ export default async function handler(req, res) {
       res.setHeader("Content-Type", "video/mp4");
       res.setHeader(
         "Content-Disposition",
-        `attachment; filename="${safeFilename(
-          `${detectedPlatform}-video.mp4`
-        )}"`
+        `attachment; filename="${safeFilename(`${detectedPlatform}-video.mp4`)}"`
       );
       res.setHeader("Cache-Control", "no-store");
-      res.setHeader(
-        "X-ZidroTool-Platform",
-        detectedPlatform
-      );
-
+      res.setHeader("X-ZidroTool-Platform", detectedPlatform);
       return res.end();
     }
 
-    /*
-     * IMPORTANT:
-     * Send the ORIGINAL source URL to Render.
-     * Do NOT download data.video_url from /extract.
-     */
-
+    // لمحاولة البث من Render أولاً
     if (ytDlpProvider) {
       try {
         return await streamFromYtDlp(
@@ -778,103 +452,39 @@ export default async function handler(req, res) {
           detectedPlatform
         );
       } catch (error) {
-        console.error(
-          "yt-dlp Render streaming failed:",
-          {
-            error:
-              error?.message ||
-              String(error),
-          }
-        );
-
+        console.error("yt-dlp streaming failed, falling back to direct redirect/extract:", error?.message);
         lastError = {
           code: error?.code || null,
           detail: error?.detail || error?.message || null,
         };
 
         if (res.headersSent) {
-          try {
-            res.end();
-          } catch {
-            // Ignore.
-          }
-
+          try { res.end(); } catch {}
           return;
         }
       }
     }
 
-    /*
-     * Fallback providers
-     */
-
+    // إذا فشل البث المباشر (مثل حظر Render على TikTok)، قم باستخراج رابط الفيديو المباشر وإعادة التوجيه إليه بدلاً من رفع خطأ
     for (const provider of providers) {
-      if (provider.type === "ytdlp") {
-        continue;
-      }
-
       try {
         let result = null;
-
-        if (provider.type === "cobalt") {
-          result = await callCobalt(
-            provider.baseUrl,
-            sourceUrl
-          );
+        if (provider.type === "ytdlp") {
+          result = await callYtDlpExtract(provider.baseUrl, sourceUrl);
         }
 
-        if (provider.type === "apify") {
-          result = await callApify(
-            provider.token,
-            sourceUrl
-          );
+        if (result?.downloadUrl) {
+          // التوجيه المباشر للرابط المباشر لتفادي حظر Render
+          res.writeHead(302, { Location: result.downloadUrl });
+          return res.end();
         }
-
-        if (result?.__providerError) {
-          lastError = { code: result.code, detail: result.detail };
-          continue;
-        }
-
-        if (!result?.downloadUrl) {
-          continue;
-        }
-
-        return await streamFallback(
-          res,
-          result,
-          detectedPlatform
-        );
-      } catch (error) {
-        console.error(
-          `${provider.name} download failed:`,
-          {
-            error:
-              error?.message ||
-              String(error),
-          }
-        );
-
-        lastError = {
-          code: error?.code || null,
-          detail: error?.detail || error?.message || null,
-        };
-
-        if (res.headersSent) {
-          try {
-            res.end();
-          } catch {
-            // Ignore.
-          }
-
-          return;
-        }
+      } catch (err) {
+        console.error("Redirect fallback failed:", err);
       }
     }
 
     return json(res, 502, {
-      error:
-        lastError?.detail ||
-        "The video was found, but the configured download servers could not stream it.",
+      error: lastError?.detail || "The video was found, but the configured download servers could not stream it.",
       code: lastError?.code || "VIDEO_STREAM_FAILED",
       platform: detectedPlatform,
     });
@@ -885,7 +495,6 @@ export default async function handler(req, res) {
    * EXTRACTION / METADATA MODE
    * =======================================================
    */
-
   const failures = [];
   let lastError = null;
 
@@ -894,24 +503,7 @@ export default async function handler(req, res) {
       let result = null;
 
       if (provider.type === "ytdlp") {
-        result = await callYtDlpExtract(
-          provider.baseUrl,
-          sourceUrl
-        );
-      }
-
-      if (provider.type === "cobalt") {
-        result = await callCobalt(
-          provider.baseUrl,
-          sourceUrl
-        );
-      }
-
-      if (provider.type === "apify") {
-        result = await callApify(
-          provider.token,
-          sourceUrl
-        );
+        result = await callYtDlpExtract(provider.baseUrl, sourceUrl);
       }
 
       if (result?.downloadUrl) {
@@ -929,31 +521,17 @@ export default async function handler(req, res) {
 
       failures.push(provider.name);
     } catch (error) {
-      console.error(
-        `${provider.name} extraction error:`,
-        {
-          error:
-            error?.message ||
-            String(error),
-        }
-      );
-
       lastError = {
         code: error?.code || null,
         detail: error?.detail || error?.message || null,
       };
-
       failures.push(provider.name);
     }
   }
 
   return json(res, 502, {
-    error:
-      lastError?.detail ||
-      "The configured video providers could not extract this URL. Try another public URL or check the provider service.",
-    code:
-      lastError?.code ||
-      "VIDEO_EXTRACTION_FAILED",
+    error: lastError?.detail || "The configured video providers could not extract this URL.",
+    code: lastError?.code || "VIDEO_EXTRACTION_FAILED",
     platform: detectedPlatform,
     providersTried: failures,
   });
