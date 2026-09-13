@@ -190,21 +190,28 @@ def get_ydl_options(platform: str) -> dict:
 
 
 def extract_tiktok_secondary_fallback(url: str) -> dict:
-    """خط دفاع ثالث لـ TikTok في حال فشل yt-dlp و TikWM"""
+    """Use TikLyDown when yt-dlp and TikWM cannot extract the video."""
     try:
         headers = {
             "User-Agent": DEFAULT_USER_AGENT,
-            "Accept": "application/json",
+            "Referer": "https://tiklydown.eu.org/",
+            "Accept": "application/json, text/plain, */*",
         }
         res = requests.get(
-            f"https://api.tiklydown.eu.org/api/download?url={url}",
+            "https://api.tiklydown.eu.org/api/download",
+            params={"url": url},
             headers=headers,
             timeout=10,
         )
         res.raise_for_status()
         data = res.json()
-        video_data = data.get("video") or {}
-        video_url = video_data.get("noWatermark") or video_data.get("watermark")
+        video_data = data.get("video") or data.get("data") or {}
+        video_url = (
+            video_data.get("noWatermark")
+            or video_data.get("no_watermark")
+            or video_data.get("play")
+            or video_data.get("watermark")
+        )
 
         if video_url:
             return {
@@ -219,6 +226,7 @@ def extract_tiktok_secondary_fallback(url: str) -> dict:
                 "webpage_url": url,
                 "timestamp": int(time.time()),
                 "provider": "tiklydown",
+                "source_headers": headers,
             }
     except Exception as exc:
         print(f"TikTok secondary fallback (TikLyDown) failed: {exc}", flush=True)
@@ -227,12 +235,13 @@ def extract_tiktok_secondary_fallback(url: str) -> dict:
 
 
 def extract_tiktok_fallback(url: str) -> dict:
-    """TikWM fallback مع التجهيزات الكاملة لتجاوز الـ 403 Forbidden"""
+    """Extract a TikTok video through TikWM, then TikLyDown as a fallback."""
     headers = {
         "User-Agent": DEFAULT_USER_AGENT,
         "Referer": "https://www.tikwm.com/",
         "Accept": "application/json, text/javascript, */*; q=0.01",
         "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+        "Origin": "https://www.tikwm.com",
     }
     try:
         response = requests.post(
@@ -243,7 +252,6 @@ def extract_tiktok_fallback(url: str) -> dict:
         )
         response.raise_for_status()
         res_data = response.json()
-        
         if res_data.get("code") == 0:
             data = res_data.get("data") or {}
             video_url = data.get("play") or data.get("wmplay")
@@ -261,11 +269,15 @@ def extract_tiktok_fallback(url: str) -> dict:
                     "webpage_url": url,
                     "timestamp": int(time.time()),
                     "provider": "tikwm",
+                    "source_headers": {
+                        "User-Agent": DEFAULT_USER_AGENT,
+                        "Referer": TIKTOK_REFERER,
+                        "Accept": "video/mp4,video/*;q=0.9,*/*;q=0.8",
+                    },
                 }
     except Exception as exc:
         print(f"TikTok fallback (TikWM) request failed: {exc}", flush=True)
 
-    # إذا فشل TikWM، الانتقال تلقائياً للمورد الاحتياطي الآخر
     return extract_tiktok_secondary_fallback(url)
 
 
@@ -286,13 +298,8 @@ def extract(url: str) -> dict:
                 raise RuntimeError("No video was found in playlist.")
             info = entries[0]
 
-        video_url = pick_video_url(info)
-        if not video_url:
-            raise RuntimeError("No direct video URL was returned.")
-
-        return {
+        result = {
             "success": True,
-            "video_url": video_url,
             "title": clean_title(info.get("title")),
             "author": info.get("uploader") or info.get("channel") or "",
             "thumbnail": info.get("thumbnail") or None,
@@ -303,6 +310,19 @@ def extract(url: str) -> dict:
             "timestamp": int(time.time()),
             "provider": "yt-dlp",
         }
+
+        if platform != "youtube":
+            video_url = pick_video_url(info)
+            if not video_url:
+                raise RuntimeError("No direct video URL was returned.")
+            result["video_url"] = video_url
+            result["source_headers"] = {
+                key: value
+                for key, value in (info.get("http_headers") or {}).items()
+                if key.lower() in {"accept", "referer", "user-agent"}
+            }
+
+        return result
 
     except Exception as exc:
         print(
@@ -417,19 +437,33 @@ def download_endpoint(url: str = Query(..., min_length=8, max_length=4096)):
             headers={"X-ZidroTool-Error-Code": "NO_VIDEO_URL"},
         )
 
-    request_headers = {"User-Agent": DEFAULT_USER_AGENT}
+    request_headers = {
+        "User-Agent": DEFAULT_USER_AGENT,
+        "Accept": "video/mp4,video/*;q=0.9,*/*;q=0.8",
+    }
     if platform == "tiktok":
         request_headers["Referer"] = TIKTOK_REFERER
+    request_headers.update(info.get("source_headers") or {})
 
-    try:
-        upstream = requests.get(
-            video_url,
-            headers=request_headers,
-            stream=True,
-            timeout=30,
-        )
-    except requests.RequestException as exc:
-        print(f"Upstream video fetch failed: {exc}", flush=True)
+    upstream = None
+    last_upstream_error = None
+    for attempt in range(2):
+        try:
+            upstream = requests.get(
+                video_url,
+                headers=request_headers,
+                stream=True,
+                timeout=30,
+            )
+            if upstream.status_code < 400 or attempt == 1:
+                break
+            upstream.close()
+            request_headers["Referer"] = TIKTOK_REFERER
+        except requests.RequestException as exc:
+            last_upstream_error = exc
+
+    if upstream is None:
+        print(f"Upstream video fetch failed: {last_upstream_error}", flush=True)
         raise HTTPException(
             status_code=502,
             detail="Could not reach the video source.",
