@@ -8,7 +8,7 @@ from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 
-APP_VERSION = "1.4.0"
+APP_VERSION = "1.5.0"
 
 app = FastAPI(
     title="ZidroTool yt-dlp API",
@@ -26,11 +26,6 @@ app.add_middleware(
 # ---------------------------------------------------------------------------
 # Allowed hosts (SSRF guard)
 # ---------------------------------------------------------------------------
-# YouTube stays in this allowlist ONLY so /extract can keep returning
-# metadata (title/author/duration/thumbnail) for YouTube URLs, and so
-# /download can recognize a YouTube URL and reject it with a specific,
-# honest error instead of a generic "unsupported host" one. It is never
-# used to fetch or stream an actual YouTube video file — see /download.
 ALLOWED_HOSTS = {
     # YouTube — metadata/detection only, never download
     "youtube.com",
@@ -60,8 +55,6 @@ ALLOWED_HOSTS = {
     "www.twitter.com",
 }
 
-# Platforms /download will actually fetch and stream a file for.
-# YouTube is deliberately absent — enforced explicitly in /download too.
 DOWNLOADABLE_PLATFORMS = {"tiktok", "facebook", "instagram", "x"}
 
 TIKTOK_REFERER = "https://www.tiktok.com/"
@@ -69,7 +62,7 @@ TIKTOK_REFERER = "https://www.tiktok.com/"
 DEFAULT_USER_AGENT = (
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
     "AppleWebKit/537.36 (KHTML, like Gecko) "
-    "Chrome/124.0.0.0 Safari/537.36"
+    "Chrome/128.0.0.0 Safari/537.36"
 )
 
 REJECTED_CONTENT_TYPES = ("text/html", "application/json")
@@ -190,56 +183,90 @@ def get_ydl_options(platform: str) -> dict:
         },
     }
 
-    # TikTok's extractor needs a matching Referer or requests are throttled
-    # by TikTok's CDN. Deliberately NOT using impersonate="chrome" here.
     if platform == "tiktok":
         opts["http_headers"]["Referer"] = TIKTOK_REFERER
 
     return opts
 
 
-def extract_tiktok_fallback(url: str) -> dict:
-    """TikWM fallback — used only when yt-dlp fails to extract a TikTok URL.
+def extract_tiktok_secondary_fallback(url: str) -> dict:
+    """خط دفاع ثالث لـ TikTok في حال فشل yt-dlp و TikWM"""
+    try:
+        headers = {
+            "User-Agent": DEFAULT_USER_AGENT,
+            "Accept": "application/json",
+        }
+        res = requests.get(
+            f"https://api.tiklydown.eu.org/api/download?url={url}",
+            headers=headers,
+            timeout=10,
+        )
+        res.raise_for_status()
+        data = res.json()
+        video_data = data.get("video") or {}
+        video_url = video_data.get("noWatermark") or video_data.get("watermark")
 
-    This is TikTok-specific and never touches YouTube or any other platform.
-    """
+        if video_url:
+            return {
+                "success": True,
+                "video_url": video_url,
+                "title": clean_title(data.get("title")),
+                "author": (data.get("author") or {}).get("name") or "",
+                "thumbnail": data.get("cover") or None,
+                "duration": None,
+                "platform": "tiktok",
+                "ext": "mp4",
+                "webpage_url": url,
+                "timestamp": int(time.time()),
+                "provider": "tiklydown",
+            }
+    except Exception as exc:
+        print(f"TikTok secondary fallback (TikLyDown) failed: {exc}", flush=True)
+
+    raise RuntimeError("All TikTok extraction fallbacks failed.")
+
+
+def extract_tiktok_fallback(url: str) -> dict:
+    """TikWM fallback مع التجهيزات الكاملة لتجاوز الـ 403 Forbidden"""
+    headers = {
+        "User-Agent": DEFAULT_USER_AGENT,
+        "Referer": "https://www.tikwm.com/",
+        "Accept": "application/json, text/javascript, */*; q=0.01",
+        "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+    }
     try:
         response = requests.post(
             "https://www.tikwm.com/api/",
-            data={"url": url},
-            headers={
-                "User-Agent": DEFAULT_USER_AGENT,
-                "Referer": TIKTOK_REFERER,
-            },
-            timeout=10,
+            data={"url": url, "hd": 1},
+            headers=headers,
+            timeout=12,
         )
+        response.raise_for_status()
         res_data = response.json()
+        
+        if res_data.get("code") == 0:
+            data = res_data.get("data") or {}
+            video_url = data.get("play") or data.get("wmplay")
+
+            if video_url:
+                return {
+                    "success": True,
+                    "video_url": video_url,
+                    "title": clean_title(data.get("title")),
+                    "author": (data.get("author") or {}).get("nickname") or "",
+                    "thumbnail": data.get("cover") or None,
+                    "duration": data.get("duration"),
+                    "platform": "tiktok",
+                    "ext": "mp4",
+                    "webpage_url": url,
+                    "timestamp": int(time.time()),
+                    "provider": "tikwm",
+                }
     except Exception as exc:
         print(f"TikTok fallback (TikWM) request failed: {exc}", flush=True)
-        raise RuntimeError("Fallback TikTok extraction failed.") from exc
 
-    if res_data.get("code") != 0:
-        raise RuntimeError("Fallback TikTok extraction failed.")
-
-    data = res_data.get("data") or {}
-    video_url = data.get("play")
-
-    if not video_url:
-        raise RuntimeError("Fallback TikTok extraction returned no video URL.")
-
-    return {
-        "success": True,
-        "video_url": video_url,
-        "title": clean_title(data.get("title")),
-        "author": (data.get("author") or {}).get("nickname") or "",
-        "thumbnail": data.get("cover") or None,
-        "duration": data.get("duration"),
-        "platform": "tiktok",
-        "ext": "mp4",
-        "webpage_url": url,
-        "timestamp": int(time.time()),
-        "provider": "tikwm",
-    }
+    # إذا فشل TikWM، الانتقال تلقائياً للمورد الاحتياطي الآخر
+    return extract_tiktok_secondary_fallback(url)
 
 
 def extract(url: str) -> dict:
@@ -284,14 +311,12 @@ def extract(url: str) -> dict:
             flush=True,
         )
 
-        # TikTok-only fallback. Never falls through to YouTube or any
-        # other platform, and YouTube never reaches this branch.
         if platform == "tiktok":
             try:
                 return extract_tiktok_fallback(url)
             except Exception as fallback_exc:
                 print(
-                    f"TikTok fallback also failed: {fallback_exc}",
+                    f"TikTok fallbacks also failed: {fallback_exc}",
                     flush=True,
                 )
                 raise HTTPException(
@@ -353,10 +378,6 @@ def extract_endpoint(url: str = Query(..., min_length=8, max_length=4096)):
 def download_endpoint(url: str = Query(..., min_length=8, max_length=4096)):
     platform = validate_url(url)
 
-    # YouTube is rejected immediately — before any extraction and before
-    # any outbound request of any kind. This is the only YouTube-specific
-    # branch in /download; there is no other YouTube download code left
-    # to reach.
     if platform == "youtube":
         raise HTTPException(
             status_code=404,
