@@ -17,56 +17,6 @@ const GenericToolLazy = lazy(() =>
   }))
 );
 
-type VideoPlatform =
-  | "facebook"
-  | "tiktok"
-  | "youtube"
-  | "instagram"
-  | "x"
-  | "auto";
-
-function getVideoPlatforms(slug: string): VideoPlatform[] | undefined {
-  // TikTok tool → TikTok + YouTube
-  if (
-    slug === "tiktok-downloader" ||
-    slug.includes("tiktok-downloader")
-  ) {
-    return ["tiktok", "youtube"];
-  }
-
-  // Facebook tool → Facebook + Instagram
-  if (
-    slug === "facebook-video-downloader" ||
-    slug.includes("facebook-video-downloader")
-  ) {
-    return ["facebook", "instagram"];
-  }
-
-  // Keep these if these tools exist separately
-  if (
-    slug === "youtube-video-downloader" ||
-    slug === "youtube-downloader"
-  ) {
-    return ["youtube"];
-  }
-
-  if (
-    slug === "instagram-video-downloader" ||
-    slug === "instagram-downloader"
-  ) {
-    return ["instagram"];
-  }
-
-  if (
-    slug === "twitter-video-downloader" ||
-    slug === "x-video-downloader"
-  ) {
-    return ["x"];
-  }
-
-  return undefined;
-}
-
 export default function ToolPage() {
   const { slug } = useParams<{ slug: string }>();
   const tool = slug ? getTool(slug) : undefined;
@@ -96,15 +46,8 @@ export default function ToolPage() {
     </div>
   );
 
-  const videoPlatforms = getVideoPlatforms(tool.slug);
-
   const toolProps = {
     slug: tool.slug,
-    ...(videoPlatforms
-      ? {
-          platforms: videoPlatforms,
-        }
-      : {}),
   };
 
   if (!LazyComp) {

@@ -26,7 +26,6 @@
   <url><loc>https://zidrotool.com/category/security</loc><changefreq>weekly</changefreq><priority>0.7</priority></url>
   <url><loc>https://zidrotool.com/category/social</loc><changefreq>weekly</changefreq><priority>0.7</priority></url>
   <url><loc>https://zidrotool.com/category/creator</loc><changefreq>weekly</changefreq><priority>0.7</priority></url>
-  <url><loc>https://zidrotool.com/category/video</loc><changefreq>weekly</changefreq><priority>0.7</priority></url>
   <url><loc>https://zidrotool.com/category/viral</loc><changefreq>weekly</changefreq><priority>0.7</priority></url>
   <url><loc>https://zidrotool.com/category/files</loc><changefreq>weekly</changefreq><priority>0.7</priority></url>
   <url><loc>https://zidrotool.com/blog/category/seo-analytics</loc><changefreq>weekly</changefreq><priority>0.7</priority></url>
@@ -46,7 +45,6 @@
   <url><loc>https://zidrotool.com/tools/security</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
   <url><loc>https://zidrotool.com/tools/social</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
   <url><loc>https://zidrotool.com/tools/creator</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
-  <url><loc>https://zidrotool.com/tools/video</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
   <url><loc>https://zidrotool.com/tools/viral</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
   <url><loc>https://zidrotool.com/tools/files</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
   <url><loc>https://zidrotool.com/tools/youtube-tag-extractor</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
@@ -203,10 +201,6 @@
   <url><loc>https://zidrotool.com/tools/social-bio-formatter</loc><lastmod>2026-08-22</lastmod><changefreq>monthly</changefreq><priority>0.8</priority></url>
   <url><loc>https://zidrotool.com/tools/tabata-timer</loc><lastmod>2026-08-22</lastmod><changefreq>monthly</changefreq><priority>0.8</priority></url>
   <url><loc>https://zidrotool.com/tools/screenshot-exporter</loc><lastmod>2026-08-22</lastmod><changefreq>monthly</changefreq><priority>0.8</priority></url>
-  <url><loc>https://zidrotool.com/tools/facebook-video-downloader</loc><lastmod>2026-08-29</lastmod><changefreq>monthly</changefreq><priority>0.8</priority></url>
-  <url><loc>https://zidrotool.com/tools/tiktok-downloader</loc><lastmod>2026-08-29</lastmod><changefreq>monthly</changefreq><priority>0.8</priority></url>
-  <url><loc>https://zidrotool.com/tools/youtube-video-downloader</loc><lastmod>2026-09-08</lastmod><changefreq>monthly</changefreq><priority>0.8</priority></url>
-  <url><loc>https://zidrotool.com/tools/instagram-video-downloader</loc><lastmod>2026-09-08</lastmod><changefreq>monthly</changefreq><priority>0.8</priority></url>
   <url><loc>https://zidrotool.com/tools/text-to-handwriting</loc><lastmod>2026-08-29</lastmod><changefreq>monthly</changefreq><priority>0.8</priority></url>
   <url><loc>https://zidrotool.com/tools/fake-whatsapp-chat-generator</loc><lastmod>2026-08-29</lastmod><changefreq>monthly</changefreq><priority>0.8</priority></url>
   <url><loc>https://zidrotool.com/tools/pdf-to-jpg</loc><lastmod>2026-08-29</lastmod><changefreq>monthly</changefreq><priority>0.8</priority></url>

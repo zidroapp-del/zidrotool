@@ -33,9 +33,8 @@ self.addEventListener("fetch", (event) => {
   }
   if (url.origin !== location.origin) return;
 
-  // Never intercept API routes. They power the video downloader and other
-  // live data — some responses (streamed video) are large and single-use,
-  // and none of them should ever be served from a stale cache.
+  // Never intercept API routes. They power live data and some responses are
+  // large or single-use, so none should ever be served from a stale cache.
   if (url.pathname.startsWith("/api/")) return;
 
   if (request.mode === "navigate") {
@@ -46,9 +45,8 @@ self.addEventListener("fetch", (event) => {
   event.respondWith(handleAsset(request));
 });
 
-// Network-first for navigations (React Router SPA routes like
-// /tools/facebook-video-downloader). Falls back to a cached copy of the
-// same URL, then to the cached app shell, then to a minimal inline page —
+// Network-first for navigations. Falls back to a cached copy of the same URL,
+// then to the cached app shell, then to a minimal inline page —
 // this branch always resolves to a real Response and never rejects, so a
 // failed navigation can never surface as an unhandled promise rejection or
 // a "network error" FetchEvent result.
