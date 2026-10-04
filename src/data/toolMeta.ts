@@ -40,6 +40,14 @@ const TOOL_META: Record<string, ToolMeta> = {
     ],
     faqs: GENERIC_FAQS,
   },
+  "bytes-converter": {
+    howTo: GENERIC_HOW_TO,
+    faqs: [
+      { qKey: "faq.bytes.q1", aKey: "faq.bytes.a1" },
+      { qKey: "faq.bytes.q2", aKey: "faq.bytes.a2" },
+      { qKey: "faq.bytes.q3", aKey: "faq.bytes.a3" },
+    ],
+  },
   "word-counter": { howTo: GENERIC_HOW_TO, faqs: GENERIC_FAQS },
   "base64": { howTo: GENERIC_HOW_TO, faqs: GENERIC_FAQS },
   "json-formatter": { howTo: GENERIC_HOW_TO, faqs: GENERIC_FAQS },

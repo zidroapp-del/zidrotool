@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { Copy, Download, Check, RotateCcw } from "lucide-react";
+import BytesConverter from "@/tools/BytesConverter";
 
 type Props = { slug?: string };
 
@@ -212,6 +213,11 @@ export default function SeoUtilityTool({ slug = "" }: Props) {
     await navigator.clipboard?.writeText(output);
     setCopied(true); setTimeout(() => setCopied(false), 1200);
   };
+
+  if (slug === "bytes-converter") {
+    return <BytesConverter />;
+  }
+
   return (
     <div className="space-y-5">
       <div>

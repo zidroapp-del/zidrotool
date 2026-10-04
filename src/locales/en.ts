@@ -93,6 +93,12 @@ export const en = {
   "faq.general.a3": "No account or software installation is required. Everything runs directly in your web browser.",
   "faq.general.q4": "Are my files stored on remote servers?",
   "faq.general.a4": "No, your files never leave your computer. Processing happens locally on your device.",
+  "faq.bytes.q1": "How do I convert bytes to kilobytes, megabytes, gigabytes, or terabytes?",
+  "faq.bytes.a1": "Enter a non-negative number of bytes. The converter divides by 1,024 for KB, 1,024² for MB, 1,024³ for GB, and 1,024⁴ for TB.",
+  "faq.bytes.q2": "Does this converter use binary or decimal units?",
+  "faq.bytes.a2": "The live results use binary multiples of 1,024. Decimal SI units use multiples of 1,000, so their results are different.",
+  "faq.bytes.q3": "Can I copy an individual conversion result?",
+  "faq.bytes.a3": "Yes. Use the Copy button on a KB, MB, GB, or TB result card to copy that value to your clipboard.",
 
   // ==========================================
   // 6. THEME, LANGUAGE & SEARCH SYSTEM
