@@ -334,6 +334,10 @@ export const ar = {
 
   "tool.meta-tag-generator.name": "مولد وسوم Meta",
   "tool.meta-tag-generator.desc": "أنشئ وسوم SEO وOpen Graph لصفحاتك.",
+  "tool.meta-title-checker.name": "أداة فحص طول عنوان Meta ومعاينة المقتطف",
+  "tool.meta-title-checker.desc": "افحص عدد الأحرف وعرض البكسل لعناوين Google وeBay وEtsy وAmazon وPoshmark.",
+  "tool.meta-title-checker.seoTitle": "أداة فحص طول عنوان Meta ومعاينة المقتطف",
+  "tool.meta-title-checker.seoDesc": "افحص طول العنوان وعرضه بالبكسل، وشاهد معاينة الاقتطاع لعناوين البحث وقوائم الأسواق.",
   "tool.keyword-density.name": "فاحص كثافة الكلمات المفتاحية",
   "tool.keyword-density.desc": "حلل تكرار الكلمات المفتاحية وكثافتها في المحتوى.",
   "tool.robots-generator.name": "مولد Robots.txt",

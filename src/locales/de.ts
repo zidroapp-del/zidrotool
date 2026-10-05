@@ -328,6 +328,10 @@ export const de = {
 
   "tool.meta-tag-generator.name": "Meta-Tag-Generator",
   "tool.meta-tag-generator.desc": "Generieren Sie SEO- und Open-Graph-Tags.",
+  "tool.meta-title-checker.name": "Meta-Titellängen- und Snippet-Prüfer",
+  "tool.meta-title-checker.desc": "Prüfen Sie Zeichenanzahl und Pixelbreite für Google- und Marktplatz-Titel.",
+  "tool.meta-title-checker.seoTitle": "Meta-Titellängen- und Snippet-Prüfer",
+  "tool.meta-title-checker.seoDesc": "Prüfen Sie Zeichen und Pixelbreite für Titel bei Google, eBay, Etsy, Amazon und Poshmark.",
   "tool.keyword-density.name": "Keyword-Dichte-Analysator",
   "tool.keyword-density.desc": "Messen Sie die Keyword-Dichte in Ihren Texten.",
   "tool.robots-generator.name": "Robots.txt-Generator",

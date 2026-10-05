@@ -32,6 +32,7 @@ const CREATOR_FAQS: FaqItem[] = [
 ];
 
 const TOOL_META: Record<string, ToolMeta> = {
+  "meta-title-checker": { howTo: [], faqs: [] },
   "case-converter": {
     howTo: [
       { titleKey: "howto.case.step1.title", descKey: "howto.case.step1.desc" },
