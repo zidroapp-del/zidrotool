@@ -49,6 +49,24 @@ const TOOL_META: Record<string, ToolMeta> = {
       { qKey: "faq.bytes.q3", aKey: "faq.bytes.a3" },
     ],
   },
+  "image-compressor": {
+    howTo: GENERIC_HOW_TO,
+    faqs: [
+      { qKey: "faq.imageCompressor.q1", aKey: "faq.imageCompressor.a1" },
+      { qKey: "faq.imageCompressor.q2", aKey: "faq.imageCompressor.a2" },
+      { qKey: "faq.imageCompressor.q3", aKey: "faq.imageCompressor.a3" },
+      { qKey: "faq.imageCompressor.q4", aKey: "faq.imageCompressor.a4" },
+    ],
+  },
+  "length-distance-converter": {
+    howTo: [],
+    faqs: [
+      { qKey: "lengthDistance.faq.q1", aKey: "lengthDistance.faq.a1" },
+      { qKey: "lengthDistance.faq.q2", aKey: "lengthDistance.faq.a2" },
+      { qKey: "lengthDistance.faq.q3", aKey: "lengthDistance.faq.a3" },
+      { qKey: "lengthDistance.faq.q4", aKey: "lengthDistance.faq.a4" },
+    ],
+  },
   "word-counter": { howTo: GENERIC_HOW_TO, faqs: GENERIC_FAQS },
   "base64": { howTo: GENERIC_HOW_TO, faqs: GENERIC_FAQS },
   "json-formatter": { howTo: GENERIC_HOW_TO, faqs: GENERIC_FAQS },
