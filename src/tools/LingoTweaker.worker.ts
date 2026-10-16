@@ -276,42 +276,50 @@ function applySuggestions(text: string, matches: GrammarMatch[]): string {
 /**
  * Limited fallback for a recognizable past-time cue followed shortly
  * by a subject and a known present-tense verb.
- */
-function applyPastTenseFallback(text: string): string {
-  return text.replace(/[^.!?\n]+[.!?]?/g, (sentence) => {
-    const cue = PAST_TIME_CUE.exec(sentence);
-
-    if (!cue || cue.index === undefined) return sentence;
-
-    const afterCue = sentence.slice(cue.index + cue[0].length);
-
-    const candidate =
-      /\b(I|we|you|they|he|she|it)\s+(go|goes|do|does|have|has|buy|buys|eat|eats|see|sees|come|comes|make|makes|take|takes|get|gets|write|writes|speak|speaks|run|runs|leave|leaves|feel|feels|say|says|tell|tells|think|thinks|find|finds|give|gives|meet|meets|bring|brings|catch|catches|sleep|sleeps|play|plays|work|works|walk|walks|talk|talks|watch|watches|live|lives|want|wants|need|needs|study|studies|use|uses|call|calls|like|likes)\b/i.exec(
-        afterCue
+*/
+function applyPastTenseAfterSubjectFallback(text: string): string {
+  return text.replace(
+    /\b(the\s+(?:teacher|student|doctor|man|woman|boy|girl|team|company)|my\s+\w+|our\s+\w+|their\s+\w+|he|she|it|they|we|I)\s+(give|go|buy|eat|see|come|make|take|write|speak|run|leave|feel|say|tell|think|find|meet|bring|catch|sleep|play|work|walk|talk|watch|live|want|need|study|use|call|like)\b/gi,
+    (match, subject, verb) => {
+      const sentenceStart = Math.max(
+        text.lastIndexOf(".", text.indexOf(match)),
+        text.lastIndexOf("!", text.indexOf(match)),
+        text.lastIndexOf("?", text.indexOf(match)),
+        text.lastIndexOf("\n", text.indexOf(match))
       );
 
-    if (!candidate || candidate.index > 40) return sentence;
+      const sentence = text.slice(sentenceStart + 1);
+      if (!PAST_TIME_CUE.test(sentence)) return match;
 
-    const originalVerb = candidate[2];
-    const pastForm = PAST_FORMS[originalVerb.toLowerCase()];
+      const past = PAST_FORMS[verb.toLowerCase()];
+      if (!past) return match;
 
-    if (!pastForm) return sentence;
+      return `${subject} ${preserveCase(verb, past)}`;
+    }
+  );
+}
+function applyPastTenseFallback(text: string): string {
+  return text.replace(/[^.!?\n]+[.!?\n]?/g, (sentence) => {
+    if (!PAST_TIME_CUE.test(sentence)) return sentence;
 
-    const verbStart =
-      cue.index + cue[0].length + candidate.index +
-      candidate[0].lastIndexOf(originalVerb);
+    const verbPattern =
+      /\b(I|we|you|they|he|she|it|the\s+\w+|my\s+\w+|our\s+\w+|their\s+\w+)\s+(go|goes|do|does|have|has|give|gives|buy|buys|eat|eats|see|sees|come|comes|make|makes|take|takes|get|gets|write|writes|speak|speaks|run|runs|leave|leaves|feel|feels|say|says|tell|tells|think|thinks|find|finds|meet|meets|bring|brings|catch|catches|sleep|sleeps|play|plays|work|works|walk|walks|talk|talks|watch|watches|live|lives|want|wants|need|needs|study|studies|use|uses|call|calls|like|likes)\b/gi;
 
-    const verbEnd = verbStart + originalVerb.length;
-    const replacement = preserveCase(originalVerb, pastForm);
+    return sentence.replace(verbPattern, (match, subject, verb) => {
+      const pastForm = PAST_FORMS[verb.toLowerCase()];
+      if (!pastForm) return match;
 
-    return (
-      sentence.slice(0, verbStart) +
-      replacement +
-      sentence.slice(verbEnd)
-    );
+      return `${subject} ${preserveCase(verb, pastForm)}`;
+    });
   });
 }
-
+function applyQuestionWordOrderFallback(text: string): string {
+  return text.replace(
+    /\b(Where|What|When|Why|How)(\s+)(I|you|we|they|he|she|it)(\s+)(am|is|are|was|were|do|does|did|have|has|can|will|would|should)(?=\s+\w)/gi,
+    (_match, question, space1, subject, space2, auxiliary) =>
+      `${question}${space1}${auxiliary}${space2}${subject}`
+  );
+}
 workerScope.addEventListener("message", (event) => {
   const { id, text } = event.data;
 
@@ -327,8 +335,9 @@ workerScope.addEventListener("message", (event) => {
       };
 
       const matches = raw.matches ?? [];
-      const suggested = applySuggestions(text, matches);
-      const corrected = applyPastTenseFallback(suggested);
+     const suggested = applySuggestions(text, matches);
+const pastCorrected = applyPastTenseFallback(suggested);
+const corrected = applyQuestionWordOrderFallback(pastCorrected);
 
       workerScope.postMessage({
         id,
