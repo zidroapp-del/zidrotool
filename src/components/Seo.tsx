@@ -14,11 +14,11 @@ interface SeoProps {
 }
 
 const SITE_URL = "https://zidrotool.com";
+const CANONICAL_ORIGIN = "https://zidrotool.com";
 
 export function Seo({
   title,
   description,
-  path,
   image,
   type = "website",
   jsonLd,
@@ -32,8 +32,7 @@ export function Seo({
     description ||
     (t("brand.tagline") as string) ||
     "Smart Online Tools for Everyone. Free, fast, privacy-first utilities.";
-  const cleanPath = (path || location.pathname || "/").split("?")[0].split("#")[0] || "/";
-  const canonical = `${SITE_URL}${cleanPath === "/" ? "/" : cleanPath.replace(/\/$/, "")}`;
+  const canonical = `${CANONICAL_ORIGIN}${location.pathname || "/"}`;
   const ogImage = image
     ? (image.startsWith("http://") || image.startsWith("https://") ? image : `${SITE_URL}${image.startsWith("/") ? image : `/${image}`}`)
     : `${SITE_URL}/og-image.png`;

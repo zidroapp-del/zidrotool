@@ -20,6 +20,8 @@
     "i18next-browser-languagedetector": "^8.0.0",
     "jsqr": "^1.4.0",
     "jszip": "^3.10.2",
+    "lingotweaker-data-en": "0.2.8",
+    "lingotweaker-wasm": "0.2.8",
     "lucide-react": "^0.427.0",
     "pdf-lib": "^1.17.1",
     "pdfjs-dist": "^3.9.179",

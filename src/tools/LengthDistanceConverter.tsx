@@ -19,7 +19,7 @@ type Preset = { id: string; from: UnitId; to: UnitId; labelKey: string };
 const PRESETS: Preset[] = [
   { id: "feet-meters", from: "ft", to: "m", labelKey: "lengthDistance.preset.feetMeters" },
   { id: "inches-centimeters", from: "in", to: "cm", labelKey: "lengthDistance.preset.inchesCentimeters" },
-  { id: "pulgadas-centimeters", from: "in", to: "cm", labelKey: "lengthDistance.preset.pulgadasCentimeters" },
+
   { id: "millimeters-centimeters", from: "mm", to: "cm", labelKey: "lengthDistance.preset.millimetersCentimeters" },
   { id: "miles-kilometers", from: "mi", to: "km", labelKey: "lengthDistance.preset.milesKilometers" },
   { id: "meters-nanometers", from: "m", to: "nm", labelKey: "lengthDistance.preset.metersNanometers" },

@@ -33,6 +33,15 @@ const CREATOR_FAQS: FaqItem[] = [
 
 const TOOL_META: Record<string, ToolMeta> = {
   "meta-title-checker": { howTo: [], faqs: [] },
+  "ai-grammar-checker": {
+    howTo: [],
+    faqs: [
+      { qKey: "grammarChecker.faq.accuracyQ", aKey: "grammarChecker.faq.accuracyA" },
+      { qKey: "grammarChecker.faq.languagesQ", aKey: "grammarChecker.faq.languagesA" },
+      { qKey: "grammarChecker.faq.correctionsQ", aKey: "grammarChecker.faq.correctionsA" },
+      { qKey: "grammarChecker.faq.privacyQ", aKey: "grammarChecker.faq.privacyA" },
+    ],
+  },
   "case-converter": {
     howTo: [
       { titleKey: "howto.case.step1.title", descKey: "howto.case.step1.desc" },

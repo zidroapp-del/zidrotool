@@ -706,7 +706,7 @@ export function ToolLayout({
           </section>
         )}
 
-        <ToolSEOContent tool={tool} />
+        {tool.slug !== "ai-grammar-checker" && <ToolSEOContent tool={tool} />}
 
         <div className="mt-8 flex flex-col items-center gap-3 border-y border-ink-100 py-6 dark:border-ink-800">
           <span className="text-sm font-semibold text-ink-700 dark:text-ink-300">Share this tool</span>
