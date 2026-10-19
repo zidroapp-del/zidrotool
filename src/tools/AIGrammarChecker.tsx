@@ -28,6 +28,16 @@ const MAX_IMAGE_FILE_BYTES = 15 * 1024 * 1024;
 const TEXT_EXTENSIONS = new Set(["txt", "md", "markdown", "csv"]);
 const IMAGE_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
 
+// Decorative background only (no effect on grammar logic).
+const BG_PARTICLES = [
+  { left: "8%", size: 6, delay: "0s", duration: "19s" },
+  { left: "22%", size: 4, delay: "-6s", duration: "23s" },
+  { left: "41%", size: 5, delay: "-12s", duration: "21s" },
+  { left: "63%", size: 4, delay: "-3s", duration: "26s" },
+  { left: "78%", size: 6, delay: "-9s", duration: "20s" },
+  { left: "92%", size: 4, delay: "-15s", duration: "24s" },
+] as const;
+
 function tokenize(value: string): string[] {
   return value.match(/\s+|[\p{L}\p{M}\p{N}]+|[^\s\p{L}\p{M}\p{N}]/gu) ?? [];
 }
@@ -313,9 +323,64 @@ useEffect(() => {
   const checkDisabled = Boolean(busy || !input.trim() || input.length > MAX_TEXT_LENGTH);
 
   return (
-    <div className="space-y-8">
-      <section className="rounded-2xl border border-ink-200 bg-white p-4 shadow-sm dark:border-ink-700 dark:bg-ink-950 sm:p-6">
-        <p className="mb-5 max-w-3xl text-sm leading-6 text-ink-600 dark:text-ink-300">{t("grammarChecker.intro")}</p>
+    <div className="zgc-root relative isolate flex flex-col gap-8 overflow-hidden rounded-[2rem] p-3 sm:p-6">
+      <style>{`
+        @keyframes zgc-shift {
+          0%, 100% { background-position: 0% 50%; }
+          50% { background-position: 100% 50%; }
+        }
+        @keyframes zgc-drift-a {
+          0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+          33% { transform: translate3d(-40px, 30px, 0) scale(1.1); }
+          66% { transform: translate3d(20px, 60px, 0) scale(0.96); }
+        }
+        @keyframes zgc-drift-b {
+          0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+          50% { transform: translate3d(60px, -30px, 0) scale(1.14); }
+        }
+        @keyframes zgc-drift-c {
+          0%, 100% { transform: translate3d(0, 0, 0) scale(1.05); }
+          50% { transform: translate3d(-50px, -40px, 0) scale(0.92); }
+        }
+        @keyframes zgc-rise {
+          0% { transform: translate3d(0, 0, 0); opacity: 0; }
+          12% { opacity: 0.55; }
+          88% { opacity: 0.35; }
+          100% { transform: translate3d(14px, -110vh, 0); opacity: 0; }
+        }
+        .zgc-base { background-size: 220% 220%; animation: zgc-shift 30s ease-in-out infinite; }
+        .zgc-orb { will-change: transform; }
+        .zgc-orb-a { animation: zgc-drift-a 20s ease-in-out infinite; }
+        .zgc-orb-b { animation: zgc-drift-b 24s ease-in-out infinite; }
+        .zgc-orb-c { animation: zgc-drift-c 28s ease-in-out infinite; }
+        .zgc-dots {
+          background-image: radial-gradient(currentColor 1px, transparent 1.2px);
+          background-size: 24px 24px;
+          -webkit-mask-image: radial-gradient(ellipse at center, #000 25%, transparent 75%);
+          mask-image: radial-gradient(ellipse at center, #000 25%, transparent 75%);
+        }
+        .zgc-particle { position: absolute; bottom: -12px; border-radius: 9999px; animation-name: zgc-rise; animation-timing-function: linear; animation-iteration-count: infinite; }
+        @media (prefers-reduced-motion: reduce) {
+          .zgc-base, .zgc-orb, .zgc-particle { animation: none !important; }
+          .zgc-particle { display: none; }
+        }
+      `}</style>
+      <div aria-hidden="true" className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
+        <div className="zgc-base absolute inset-0 bg-gradient-to-br from-brand-50 via-white to-accent-50 dark:from-ink-950 dark:via-brand-950/40 dark:to-accent-950/30" />
+        <div className="zgc-dots absolute inset-0 text-ink-900/10 dark:text-white/10" />
+        <div className="zgc-orb zgc-orb-a absolute -right-24 -top-28 h-80 w-80 rounded-full bg-brand-400/30 blur-3xl dark:bg-brand-500/20" />
+        <div className="zgc-orb zgc-orb-b absolute -left-28 top-1/3 h-96 w-96 rounded-full bg-accent-400/25 blur-3xl dark:bg-accent-500/15" />
+        <div className="zgc-orb zgc-orb-c absolute -bottom-32 right-1/4 h-72 w-72 rounded-full bg-brand-300/25 blur-3xl dark:bg-brand-400/10" />
+        {BG_PARTICLES.map((p, index) => (
+          <span
+            key={index}
+            className="zgc-particle bg-brand-400/60 dark:bg-brand-300/40"
+            style={{ left: p.left, width: p.size, height: p.size, animationDelay: p.delay, animationDuration: p.duration }}
+          />
+        ))}
+      </div>
+      <section className="rounded-3xl border border-white/70 bg-white/80 p-4 shadow-[0_24px_70px_-30px_rgba(37,99,235,0.35)] backdrop-blur-xl dark:border-ink-700/70 dark:bg-ink-950/75 sm:p-8">
+        <p className="mx-auto mb-6 max-w-2xl text-center text-sm leading-6 text-ink-600 dark:text-ink-300">{t("grammarChecker.intro")}</p>
         <div className="mb-2 flex items-center justify-between gap-2">
           <label htmlFor="grammar-checker-input" className="label mb-0">{t("grammarChecker.inputLabel")}</label>
           <span className={`text-xs ${input.length > MAX_TEXT_LENGTH ? "text-danger" : "text-ink-400"}`}>
@@ -331,16 +396,16 @@ useEffect(() => {
           maxLength={MAX_TEXT_LENGTH + 1}
           disabled={Boolean(busy)}
           aria-describedby="grammar-checker-guidance"
-          className="input min-h-56 w-full resize-y font-mono text-sm disabled:opacity-70"
+          className="input min-h-56 w-full resize-y rounded-2xl bg-white/70 p-4 font-sans text-base leading-7 shadow-inner transition focus:ring-2 focus:ring-brand-300/60 disabled:opacity-70 dark:bg-ink-900/60"
         />
         <div className="mt-3 flex flex-wrap gap-2">
-          <button type="button" onClick={handlePaste} disabled={Boolean(busy)} className="btn btn-secondary">
+          <button type="button" onClick={handlePaste} disabled={Boolean(busy)} className="btn btn-secondary rounded-full border-brand-200 text-brand-700 transition hover:-translate-y-0.5 hover:shadow-sm dark:border-brand-800 dark:text-brand-300">
             <ClipboardPaste className="h-4 w-4" aria-hidden="true" />{t("grammarChecker.pasteText")}
           </button>
-          <button type="button" onClick={() => fileInputRef.current?.click()} disabled={Boolean(busy)} className="btn btn-secondary">
+          <button type="button" onClick={() => fileInputRef.current?.click()} disabled={Boolean(busy)} className="btn btn-secondary rounded-full border-brand-200 text-brand-700 transition hover:-translate-y-0.5 hover:shadow-sm dark:border-brand-800 dark:text-brand-300">
             <FileUp className="h-4 w-4" aria-hidden="true" />{t("grammarChecker.uploadFileImage")}
           </button>
-          <button type="button" onClick={() => { updateInput(""); setAnalysis(null); setError(""); setNotice(""); }} disabled={Boolean(busy) || !input} className="btn btn-secondary">
+          <button type="button" onClick={() => { updateInput(""); setAnalysis(null); setError(""); setNotice(""); }} disabled={Boolean(busy) || !input} className="btn btn-secondary rounded-full border-brand-200 text-brand-700 transition hover:-translate-y-0.5 hover:shadow-sm dark:border-brand-800 dark:text-brand-300">
             <RotateCcw className="h-4 w-4" aria-hidden="true" />{t("grammarChecker.clear")}
           </button>
           <input
@@ -367,14 +432,14 @@ useEffect(() => {
           type="button"
           onClick={handleCheck}
           disabled={checkDisabled}
-          className="btn btn-primary mt-4 w-full justify-center py-3 text-base disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto sm:min-w-56"
+          className="btn btn-primary mt-5 flex w-full justify-center rounded-full bg-gradient-to-r from-brand-600 to-accent-600 py-3 text-base shadow-lg shadow-brand-500/25 transition hover:-translate-y-0.5 hover:shadow-xl disabled:cursor-not-allowed disabled:opacity-60 sm:ml-auto sm:w-auto sm:min-w-56"
         >
           {busy === "checking" ? <><Loader2 className="h-5 w-5 animate-spin" aria-hidden="true" />{t("grammarChecker.checking")}</> : <><Sparkles className="h-5 w-5" aria-hidden="true" />{t("grammarChecker.checkGrammar")}</>}
         </button>
       </section>
 
       {analysis && (
-        <section aria-labelledby="grammar-corrected-heading" className="rounded-2xl border border-ink-200 bg-white p-4 dark:border-ink-700 dark:bg-ink-950 sm:p-6">
+        <section aria-labelledby="grammar-corrected-heading" className="rounded-3xl border border-white/70 bg-white/85 p-4 shadow-[0_24px_70px_-30px_rgba(37,99,235,0.30)] backdrop-blur-xl dark:border-ink-700/70 dark:bg-ink-950/80 sm:p-8">
           <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <h2 id="grammar-corrected-heading" className="text-lg font-bold text-ink-900 dark:text-ink-100">{t("grammarChecker.correctedOutput")}</h2>
@@ -391,13 +456,13 @@ useEffect(() => {
           <div className="grid gap-4 lg:grid-cols-2">
             <div>
               <h3 className="mb-2 text-sm font-semibold text-ink-700 dark:text-ink-300">{t("grammarChecker.originalText")}</h3>
-              <pre className="min-h-40 whitespace-pre-wrap break-words rounded-xl border border-ink-200 bg-ink-50 p-4 font-sans text-sm leading-6 text-ink-700 dark:border-ink-700 dark:bg-ink-900 dark:text-ink-300">
+              <pre className="min-h-40 whitespace-pre-wrap break-words rounded-2xl border border-ink-200/80 bg-ink-50/80 p-4 font-sans text-sm leading-6 text-ink-700 dark:border-ink-700 dark:bg-ink-900 dark:text-ink-300">
                 {differences.map((part, index) => <span key={`old-${index}`} className={part.kind === "removed" ? "rounded bg-red-100 text-red-900 line-through dark:bg-red-950/70 dark:text-red-200" : undefined}>{part.kind === "added" ? "" : part.text}</span>)}
               </pre>
             </div>
             <div>
               <h3 className="mb-2 text-sm font-semibold text-ink-700 dark:text-ink-300">{t("grammarChecker.correctedText")}</h3>
-              <pre className="min-h-40 whitespace-pre-wrap break-words rounded-xl border border-ink-200 bg-white p-4 font-sans text-sm leading-6 text-ink-800 dark:border-ink-700 dark:bg-ink-950 dark:text-ink-200">
+              <pre className="min-h-40 whitespace-pre-wrap break-words rounded-2xl border border-emerald-200/70 bg-white/80 p-4 font-sans text-sm leading-6 text-ink-800 dark:border-ink-700 dark:bg-ink-950 dark:text-ink-200">
                 {differences.map((part, index) => <span key={`new-${index}`} className={part.kind === "added" ? "rounded bg-emerald-100 font-medium text-emerald-950 dark:bg-emerald-950/70 dark:text-emerald-200" : undefined}>{part.kind === "removed" ? "" : part.text}</span>)}
               </pre>
             </div>
@@ -406,14 +471,14 @@ useEffect(() => {
         </section>
       )}
 
-      <section className="rounded-xl border border-amber-200 bg-amber-50 p-4 dark:border-amber-900/60 dark:bg-amber-950/20" aria-label={t("grammarChecker.limitsHeading")}>
+      <section className="rounded-2xl border border-amber-200 bg-amber-50/90 p-4 backdrop-blur dark:border-amber-900/60 dark:bg-amber-950/20" aria-label={t("grammarChecker.limitsHeading")}>
         <h2 className="font-semibold text-amber-950 dark:text-amber-100">{t("grammarChecker.limitsHeading")}</h2>
         <p className="mt-2 text-sm leading-6 text-amber-900 dark:text-amber-200">{t("grammarChecker.limitsText")}</p>
       </section>
 
       <section aria-labelledby="grammar-common-fixes" className="space-y-3">
         <h2 id="grammar-common-fixes" className="text-xl font-bold text-ink-900 dark:text-ink-100">{t("grammarChecker.commonFixesHeading")}</h2>
-        <div className="overflow-x-auto rounded-xl border border-ink-200 dark:border-ink-700">
+        <div className="overflow-x-auto rounded-2xl border border-ink-200/80 bg-white/60 backdrop-blur dark:border-ink-700 dark:bg-ink-950/50">
           <table className="w-full min-w-[560px] border-collapse text-left text-sm">
             <thead className="bg-ink-50 text-ink-700 dark:bg-ink-800 dark:text-ink-200"><tr>
               <th scope="col" className="px-4 py-3 font-semibold">{t("grammarChecker.tableIssue")}</th>
@@ -422,7 +487,7 @@ useEffect(() => {
             </tr></thead>
             <tbody className="divide-y divide-ink-200 dark:divide-ink-700">
               {([1, 2, 3, 4, 5] as const).map((number) => (
-                <tr key={number} className="bg-white dark:bg-ink-950">
+                <tr key={number} className="bg-white/50 dark:bg-ink-950/40">
                   <td className="px-4 py-3 font-mono text-ink-700 dark:text-ink-300">{t(`grammarChecker.fix${number}Before`)}</td>
                   <td className="px-4 py-3 font-mono text-ink-900 dark:text-ink-100">{t(`grammarChecker.fix${number}After`)}</td>
                   <td className="px-4 py-3 text-ink-600 dark:text-ink-400">{t(`grammarChecker.fix${number}Reason`)}</td>
