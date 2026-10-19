@@ -12,7 +12,8 @@ const escapeXml = (value) => String(value)
   .replaceAll("'", "&apos;");
 
 const catalog = fs.readFileSync(path.join(root, "src/data/catalog.ts"), "utf8");
-const tools = [...catalog.matchAll(/^\s*\{\s*slug:\s*["']([^"']+)["']/gm)].map((m) => m[1]);
+const toolSource = catalog.split("export const TOOLS:")[1] ?? "";
+const tools = [...toolSource.matchAll(/^\s*\{\s*slug:\s*["']([^"']+)["']/gm)].map((m) => m[1]);
 const categorySource = catalog.split("export const TOOLS:")[0];
 const categories = [...categorySource.matchAll(/\{\s*slug:\s*["']([^"']+)["'],\s*nameKey:/g)].map((m) => m[1]);
 const toolUpdatedAt = new Map(
