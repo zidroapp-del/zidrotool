@@ -1,4 +1,4 @@
-const YT_HOST = 'https://www.youtube.com';
+﻿const YT_HOST = 'https://www.youtube.com';
 const YT_API = 'https://www.googleapis.com/youtube/v3';
 const REQUEST_TIMEOUT_MS = 12000;
 const THUMBNAIL_TIMEOUT_MS = 10000;
@@ -285,21 +285,119 @@ async function getChannelFromDataApi(ref) {
 
 async function getChannelFromPage(urlOrHandle) {
   let input = String(urlOrHandle || '').trim();
-  if (!input.startsWith('http')) input = `${YT_HOST}/@${input.replace(/^@/, '')}`;
+
+  if (!input.startsWith('http')) {
+    input = `${YT_HOST}/@${input.replace(/^@/, '')}`;
+  }
+
   const html = await fetchText(input);
   const data = extractJson(html, 'ytInitialData');
-  const channelId = html.match(/"channelId":"(UC[\w-]{22})"/)?.[1] || data?.metadata?.channelMetadataRenderer?.externalId || '';
+
   const meta = data?.metadata?.channelMetadataRenderer || {};
   const header = data?.header?.c4TabbedHeaderRenderer || {};
+
+  const channelId =
+    meta.externalId ||
+    html.match(/"channelId":"(UC[\w-]{22})"/)?.[1] ||
+    '';
+
   const title = meta.title || header.title || '';
-  const avatar = meta.avatar?.thumbnails?.at(-1)?.url || header.avatar?.thumbnails?.at(-1)?.url || '';
+  const avatar =
+    meta.avatar?.thumbnails?.at(-1)?.url ||
+    header.avatar?.thumbnails?.at(-1)?.url ||
+    '';
   const banner = header.banner?.thumbnails?.at(-1)?.url || '';
-  const subscriberText = text(header.subscriberCountText) || '';
-  const videosText = text(header.videosCountText) || '';
-  const desc = meta.description || text(data?.metadata?.channelMetadataRenderer?.description) || '';
-  const about = JSON.stringify(data).match(/"joinedDateText":\{"runs":\[\{"text":"([^"]+)/)?.[1] || '';
-  if (!channelId && !title) throw new Error('Could not read public YouTube channel metadata.');
-  return { channelId, title, avatar, banner, subscriberText, videosText, joinedDate: about, description: desc, url: input, source: 'youtube-page' };
+
+  let subscriberText = text(header.subscriberCountText) || '';
+  let videosText = text(header.videosCountText) || '';
+  let joinedDate = '';
+  let viewCount = null;
+
+  if (channelId) {
+    try {
+      const aboutHtml = await fetchText(
+        `${YT_HOST}/channel/${channelId}/about?hl=en`
+      );
+
+      const aboutData = extractJson(aboutHtml, 'ytInitialData');
+      const aboutMeta =
+        aboutData?.metadata?.channelMetadataRenderer || {};
+
+      const rawViews = aboutMeta.viewCountText;
+      const viewText =
+        typeof rawViews === 'string'
+          ? rawViews
+          : rawViews?.content || rawViews?.simpleText || text(rawViews);
+
+      let match = String(viewText || '').match(/([\d,.\s]+)\s+views?/i);
+
+      // Fallback: YouTube may place channel statistics outside ytInitialData.
+      if (!match) {
+        const channelMarker = aboutHtml.indexOf('"canonicalChannelUrl"');
+        const channelContext = channelMarker >= 0
+          ? aboutHtml.slice(Math.max(0, channelMarker - 5000), channelMarker + 5000)
+          : '';
+
+        const rawMatch = channelContext.match(/"viewCountText"\s*:\s*"([\d,.\s]+)\s+views?"/i);
+        if (rawMatch) match = rawMatch;
+      }
+
+      if (match) {
+        const parsed = Number(match[1].replace(/[,\s]/g, ''));
+        if (Number.isFinite(parsed)) viewCount = parsed;
+      }
+
+      joinedDate =
+        aboutMeta.joinedDateText?.content ||
+        aboutMeta.joinedDateText?.text ||
+        '';
+
+      subscriberText =
+        aboutMeta.subscriberCountText || subscriberText;
+
+      videosText =
+        aboutMeta.videoCountText || videosText;
+
+      if (!subscriberText) {
+        subscriberText =
+          aboutHtml.match(/"subscriberCountText"\s*:\s*"([^"]+)"/)?.[1] || '';
+      }
+
+      if (!videosText) {
+        videosText =
+          aboutHtml.match(/"videoCountText"\s*:\s*"([^"]+)"/)?.[1] || '';
+      }
+
+      if (!joinedDate) {
+        joinedDate =
+          aboutHtml.match(/"joinedDateText"\s*:\s*\{"content":"([^"]+)"/)?.[1] || '';
+      }
+    } catch (error) {
+      console.warn('Could not read YouTube channel About page:', error);
+    }
+  }
+
+  const description = meta.description || '';
+
+  if (!channelId && !title) {
+    throw new Error('Could not read public YouTube channel metadata.');
+  }
+
+  return {
+    channelId,
+    title,
+    avatar,
+    banner,
+    subscriberText,
+    subscriberCount: null,
+    videosText,
+    videoCount: null,
+    viewCount,
+    joinedDate,
+    description,
+    url: input,
+    source: 'youtube-page',
+  };
 }
 
 async function getChannel(urlOrHandle) {
@@ -399,3 +497,5 @@ export default async function handler(req, res) {
     return json(res, status, { error:e?.message || 'YouTube request failed' });
   }
 }
+
+

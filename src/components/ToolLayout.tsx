@@ -111,6 +111,10 @@ export function ToolLayout({
 
   const popular = getPopularTools().slice(0, 4);
 
+  // Tools that need the full page width: the side list moves below them.
+  const WIDE_TOOLS = ["text-to-handwriting"];
+  const wide = tool ? WIDE_TOOLS.includes(tool.slug) : false;
+
   const Icon = tool
     ? getIcon(tool.icon)
     : Wrench;
@@ -464,9 +468,9 @@ export function ToolLayout({
           </div>
         </div>
 
-        <div className="mt-8 grid gap-6 lg:grid-cols-12">
-          <div className="lg:col-span-8">
-            <div className="card p-6">
+        <div className={`mt-8 grid gap-6 ${wide ? "" : "lg:grid-cols-12"}`}>
+          <div className={wide ? "" : "lg:col-span-8"}>
+            <div className={`card ${wide ? "p-3 sm:p-4" : "p-6"}`}>
               {children}
 
               {output && (
@@ -501,8 +505,8 @@ export function ToolLayout({
             </div>
           </div>
 
-          <div className="lg:col-span-4">
-            <div className="sticky top-24 space-y-4">
+          <div className={wide ? "" : "lg:col-span-4"}>
+            <div className={wide ? "grid gap-4 sm:grid-cols-2 lg:grid-cols-3" : "sticky top-24 space-y-4"}>
               <AdSlot variant="sidebar" />
 
               {related.length > 0 && (
