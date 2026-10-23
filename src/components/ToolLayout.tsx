@@ -112,7 +112,7 @@ export function ToolLayout({
   const popular = getPopularTools().slice(0, 4);
 
   // Tools that need the full page width: the side list moves below them.
-const WIDE_TOOLS = ["text-to-handwriting", "age-calculator", "ContentRewriter"];
+const WIDE_TOOLS = ["text-to-handwriting", "age-calculator", "ai-content-rewriter", "ovulation-calculator"];
   const wide = tool ? WIDE_TOOLS.includes(tool.slug) : false;
 
   const Icon = tool
