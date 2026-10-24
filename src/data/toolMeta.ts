@@ -42,6 +42,22 @@ const TOOL_META: Record<string, ToolMeta> = {
       { qKey: "grammarChecker.faq.privacyQ", aKey: "grammarChecker.faq.privacyA" },
     ],
   },
+  "ai-text-summarizer": {
+    howTo: [
+      { titleKey: "howto.summarizer.step1.title", descKey: "howto.summarizer.step1.desc" },
+      { titleKey: "howto.summarizer.step2.title", descKey: "howto.summarizer.step2.desc" },
+      { titleKey: "howto.summarizer.step3.title", descKey: "howto.summarizer.step3.desc" },
+    ],
+    faqs: [
+      { qKey: "faq.summarizer.q1", aKey: "faq.summarizer.a1" },
+      { qKey: "faq.summarizer.q2", aKey: "faq.summarizer.a2" },
+      { qKey: "faq.summarizer.q3", aKey: "faq.summarizer.a3" },
+      { qKey: "faq.summarizer.q4", aKey: "faq.summarizer.a4" },
+      { qKey: "faq.summarizer.q5", aKey: "faq.summarizer.a5" },
+      { qKey: "faq.summarizer.q6", aKey: "faq.summarizer.a6" },
+    ],
+  },
+ 
   "case-converter": {
     howTo: [
       { titleKey: "howto.case.step1.title", descKey: "howto.case.step1.desc" },
@@ -58,15 +74,24 @@ const TOOL_META: Record<string, ToolMeta> = {
       { qKey: "faq.bytes.q3", aKey: "faq.bytes.a3" },
     ],
   },
-  "image-compressor": {
-    howTo: GENERIC_HOW_TO,
+    "image-compressor": {
+    howTo: [
+      { titleKey: "howto.imgcompressor.step1.title", descKey: "howto.imgcompressor.step1.desc" },
+      { titleKey: "howto.imgcompressor.step2.title", descKey: "howto.imgcompressor.step2.desc" },
+      { titleKey: "howto.imgcompressor.step3.title", descKey: "howto.imgcompressor.step3.desc" },
+    ],
     faqs: [
-      { qKey: "faq.imageCompressor.q1", aKey: "faq.imageCompressor.a1" },
-      { qKey: "faq.imageCompressor.q2", aKey: "faq.imageCompressor.a2" },
-      { qKey: "faq.imageCompressor.q3", aKey: "faq.imageCompressor.a3" },
-      { qKey: "faq.imageCompressor.q4", aKey: "faq.imageCompressor.a4" },
+      { qKey: "faq.imgcompressor.q1", aKey: "faq.imgcompressor.a1" },
+      { qKey: "faq.imgcompressor.q2", aKey: "faq.imgcompressor.a2" },
+      { qKey: "faq.imgcompressor.q3", aKey: "faq.imgcompressor.a3" },
+      { qKey: "faq.imgcompressor.q4", aKey: "faq.imgcompressor.a4" },
+      { qKey: "faq.imgcompressor.q5", aKey: "faq.imgcompressor.a5" },
+      { qKey: "faq.imgcompressor.q6", aKey: "faq.imgcompressor.a6" },
+      { qKey: "faq.imgcompressor.q7", aKey: "faq.imgcompressor.a7" },
     ],
   },
+
+   
   "length-distance-converter": {
     howTo: [],
     faqs: [
