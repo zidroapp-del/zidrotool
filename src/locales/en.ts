@@ -416,8 +416,8 @@ export const en = {
   "tool.og-preview.desc": "Preview social media card previews.",
 
   // --- AI Tools ---
+  "tool.ai-text-summarizer.name": "Text Summarizer",
 "tool.ai-text-summarizer.desc": "Summarize long articles into their key sentences, with bullet points and key phrases.",
-"tool.ai-text-summarizer.name": "Text Summarizer",
   "faq.summarizer.a1": "A text summarizer shortens a long text into its most important points. This one is extractive: it selects the key sentences from your text and keeps them in their original order.",
 "faq.summarizer.a2": "No. It does not use a large language model. It uses a word-frequency method that runs in your browser, so it selects existing sentences and never invents new ones. The summary can still miss context, so read it before you rely on it.",
 "faq.summarizer.a3": "No. The summary is created in your browser. Your text is not uploaded or stored by ZidroTool.",
