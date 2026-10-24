@@ -2,7 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 
 const root = process.cwd();
-const site = "https://zidrotool.com";
+const site = "https://www.zidrotool.com";
 
 const escapeXml = (value) => String(value)
   .replaceAll("&", "&amp;")
