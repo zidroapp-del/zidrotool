@@ -31,7 +31,6 @@ curl.exe "http://localhost:10000/extract?url=https%3A%2F%2Fwww.tiktok.com%2F@USE
 ## ZidroTool test after deployment
 
 ```powershell
-curl.exe "https://YOUR-ZIDRO-DOMAIN.vercel.app/api/video-download?platform=auto&url=ENCODED_VIDEO_URL"
+curl.exe "https://zidrotool.com/api/video-download?platform=auto&url=ENCODED_VIDEO_URL"
 ```
-
 The Vercel function first tries the configured Cobalt instance. If it returns no usable download URL, it calls the Render yt-dlp service. The frontend keeps the existing Facebook/TikTok tools intact.

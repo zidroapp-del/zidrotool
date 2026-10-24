@@ -1,0 +1,19 @@
+﻿<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>LingoTweaker Browser Test</title>
+</head>
+<body style="font-family:system-ui;max-width:850px;margin:30px auto;padding:16px">
+  <h1>LingoTweaker Browser Test</h1>
+  <p>English grammar and spelling test running locally in the browser.</p>
+  <textarea id="text" style="width:100%;height:220px">yesterday i go to the school and i see my freind. we was very happy because we didnt meet since two month. the weather was very nice , and we decide to play football after class . i have alot of homeworks to do, but i dont want to miss this opportunity. she tell me that learning english are important for our future</textarea>
+  <br>
+  <button id="check" style="padding:10px 20px;margin-top:12px">Check English</button>
+  <p id="status">The engine will load when you start the test.</p>
+  <h2>Detected issues</h2>
+  <ol id="results"></ol>
+  <script type="module" src="./browser.js"></script>
+</body>
+</html>
