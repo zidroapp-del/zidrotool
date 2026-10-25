@@ -3,6 +3,8 @@ import { useParams } from "react-router-dom";
 import { ToolLayout } from "@/components/ToolLayout";
 import { getTool } from "@/data/catalog";
 import { getToolMeta } from "@/data/toolMeta";
+import { getLanding } from "@/data/toolLandings";
+import { ToolLandingContent } from "@/components/ToolLandingContent";
 import { useTranslation } from "react-i18next";
 import { Loader2 } from "lucide-react";
 
@@ -17,9 +19,60 @@ const GenericToolLazy = lazy(() =>
   }))
 );
 
+type VideoPlatform =
+  | "facebook"
+  | "tiktok"
+  | "youtube"
+  | "instagram"
+  | "x"
+  | "auto";
+
+function getVideoPlatforms(slug: string): VideoPlatform[] | undefined {
+  // TikTok tool → TikTok + YouTube
+  if (
+    slug === "tiktok-downloader" ||
+    slug.includes("tiktok-downloader")
+  ) {
+    return ["tiktok", "youtube"];
+  }
+
+  // Facebook tool → Facebook + Instagram
+  if (
+    slug === "facebook-video-downloader" ||
+    slug.includes("facebook-video-downloader")
+  ) {
+    return ["facebook", "instagram"];
+  }
+
+  // Keep these if these tools exist separately
+  if (
+    slug === "youtube-video-downloader" ||
+    slug === "youtube-downloader"
+  ) {
+    return ["youtube"];
+  }
+
+  if (
+    slug === "instagram-video-downloader" ||
+    slug === "instagram-downloader"
+  ) {
+    return ["instagram"];
+  }
+
+  if (
+    slug === "twitter-video-downloader" ||
+    slug === "x-video-downloader"
+  ) {
+    return ["x"];
+  }
+
+  return undefined;
+}
+
 export default function ToolPage() {
   const { slug } = useParams<{ slug: string }>();
-  const tool = slug ? getTool(slug) : undefined;
+  const landing = slug && !getTool(slug) ? getLanding(slug) : undefined;
+  const tool = slug ? (getTool(slug) ?? (landing ? getTool(landing.tool) : undefined)) : undefined;
   const { t } = useTranslation();
 
   if (!tool) {
@@ -37,8 +90,8 @@ export default function ToolPage() {
     | (() => Promise<{ default: React.ComponentType<any> }>)
     | undefined;
 
-  const seoTitle = t(tool.seoTitleKey) as string;
-  const seoDesc = t(tool.seoDescKey) as string;
+  const seoTitle = landing ? landing.title : (t(tool.seoTitleKey) as string);
+  const seoDesc = landing ? landing.description : (t(tool.seoDescKey) as string);
 
   const fallback = (
     <div className="flex items-center justify-center py-12">
@@ -46,8 +99,16 @@ export default function ToolPage() {
     </div>
   );
 
+  const videoPlatforms = getVideoPlatforms(tool.slug);
+
   const toolProps = {
     slug: tool.slug,
+    ...(landing?.initial ? { initial: landing.initial } : {}),
+    ...(videoPlatforms
+      ? {
+          platforms: videoPlatforms,
+        }
+      : {}),
   };
 
   if (!LazyComp) {
@@ -55,8 +116,9 @@ export default function ToolPage() {
       <ToolLayout
         output=""
         onReset={() => {}}
-        howToSteps={meta.howTo}
-        faqs={meta.faqs}
+        howToSteps={landing ? [] : meta.howTo}
+        faqs={landing ? [] : meta.faqs}
+        landing={landing}
         seoTitle={seoTitle}
         seoDescription={seoDesc}
         slug={tool.slug}
@@ -74,8 +136,9 @@ export default function ToolPage() {
     <ToolLayout
       output=""
       onReset={() => {}}
-      howToSteps={meta.howTo}
-      faqs={meta.faqs}
+      howToSteps={landing ? [] : meta.howTo}
+      faqs={landing ? [] : meta.faqs}
+      landing={landing}
       seoTitle={seoTitle}
       seoDescription={seoDesc}
       slug={tool.slug}
@@ -83,6 +146,7 @@ export default function ToolPage() {
       <Suspense fallback={fallback}>
         <ToolComponent {...toolProps} />
       </Suspense>
+      {landing && <ToolLandingContent landing={landing} />}
     </ToolLayout>
   );
 }

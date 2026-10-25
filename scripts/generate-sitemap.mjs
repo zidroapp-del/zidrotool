@@ -2,7 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 
 const root = process.cwd();
-const site = "https://www.zidrotool.com";
+const site = "https://zidrotool.com";
 
 const escapeXml = (value) => String(value)
   .replaceAll("&", "&amp;")
@@ -12,14 +12,16 @@ const escapeXml = (value) => String(value)
   .replaceAll("'", "&apos;");
 
 const catalog = fs.readFileSync(path.join(root, "src/data/catalog.ts"), "utf8");
-const toolSource = catalog.split("export const TOOLS:")[1] ?? "";
-const tools = [...toolSource.matchAll(/^\s*\{\s*slug:\s*["']([^"']+)["']/gm)].map((m) => m[1]);
+const tools = [...catalog.matchAll(/^\s*\{\s*slug:\s*["']([^"']+)["']/gm)].map((m) => m[1]);
 const categorySource = catalog.split("export const TOOLS:")[0];
 const categories = [...categorySource.matchAll(/\{\s*slug:\s*["']([^"']+)["'],\s*nameKey:/g)].map((m) => m[1]);
 const toolUpdatedAt = new Map(
   [...catalog.matchAll(/slug:\s*["']([^"']+)["'][\s\S]*?(?:updatedAt|addedAt):\s*["']([^"']+)["']/g)]
     .map((m) => [m[1], m[2]])
 );
+
+const landingSrc = fs.existsSync(path.join(root, "src/data/toolLandings.ts")) ? fs.readFileSync(path.join(root, "src/data/toolLandings.ts"), "utf8") : "";
+const landingSlugs = [...landingSrc.matchAll(/^\s*slug:\s*"([^"]+)",\s*\n\s*tool:/gm)].map((m) => m[1]);
 
 const blogDir = path.join(root, "content/blog");
 const blogCategories = ["seo-analytics", "web-development", "text-utilities"];
@@ -56,6 +58,7 @@ const urls = [
   ...blogCategories.map((slug) => ({ path: `/blog/category/${slug}`, changefreq: "weekly", priority: "0.7" })),
   { path: "/blog/author/zidro-team", changefreq: "monthly", priority: "0.4" },
   ...unique(tools).map((slug) => ({ path: `/tools/${slug}`, changefreq: "monthly", priority: "0.8", lastmod: toolUpdatedAt.get(slug) })),
+  ...unique(landingSlugs).map((slug) => ({ path: `/tools/${slug}`, changefreq: "monthly", priority: "0.7" })),
   ...unique(posts.map((post) => post.slug)).map((slug) => {
     const post = posts.find((item) => item.slug === slug);
     return { path: `/blog/${slug}`, changefreq: "monthly", priority: "0.7", lastmod: post?.lastmod };

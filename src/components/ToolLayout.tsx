@@ -46,6 +46,7 @@ import { cn, copyToClipboard } from "@/lib/utils";
 import { useToast } from "@/components/Toast";
 import { getToolImage } from "@/data/toolImages";
 import { ToolSEOContent } from "@/components/ToolSEOContent";
+import type { ToolLanding } from "@/data/toolLandings";
 
 interface ToolLayoutProps {
   children: ReactNode;
@@ -64,6 +65,7 @@ interface ToolLayoutProps {
   slug?: string;
   sampleInput?: string;
   onLoadSample?: () => void;
+  landing?: ToolLanding;
 }
 
 export function ToolLayout({
@@ -75,6 +77,7 @@ export function ToolLayout({
   seoTitle,
   seoDescription,
   slug,
+  landing,
 }: ToolLayoutProps) {
   const { slug: routeSlug } = useParams<{ slug: string }>();
   const { t } = useTranslation();
@@ -140,7 +143,7 @@ export function ToolLayout({
       applicationCategory: "UtilitiesApplication",
       applicationSubCategory: t(tool.category === "pdf" ? "category.pdf" : "nav.tools"),
       operatingSystem: "Web Browser",
-      url: `https://zidrotool.com/tools/${tool.slug}`,
+      url: `https://zidrotool.com/tools/${landing?.slug ?? tool.slug}`,
       brand: { "@type": "Brand", name: "ZidroTool" },
       offers: {
         "@type": "Offer",
@@ -148,7 +151,7 @@ export function ToolLayout({
         priceCurrency: "USD",
       },
     };
-  }, [tool, t]);
+  }, [tool, landing, t]);
 
   const breadcrumbJsonLd = useMemo(() => {
     if (!tool) return null;
@@ -167,11 +170,11 @@ export function ToolLayout({
     items.push({
       "@type": "ListItem",
       position: items.length + 1,
-      name: t(tool.nameKey),
-      item: `https://zidrotool.com/tools/${tool.slug}`,
+      name: landing ? landing.h1 : t(tool.nameKey),
+      item: `https://zidrotool.com/tools/${landing?.slug ?? tool.slug}`,
     });
     return { "@context": "https://schema.org", "@type": "BreadcrumbList", itemListElement: items };
-  }, [tool, category, t]);
+  }, [tool, category, landing, t]);
 
   const faqJsonLd = useMemo(() => {
     if (!faqs.length) return null;
@@ -299,7 +302,7 @@ export function ToolLayout({
       <Seo
         title={seoTitle || t(tool.nameKey)}
         description={seoDescription || t(tool.descKey)}
-        keywords={tool.keywords}
+        keywords={landing ? landing.keywords : tool.keywords}
         image={`https://zidrotool.com${getToolImage(tool)}`}
         jsonLd={[toolJsonLd, ...(breadcrumbJsonLd ? [breadcrumbJsonLd] : []), ...(faqJsonLd ? [faqJsonLd] : [])]}
       />
@@ -347,7 +350,7 @@ export function ToolLayout({
 
             <div>
               <h1 className="text-2xl font-bold tracking-tight text-ink-900 dark:text-ink-100">
-                {t(tool.nameKey)}
+                {landing ? landing.h1 : t(tool.nameKey)}
               </h1>
 
               <p className="mt-1.5 max-w-2xl text-sm text-ink-500 dark:text-ink-400">
@@ -710,7 +713,7 @@ export function ToolLayout({
           </section>
         )}
 
-        {tool.slug !== "ai-grammar-checker" && <ToolSEOContent tool={tool} />}
+        {!landing && tool.slug !== "ai-grammar-checker" && <ToolSEOContent tool={tool} />}
 
         <div className="mt-8 flex flex-col items-center gap-3 border-y border-ink-100 py-6 dark:border-ink-800">
           <span className="text-sm font-semibold text-ink-700 dark:text-ink-300">Share this tool</span>

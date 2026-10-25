@@ -679,7 +679,7 @@ function Compare({ before, after, w, h, labelBefore, labelAfter }: { before: str
   );
 }
 
-export default function ImageCompressor() {
+export default function ImageCompressor({ initial }: { initial?: Partial<Settings> } = {}) {
   const { t, i18n } = useTranslation();
   const tr = (key: string, fallback: string, vars?: Record<string, unknown>): string =>
     t(key, { defaultValue: fallback, ...vars }) as string;
@@ -689,12 +689,12 @@ export default function ImageCompressor() {
 
   const [settings, setSettings] = useState<Settings>(() => {
     try {
-      const raw = localStorage.getItem(STORAGE_KEY);
+      const raw = initial ? null : localStorage.getItem(STORAGE_KEY);
       if (raw) return { ...DEFAULTS, ...(JSON.parse(raw) as Partial<Settings>) };
     } catch {
       /* ignore */
     }
-    return DEFAULTS;
+    return initial ? { ...DEFAULTS, ...initial } : DEFAULTS;
   });
   const [items, setItems] = useState<Item[]>([]);
   const [caps, setCaps] = useState<Caps | null>(null);
@@ -720,6 +720,7 @@ export default function ImageCompressor() {
   }, []);
 
   useEffect(() => {
+    if (initial) return; // landing pages start from their own preset and do not overwrite the saved one
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
     } catch {
