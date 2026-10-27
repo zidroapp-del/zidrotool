@@ -1,3 +1,4 @@
+
 import type { FaqItem, HowToStep } from "@/types";
 
 export interface ToolMeta {
@@ -32,7 +33,11 @@ const CREATOR_FAQS: FaqItem[] = [
 ];
 
 const TOOL_META: Record<string, ToolMeta> = {
-  "meta-title-checker": { howTo: [], faqs: [] },
+  "meta-title-checker": {
+    howTo: [],
+    faqs: [],
+  },
+
   "ai-grammar-checker": {
     howTo: [],
     faqs: [
@@ -42,6 +47,7 @@ const TOOL_META: Record<string, ToolMeta> = {
       { qKey: "grammarChecker.faq.privacyQ", aKey: "grammarChecker.faq.privacyA" },
     ],
   },
+
   "ai-text-summarizer": {
     howTo: [
       { titleKey: "howto.summarizer.step1.title", descKey: "howto.summarizer.step1.desc" },
@@ -57,15 +63,57 @@ const TOOL_META: Record<string, ToolMeta> = {
       { qKey: "faq.summarizer.q6", aKey: "faq.summarizer.a6" },
     ],
   },
- 
+
+
+
+    "text-diff-checker": {
+    howTo: [
+      { titleKey: "howto.textdiff.step1.title", descKey: "howto.textdiff.step1.desc" },
+      { titleKey: "howto.textdiff.step2.title", descKey: "howto.textdiff.step2.desc" },
+      { titleKey: "howto.textdiff.step3.title", descKey: "howto.textdiff.step3.desc" },
+    ],
+    faqs: [
+      { qKey: "faq.textdiff.q1", aKey: "faq.textdiff.a1" },
+      { qKey: "faq.textdiff.q2", aKey: "faq.textdiff.a2" },
+      { qKey: "faq.textdiff.q3", aKey: "faq.textdiff.a3" },
+      { qKey: "faq.textdiff.q4", aKey: "faq.textdiff.a4" },
+      { qKey: "faq.textdiff.q5", aKey: "faq.textdiff.a5" },
+      { qKey: "faq.textdiff.q6", aKey: "faq.textdiff.a6" },
+    ],
+  },
+
+  "reading-time-calculator": {
+    howTo: [
+      { titleKey: "howto.readtime.step1.title", descKey: "howto.readtime.step1.desc" },
+      { titleKey: "howto.readtime.step2.title", descKey: "howto.readtime.step2.desc" },
+      { titleKey: "howto.readtime.step3.title", descKey: "howto.readtime.step3.desc" },
+    ],
+    faqs: [
+      { qKey: "faq.readtime.q1", aKey: "faq.readtime.a1" },
+      { qKey: "faq.readtime.q2", aKey: "faq.readtime.a2" },
+      { qKey: "faq.readtime.q3", aKey: "faq.readtime.a3" },
+      { qKey: "faq.readtime.q4", aKey: "faq.readtime.a4" },
+      { qKey: "faq.readtime.q5", aKey: "faq.readtime.a5" },
+      { qKey: "faq.readtime.q6", aKey: "faq.readtime.a6" },
+    ],
+  },
+
   "case-converter": {
     howTo: [
-      { titleKey: "howto.case.step1.title", descKey: "howto.case.step1.desc" },
-      { titleKey: "howto.case.step2.title", descKey: "howto.case.step2.desc" },
-      { titleKey: "howto.case.step3.title", descKey: "howto.case.step3.desc" },
+      { titleKey: "howto.casecv.step1.title", descKey: "howto.casecv.step1.desc" },
+      { titleKey: "howto.casecv.step2.title", descKey: "howto.casecv.step2.desc" },
+      { titleKey: "howto.casecv.step3.title", descKey: "howto.casecv.step3.desc" },
     ],
-    faqs: GENERIC_FAQS,
+    faqs: [
+      { qKey: "faq.casecv.q1", aKey: "faq.casecv.a1" },
+      { qKey: "faq.casecv.q2", aKey: "faq.casecv.a2" },
+      { qKey: "faq.casecv.q3", aKey: "faq.casecv.a3" },
+      { qKey: "faq.casecv.q4", aKey: "faq.casecv.a4" },
+      { qKey: "faq.casecv.q5", aKey: "faq.casecv.a5" },
+      { qKey: "faq.casecv.q6", aKey: "faq.casecv.a6" },
+    ],
   },
+
   "bytes-converter": {
     howTo: GENERIC_HOW_TO,
     faqs: [
@@ -74,7 +122,8 @@ const TOOL_META: Record<string, ToolMeta> = {
       { qKey: "faq.bytes.q3", aKey: "faq.bytes.a3" },
     ],
   },
-    "image-compressor": {
+
+  "image-compressor": {
     howTo: [
       { titleKey: "howto.imgcompressor.step1.title", descKey: "howto.imgcompressor.step1.desc" },
       { titleKey: "howto.imgcompressor.step2.title", descKey: "howto.imgcompressor.step2.desc" },
@@ -91,7 +140,6 @@ const TOOL_META: Record<string, ToolMeta> = {
     ],
   },
 
-   
   "length-distance-converter": {
     howTo: [],
     faqs: [
@@ -101,19 +149,70 @@ const TOOL_META: Record<string, ToolMeta> = {
       { qKey: "lengthDistance.faq.q4", aKey: "lengthDistance.faq.a4" },
     ],
   },
-  "word-counter": { howTo: GENERIC_HOW_TO, faqs: GENERIC_FAQS },
+
+  "word-counter": {
+    howTo: [
+      { titleKey: "howto.wordcounter.step1.title", descKey: "howto.wordcounter.step1.desc" },
+      { titleKey: "howto.wordcounter.step2.title", descKey: "howto.wordcounter.step2.desc" },
+      { titleKey: "howto.wordcounter.step3.title", descKey: "howto.wordcounter.step3.desc" },
+    ],
+    faqs: [
+      { qKey: "faq.wordcounter.q1", aKey: "faq.wordcounter.a1" },
+      { qKey: "faq.wordcounter.q2", aKey: "faq.wordcounter.a2" },
+      { qKey: "faq.wordcounter.q3", aKey: "faq.wordcounter.a3" },
+      { qKey: "faq.wordcounter.q4", aKey: "faq.wordcounter.a4" },
+      { qKey: "faq.wordcounter.q5", aKey: "faq.wordcounter.a5" },
+      { qKey: "faq.wordcounter.q6", aKey: "faq.wordcounter.a6" },
+    ],
+  },
+
+  "sentence-counter": {
+    howTo: [
+      { titleKey: "howto.sentencecounter.step1.title", descKey: "howto.sentencecounter.step1.desc" },
+      { titleKey: "howto.sentencecounter.step2.title", descKey: "howto.sentencecounter.step2.desc" },
+      { titleKey: "howto.sentencecounter.step3.title", descKey: "howto.sentencecounter.step3.desc" },
+    ],
+    faqs: [
+      { qKey: "faq.sentencecounter.q1", aKey: "faq.sentencecounter.a1" },
+      { qKey: "faq.sentencecounter.q2", aKey: "faq.sentencecounter.a2" },
+      { qKey: "faq.sentencecounter.q3", aKey: "faq.sentencecounter.a3" },
+      { qKey: "faq.sentencecounter.q4", aKey: "faq.sentencecounter.a4" },
+      { qKey: "faq.sentencecounter.q5", aKey: "faq.sentencecounter.a5" },
+      { qKey: "faq.sentencecounter.q6", aKey: "faq.sentencecounter.a6" },
+    ],
+  },
+
   "base64": { howTo: GENERIC_HOW_TO, faqs: GENERIC_FAQS },
   "json-formatter": { howTo: GENERIC_HOW_TO, faqs: GENERIC_FAQS },
   "password-generator": { howTo: GENERIC_HOW_TO, faqs: GENERIC_FAQS },
-  "yt-thumbnail-downloader": { howTo: CREATOR_HOW_TO, faqs: CREATOR_FAQS },
-  "youtube-tag-extractor": { howTo: CREATOR_HOW_TO, faqs: CREATOR_FAQS },
+
+  "yt-thumbnail-downloader": {
+    howTo: CREATOR_HOW_TO,
+    faqs: CREATOR_FAQS,
+  },
+
+  "youtube-description-extractor": {
+    howTo: [
+      { titleKey: "howto.ytdesc.step1.title", descKey: "howto.ytdesc.step1.desc" },
+      { titleKey: "howto.ytdesc.step2.title", descKey: "howto.ytdesc.step2.desc" },
+      { titleKey: "howto.ytdesc.step3.title", descKey: "howto.ytdesc.step3.desc" },
+    ],
+    faqs: [
+      { qKey: "faq.ytdesc.q1", aKey: "faq.ytdesc.a1" },
+      { qKey: "faq.ytdesc.q2", aKey: "faq.ytdesc.a2" },
+      { qKey: "faq.ytdesc.q3", aKey: "faq.ytdesc.a3" },
+      { qKey: "faq.ytdesc.q4", aKey: "faq.ytdesc.a4" },
+      { qKey: "faq.ytdesc.q5", aKey: "faq.ytdesc.a5" },
+      { qKey: "faq.ytdesc.q6", aKey: "faq.ytdesc.a6" },
+    ],
+  },
+
   "youtube-tag-generator": { howTo: CREATOR_HOW_TO, faqs: CREATOR_FAQS },
   "youtube-hashtag-extractor": { howTo: CREATOR_HOW_TO, faqs: CREATOR_FAQS },
   "youtube-hashtag-generator": { howTo: CREATOR_HOW_TO, faqs: CREATOR_FAQS },
   "youtube-title-extractor": { howTo: CREATOR_HOW_TO, faqs: CREATOR_FAQS },
   "youtube-title-generator": { howTo: CREATOR_HOW_TO, faqs: CREATOR_FAQS },
   "youtube-title-length-checker": { howTo: CREATOR_HOW_TO, faqs: CREATOR_FAQS },
-  "youtube-description-extractor": { howTo: CREATOR_HOW_TO, faqs: CREATOR_FAQS },
   "youtube-description-generator": { howTo: CREATOR_HOW_TO, faqs: CREATOR_FAQS },
   "youtube-embed-code-generator": { howTo: CREATOR_HOW_TO, faqs: CREATOR_FAQS },
   "youtube-channel-id-extractor": { howTo: CREATOR_HOW_TO, faqs: CREATOR_FAQS },

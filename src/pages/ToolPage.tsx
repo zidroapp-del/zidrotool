@@ -5,6 +5,7 @@ import { getTool } from "@/data/catalog";
 import { getToolMeta } from "@/data/toolMeta";
 import { getLanding } from "@/data/toolLandings";
 import { ToolLandingContent } from "@/components/ToolLandingContent";
+import { WritingSuite } from "@/components/WritingSuite";
 import { useTranslation } from "react-i18next";
 import { Loader2 } from "lucide-react";
 
@@ -143,9 +144,11 @@ export default function ToolPage() {
       seoDescription={seoDesc}
       slug={tool.slug}
     >
-      <Suspense fallback={fallback}>
-        <ToolComponent {...toolProps} />
-      </Suspense>
+      <WritingSuite slug={tool.slug}>
+        <Suspense fallback={fallback}>
+          <ToolComponent {...toolProps} />
+        </Suspense>
+      </WritingSuite>
       {landing && <ToolLandingContent landing={landing} />}
     </ToolLayout>
   );

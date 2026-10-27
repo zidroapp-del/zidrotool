@@ -80,69 +80,81 @@ export default function HomePage() {
     <>
       <Seo jsonLd={[jsonLd, faqJsonLd]} />
 
-      {/* E-style directory hero */}
-      <section className="zt-directory-hero relative overflow-hidden border-b border-orange-100 dark:border-ink-800">
-        <div className="zt-paper-noise" aria-hidden="true" />
-        <div className="zt-ambient-orb zt-ambient-orb-a" aria-hidden="true" />
-        <div className="zt-ambient-orb zt-ambient-orb-b" aria-hidden="true" />
-        <div className="zt-ambient-orb zt-ambient-orb-c" aria-hidden="true" />
+      {/* Hero with motion graphics: grid + floating orbs + live glass card */}
+      <section className="zt-motion-hero relative overflow-hidden border-b border-brand-100/70 bg-gradient-to-b from-brand-50/80 via-white to-white dark:border-ink-800 dark:from-ink-950 dark:via-ink-950 dark:to-ink-950">
+        <div className="zt-hero-grid absolute inset-0" aria-hidden="true" />
+        <div className="zt-orb zt-orb-1" aria-hidden="true" />
+        <div className="zt-orb zt-orb-2" aria-hidden="true" />
+        <div className="zt-orb zt-orb-3" aria-hidden="true" />
+        <div className="zt-aurora" aria-hidden="true" />
         <div className="container-page relative py-14 sm:py-20 lg:py-24">
-          <div className="grid items-center gap-10 lg:grid-cols-[minmax(0,1fr)_430px]">
+          <div className="grid items-center gap-10 lg:grid-cols-[minmax(0,1fr)_440px]">
             <div className="max-w-3xl">
-              <span className="zt-warm-pill inline-flex items-center gap-2">
-                <Sparkles className="h-3.5 w-3.5" />
+              <span className="zt-rise zt-glass inline-flex items-center gap-2 rounded-full px-3.5 py-1.5 text-xs font-bold text-brand-700 dark:text-brand-300" style={{ animationDelay: "0ms" }}>
+                <span className="zt-dot-pulse h-2 w-2 rounded-full bg-emerald-500" />
                 {t("hero.badge")}
               </span>
-              <h1 className="mt-5 max-w-3xl text-4xl font-black tracking-[-0.045em] text-ink-950 sm:text-5xl lg:text-[4.3rem] lg:leading-[1.02] dark:text-white">
-                {t("hero.title")}
+              <h1 className="zt-rise mt-5 max-w-3xl text-4xl font-black tracking-[-0.045em] text-ink-950 sm:text-5xl lg:text-[4.3rem] lg:leading-[1.02] dark:text-white" style={{ animationDelay: "90ms" }}>
+                <span className="zt-title-shimmer">{t("hero.title")}</span>
               </h1>
-              <p className="mt-5 max-w-2xl text-base leading-7 text-ink-600 sm:text-lg dark:text-ink-400">
+              <p className="zt-rise mt-5 max-w-2xl text-base leading-7 text-ink-600 sm:text-lg dark:text-ink-400" style={{ animationDelay: "180ms" }}>
                 {t("hero.subtitle")}
               </p>
 
-              <div className="zt-search-shell mt-8 max-w-2xl">
-                <Search className="h-5 w-5 shrink-0 text-orange-500" />
+              <div className="zt-rise zt-glass zt-search-glow mt-8 flex max-w-2xl items-center gap-3 rounded-2xl px-4 py-3.5 shadow-lg shadow-brand-500/10" style={{ animationDelay: "270ms" }}>
+                <Search className="h-5 w-5 shrink-0 text-brand-600" />
                 <Link to="/tools" className="flex min-w-0 flex-1 items-center text-sm text-ink-400 dark:text-ink-500">
                   {t("search.placeholder")}
                 </Link>
-                <span className="rounded-lg bg-orange-50 px-2.5 py-1 text-[10px] font-bold text-orange-600 dark:bg-orange-950/50 dark:text-orange-300">⌘ K</span>
+                <span className="rounded-lg bg-brand-50 px-2.5 py-1 text-[10px] font-bold text-brand-700 dark:bg-brand-900/40 dark:text-brand-300">⌘ K</span>
               </div>
 
-              <div className="mt-5 flex flex-wrap gap-2">
-                <Link to="/tools" className="zt-category-pill is-active">{t("common.all")}</Link>
+              <div className="zt-rise mt-5 flex flex-wrap gap-2" style={{ animationDelay: "360ms" }}>
+                <Link to="/tools" className="zt-chip is-active">{t("common.all")}</Link>
                 {CATEGORIES.slice(0, 5).map((cat) => (
-                  <Link key={cat.slug} to={`/category/${cat.slug}`} className="zt-category-pill">{t(cat.nameKey)}</Link>
+                  <Link key={cat.slug} to={`/category/${cat.slug}`} className="zt-chip">{t(cat.nameKey)}</Link>
+                ))}
+              </div>
+
+              <div className="zt-rise mt-10 flex flex-wrap gap-4" style={{ animationDelay: "450ms" }}>
+                {stats.map((stat) => (
+                  <div key={stat.labelKey} className="zt-glass rounded-2xl px-6 py-4 text-center">
+                    <span className="block text-3xl font-black text-gradient sm:text-4xl">{stat.value}</span>
+                    <span className="mt-1 block text-xs font-bold uppercase tracking-[0.16em] text-ink-500 dark:text-ink-400">{t(stat.labelKey)}</span>
+                  </div>
                 ))}
               </div>
             </div>
 
-            <div className="zt-hero-collage" aria-hidden="true">
-              <div className="zt-collage-blob" />
-              <div className="zt-collage-main">
+            <div className="zt-hero-collage zt-rise" aria-hidden="true" style={{ animationDelay: "250ms" }}>
+              <div className="zt-collage-glow" />
+              <div className="zt-glass zt-float-slow absolute inset-x-6 top-10 rounded-3xl p-5 shadow-2xl shadow-brand-500/20">
                 <div className="flex items-center gap-3">
-                  <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-orange-500 text-white shadow-lg shadow-orange-500/20"><Sparkles className="h-5 w-5" /></div>
-                  <div><p className="text-xs font-bold uppercase tracking-[0.16em] text-ink-400">ZidroTool</p><p className="mt-0.5 text-xl font-black text-ink-950">{TOOLS.length}+</p></div>
+                  <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-brand-500 to-accent-500 text-white shadow-lg shadow-brand-500/30"><Sparkles className="h-5 w-5" /></div>
+                  <div>
+                    <p className="text-xs font-bold uppercase tracking-[0.16em] text-ink-400">ZidroTool</p>
+                    <p className="mt-0.5 text-xl font-black text-ink-950 dark:text-white">{TOOLS.length}+</p>
+                  </div>
+                  <span className="ml-auto inline-flex items-center gap-1.5 text-[10px] font-bold text-emerald-600"><span className="zt-dot-pulse h-2 w-2 rounded-full bg-emerald-500" />LIVE</span>
                 </div>
                 <div className="mt-5 grid grid-cols-3 gap-2">
-                  {popular.slice(0, 3).map((tool) => {
+                  {popular.slice(0, 3).map((tool, i) => {
                     const Icon = getIcon(tool.icon);
-                    return <div key={tool.slug} className="flex h-16 items-center justify-center rounded-xl bg-white/80 text-orange-500 shadow-sm ring-1 ring-black/5"><Icon className="h-5 w-5" /></div>;
+                    return (
+                      <div key={tool.slug} className="zt-mini-tool flex h-16 items-center justify-center rounded-xl bg-white/80 text-brand-600 shadow-sm ring-1 ring-black/5 dark:bg-ink-800/80 dark:text-brand-300" style={{ animationDelay: `${i * 0.6}s` }}><Icon className="h-5 w-5" /></div>
+                    );
                   })}
+                </div>
+                <div className="mt-4 space-y-2">
+                  <div className="zt-bar"><span style={{ width: "86%" }} /></div>
+                  <div className="zt-bar"><span style={{ width: "62%", animationDelay: ".5s" }} /></div>
+                  <div className="zt-bar"><span style={{ width: "74%", animationDelay: "1s" }} /></div>
                 </div>
               </div>
               <div className="zt-float-card zt-float-a"><Gauge className="h-5 w-5" /><span>Fast</span></div>
               <div className="zt-float-card zt-float-b"><ShieldCheck className="h-5 w-5" /><span>Private</span></div>
               <div className="zt-float-card zt-float-c"><Globe2 className="h-5 w-5" /><span>Global</span></div>
             </div>
-          </div>
-
-          <div className="mt-12 flex justify-center sm:justify-start">
-            {stats.map((stat) => (
-              <div key={stat.labelKey} className="zt-stat-card w-full max-w-[260px] sm:max-w-[220px]">
-                <span className="text-3xl font-black text-ink-950 sm:text-4xl dark:text-white">{stat.value}</span>
-                <span className="mt-1 text-xs font-bold uppercase tracking-[0.16em] text-ink-500 dark:text-ink-400">{t(stat.labelKey)}</span>
-              </div>
-            ))}
           </div>
         </div>
       </section>

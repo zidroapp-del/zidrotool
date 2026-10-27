@@ -47,6 +47,7 @@ import { useToast } from "@/components/Toast";
 import { getToolImage } from "@/data/toolImages";
 import { ToolSEOContent } from "@/components/ToolSEOContent";
 import type { ToolLanding } from "@/data/toolLandings";
+import { isSuiteTool } from "@/components/WritingSuite";
 
 interface ToolLayoutProps {
   children: ReactNode;
@@ -115,8 +116,10 @@ export function ToolLayout({
   const popular = getPopularTools().slice(0, 4);
 
   // Tools that need the full page width: the side list moves below them.
- const WIDE_TOOLS = ["text-to-handwriting", "age-calculator", "ai-content-rewriter", "ovulation-calculator", "ai-text-summarizer", "image-compressor"];
+    const WIDE_TOOLS = ["text-to-handwriting", "age-calculator", "ai-content-rewriter", "ovulation-calculator", "ai-text-summarizer", "image-compressor", "youtube-description-extractor", "ai-grammar-checker", "plagiarism-checker", "word-counter", "sentence-counter", "reading-time-calculator", "case-converter", "text-diff-checker"];
   const wide = tool ? WIDE_TOOLS.includes(tool.slug) : false;
+  // Writing tools: the tool takes the full width and the Related Tools column is removed.
+  const hideSide = tool ? isSuiteTool(tool.slug) : false;
 
   const Icon = tool
     ? getIcon(tool.icon)
@@ -471,9 +474,9 @@ export function ToolLayout({
           </div>
         </div>
 
-        <div className={`mt-8 grid gap-6 ${wide ? "" : "lg:grid-cols-12"}`}>
-          <div className={wide ? "" : "lg:col-span-8"}>
-            <div className={`card ${wide ? "p-3 sm:p-4" : "p-6"}`}>
+        <div className={`mt-8 grid gap-6 ${wide ? "grid-cols-1" : "lg:grid-cols-12"}`}>
+          <div className={wide ? "min-w-0 w-full" : "lg:col-span-8"}>
+            <div className={`card ${wide ? "w-full p-3 sm:p-4" : "p-6"}`}>
               {children}
 
               {output && (
@@ -508,7 +511,7 @@ export function ToolLayout({
             </div>
           </div>
 
-          <div className={wide ? "" : "lg:col-span-4"}>
+          <div className={cn(wide ? "" : "lg:col-span-4", hideSide && "hidden")}>
             <div className={wide ? "grid gap-4 sm:grid-cols-2 lg:grid-cols-3" : "sticky top-24 space-y-4"}>
               <AdSlot variant="sidebar" />
 
