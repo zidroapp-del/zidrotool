@@ -9,6 +9,7 @@
     "preview": "vite preview",
     "typecheck": "tsc -b --noEmit",
     "prebuild": "node scripts/generate-sitemap.mjs",
+    "postbuild": "node scripts/prerender.mjs",
     "check": "npm run typecheck && npm run build"
   },
   "dependencies": {

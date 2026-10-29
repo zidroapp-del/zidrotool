@@ -14,11 +14,11 @@ interface SeoProps {
 }
 
 const SITE_URL = "https://zidrotool.com";
-const CANONICAL_ORIGIN = "https://zidrotool.com";
 
 export function Seo({
   title,
   description,
+  path,
   image,
   type = "website",
   jsonLd,
@@ -27,12 +27,18 @@ export function Seo({
 }: SeoProps) {
   const { t, i18n } = useTranslation();
   const location = useLocation();
-  const pageTitle = title ? `${title} — ZidroTool` : "ZidroTool — Smart Online Tools for Everyone";
+  // Many titles already end with "| ZidroTool": remove any trailing brand first so it is never repeated.
+  let cleanTitle = (title || "").trim();
+  while (/\s*[|\u2014\u2013-]\s*ZidroTool\s*$/i.test(cleanTitle)) cleanTitle = cleanTitle.replace(/\s*[|\u2014\u2013-]\s*ZidroTool\s*$/i, "").trim();
+  const pageTitle = !cleanTitle || cleanTitle.toLowerCase() === "zidrotool"
+    ? "ZidroTool — Smart Online Tools for Everyone"
+    : cleanTitle.length + 12 <= 62 ? `${cleanTitle} | ZidroTool` : cleanTitle;
   const desc =
     description ||
     (t("brand.tagline") as string) ||
     "Smart Online Tools for Everyone. Free, fast, privacy-first utilities.";
-  const canonical = `${CANONICAL_ORIGIN}${location.pathname || "/"}`;
+  const cleanPath = (path || location.pathname || "/").split("?")[0].split("#")[0] || "/";
+  const canonical = `${SITE_URL}${cleanPath === "/" ? "/" : cleanPath.replace(/\/$/, "")}`;
   const ogImage = image
     ? (image.startsWith("http://") || image.startsWith("https://") ? image : `${SITE_URL}${image.startsWith("/") ? image : `/${image}`}`)
     : `${SITE_URL}/og-image.png`;

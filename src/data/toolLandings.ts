@@ -39,6 +39,7 @@ export interface ToolLanding {
 
 export const TOOL_LANDINGS: ToolLanding[] = [
   /* ------------------------------------------------------------ image compressor */
+
   {
     slug: "compress-image-to-100kb",
     tool: "image-compressor",
@@ -59,6 +60,69 @@ export const TOOL_LANDINGS: ToolLanding[] = [
       { q: "What if the image is still larger than 100 KB?", a: "The tool tells you the target was not reached. Try a smaller longest side, a different format, or a simpler image." },
     ],
   },
+  {
+    slug: "what-is-the-length-of-a-title",
+    tool: "meta-title-checker",
+    title: "What Is the Length of a Title? SEO Title Length Guide",
+    description: "What is the right length of a title for Google? Aim for about 50 to 60 characters or 600 pixels. Check your own title length with the free checker below.",
+    h1: "What is the length of a title?",
+    intro: "For a page title in Google, a good length is about 50 to 60 characters, or roughly 600 pixels wide. Type your title below to check it.",
+    keywords: ["what is the length of a title", "title length", "seo title length", "title tag length", "how long should a title be", "meta title length"],
+    initial: { kind: "title" },
+    sections: [
+      { heading: "The short answer", text: "Google shows a title until it runs out of width, around 600 pixels on desktop. In practice that is about 50 to 60 characters, but a title with many wide letters can be cut sooner and one with narrow letters can fit more. This is why the checker measures pixels as well as characters." },
+      { heading: "Title length on other platforms", text: "A YouTube video title can be up to 100 characters, but the first part is what viewers see in lists, so put the main words first. Email subject lines are usually kept short, often around 40 to 60 characters, so they are not cut on a phone. Social platforms show different amounts of a shared title, so check the preview in each one." },
+      { heading: "What happens when a title is too long", text: "The end of the title is replaced by three dots, and the words you put there may not be seen. Google can also choose to show a different title than the one you wrote, especially when the title is very long or repeats the same words." },
+      { heading: "How to write a good title", text: "Put the main topic near the start, make it specific, add your brand name last if there is room, and avoid stuffing the same keyword several times. A title is first of all a promise to the reader about what the page contains." },
+    ],
+    faqs: [
+      { q: "Is the title length a ranking factor?", a: "No. Length itself does not rank a page, but a title that is cut off or unclear can lower the number of clicks." },
+      { q: "Is 70 characters too long?", a: "Often yes for Google. It may fit if the letters are narrow, so check the pixel width in the tool." },
+      { q: "What is the maximum title length for YouTube?", a: "YouTube allows up to 100 characters. Keep the important words at the beginning because lists show only part of the title." },
+      { q: "Does the brand name count?", a: "Yes. Everything in the title counts toward the width, including the brand name and separators." },
+    ],
+  },
+  {
+    slug: "keyword-density-checker",
+    tool: "keyword-density",
+    title: "Keyword Density Checker Tool – Count Keywords and Phrases",
+    description: "Free keyword density checker tool. Paste your text to see how often each word and 2 to 3 word phrase appears and check the density of one keyword.",
+    h1: "Keyword density checker tool",
+    intro: "Paste your article or page text to see the most used words and phrases, and check how often one keyword appears as a percentage of all words.",
+    keywords: ["keyword density checker", "keyword density checker tool", "keyword density tool", "keyword density tool checker", "keyword density calculator", "keyword frequency"],
+    sections: [
+      { heading: "What keyword density means", text: "Keyword density is the number of times a keyword appears divided by the total number of words, shown as a percentage. If a word appears 10 times in 1,000 words, its density is 1%." },
+      { heading: "Use it as a writing aid", text: "Search engines do not use a perfect percentage, and there is no number that guarantees a ranking. The tool helps you notice a word you repeat too often, or an important topic you barely mention. Write for the reader first." },
+      { heading: "Words and phrases", text: "Switch between single words, two-word and three-word phrases. Common words such as the, and or de can be ignored so the useful terms stand out. Click any row to check it as your keyword." },
+      { heading: "Private by design", text: "The text is analysed in your browser and is not uploaded, so you can check drafts and unpublished pages." },
+    ],
+    faqs: [
+      { q: "What is a good keyword density?", a: "There is no official number. Many writers stay below roughly 3% so the text reads naturally, but clarity matters more than a percentage." },
+      { q: "Does the tool work in other languages?", a: "Yes. It counts words in many languages, including Arabic, and ignores common words in several of them." },
+      { q: "Can I check a phrase?", a: "Yes. Type a phrase in the keyword box or click a phrase in the list." },
+      { q: "Is there a limit on text length?", a: "No fixed limit. Very long texts depend on your device speed." },
+    ],
+  },
+  {
+    slug: "keyword-counter-tool",
+    tool: "keyword-counter",
+    title: "Keyword Counter Tool – Count Keywords in Text",
+    description: "Count how many times a keyword appears in your text. Free keyword counter that shows the top words, 2 to 3 word phrases and the density of your keyword.",
+    h1: "Keyword counter tool",
+    intro: "Paste your text, type a keyword and see how many times it is used, where it first appears and what share of the text it makes up.",
+    keywords: ["keyword counter tool", "keyword counter", "count keywords in text", "keyword count checker", "word frequency counter"],
+    sections: [
+      { heading: "Count one keyword", text: "Type a word or a phrase and the tool shows the exact number of times it appears, its density and the position of its first use. It matches whole words, so counting the word art does not count the word start." },
+      { heading: "See what you use most", text: "The list shows your most used words and phrases with counts and percentages, which is useful to find repetition in an article or product description." },
+      { heading: "Export the list", text: "Copy the table as CSV to paste into a spreadsheet and compare drafts." },
+    ],
+    faqs: [
+      { q: "Does it count different forms of a word?", a: "No. It counts the exact word or phrase you type, so run and running are counted separately." },
+      { q: "Is the counting case sensitive?", a: "No. Capital and small letters are treated the same." },
+      { q: "Is my text stored?", a: "No. It stays in your browser." },
+    ],
+  },
+ 
   {
     slug: "compress-image-to-50kb",
     tool: "image-compressor",
@@ -591,24 +655,27 @@ export const TOOL_LANDINGS: ToolLanding[] = [
       { q: "Does the counter match Microsoft Word?", a: "It is usually the same or within a word or two. Hyphenated words count once, as in Word." },
     ],
   },
-  {
+ 
+    {
     slug: "meta-description-length-checker",
-    tool: "word-counter",
-    title: "Meta Description Length Checker",
-    description: "Check the length of your meta description in characters. See how much of the usual 160-character guideline is left before Google may cut it.",
+    tool: "meta-description-checker",
+    title: "Meta Description Length Checker (Characters and Pixels)",
+    description: "Check your meta description length in characters and pixels. See how Google may show it on desktop and mobile and spot text that gets cut off. Free.",
     h1: "Meta description length checker",
-    intro: "Paste your meta description and see how close it is to the common 160-character guideline.",
-    keywords: ["meta description length checker", "meta description character counter", "meta description length", "seo description length", "160 character counter"],
-    initial: { limit: "meta" },
+    intro: "Paste your meta description to see its length in characters and pixels, and a preview of how it may look in Google results on desktop and mobile.",
+    keywords: ["meta description length", "meta description length checker", "meta description character limit", "seo description length", "meta description checker"],
+    initial: { kind: "description" },
     sections: [
-      { heading: "About 160 characters", text: "Search engines show a limited amount of text in results, and around 160 characters is the usual guideline. Longer descriptions are often cut off with an ellipsis." },
-      { heading: "It is a guideline, not a rule", text: "The real limit depends on pixel width, so the exact cut-off varies by device, and Google may rewrite your description. Treat the bar as a safe target, not a guarantee." },
-      { heading: "Check the title too", text: "Switch the preset to SEO title (60 characters) to check your page title the same way." },
+      { heading: "How long should a meta description be?", text: "A safe target is about 120 to 155 characters. Google cuts snippets by pixel width, not by a fixed number of characters, so wide letters such as W and M use more space than narrow ones such as i and l. That is why the tool shows characters and pixels together." },
+      { heading: "Desktop and mobile are different", text: "Results on a phone are narrower than on a computer, so a description that fits on desktop can be shortened on mobile. Check both previews and put the most useful words at the start." },
+      { heading: "Google may rewrite it", text: "Google often shows its own text taken from the page when it thinks that matches the search better. A clear description that answers the search still helps people decide to click, but the length is not a ranking factor." },
+      { heading: "What to write", text: "Say what the page offers in plain words, include the main topic once, and finish with a short reason to click. Avoid repeating the same word and avoid writing in capital letters." },
     ],
     faqs: [
-      { q: "Does the length affect ranking?", a: "The length itself is not a ranking factor. A clear description can help people choose your result." },
-      { q: "Should I write less than 160 characters?", a: "A little less is safer, around 150 to 155, so nothing is cut on narrow screens." },
-      { q: "Can I check several descriptions?", a: "Paste one at a time. The counter works on whatever is in the box." },
+      { q: "Is 160 characters the limit?", a: "It is the usual guideline, but the real cut-off depends on pixel width. Aiming for roughly 150 to 155 characters is safer." },
+      { q: "Does a longer meta description help ranking?", a: "No. The length is not a ranking factor. Write what is useful for the person reading the result." },
+      { q: "Can I check many descriptions at once?", a: "Yes. Switch to the many-lines mode, paste one description per line and copy the table as CSV." },
+      { q: "Is my text uploaded?", a: "No. Everything is calculated in your browser." },
     ],
   },
   {
@@ -900,33 +967,23 @@ export const TOOL_LANDINGS: ToolLanding[] = [
       { heading: "Ignore extra spaces", text: "Spaces at the start and end of a line and repeated spaces between words are not counted as changes." },
       { heading: "Turn them off any time", text: "Both options are checkboxes under the text boxes. Untick them to see every character-level difference again." },
     ],
-    faqs: [
-      { q: "Are line breaks ignored too?", a: "No. Lines are still compared one by one. Only case and spacing inside a line are relaxed." },
-      { q: "Is the text itself changed?", a: "No. The options only affect how texts are compared, your original text stays as typed." },
-      { q: "Why do two lines show as the same when they look different?", a: "They probably differ only in case or spacing, which is ignored on this page." },
-    ],
-  },
-  {
-    slug: "compare-text-line-by-line",
-    tool: "text-diff-checker",
-    title: "Compare Text Line by Line – Diff Online",
-    description: "Compare text line by line in one column, like a code diff. Removed lines in red, added lines in green, with a downloadable .diff file.",
-    h1: "Compare text line by line",
-    intro: "A compact one-column diff, like the ones used for code: each removed line is followed by the line that replaced it.",
-    keywords: ["compare text line by line", "line by line diff online", "online diff tool", "unified diff online", "compare code online"],
-    initial: { view: "unified", onlyChanges: true },
-    sections: [
-      { heading: "A familiar diff layout", text: "Removed lines start with a minus and added lines with a plus. The copied or downloaded result uses the same markers." },
-      { heading: "Good for code and config", text: "Compare snippets, configuration files, CSV rows or JSON text. Words inside changed lines are highlighted as well." },
-      { heading: "Only what changed", text: "Long unchanged parts are folded away with a count of hidden lines, and you can show them again with one click." },
-    ],
-    faqs: [
-      { q: "Is this the same as git diff?", a: "It looks similar, but it is a simple text comparison and does not read git repositories." },
-      { q: "Can I open files?", a: "Yes. Use Open file on each side for a text file of up to 3 MB." },
-      { q: "Can I compare more than two texts?", a: "Not at once. Compare two at a time." },
+       faqs: [
+      {
+        q: "Are line breaks ignored too?",
+        a: "No. Lines are still compared one by one. Only case and spacing inside a line are relaxed."
+      },
+      {
+        q: "Is the text itself changed?",
+        a: "No. The options only affect how texts are compared, your original text stays as typed."
+      },
+      {
+        q: "Why do two lines show as the same when they look different?",
+        a: "They probably differ only in case or spacing, which is ignored on this page."
+      }
     ],
   },
 ];
+
 
 export function getLanding(slug: string): ToolLanding | undefined {
   return TOOL_LANDINGS.find((l) => l.slug === slug);

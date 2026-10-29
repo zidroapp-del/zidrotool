@@ -39,6 +39,9 @@ export const ar = {
   "search.suggestions": "اقتراحات",
   "search.allTools": "كل الأدوات",
   "search.hint": "اكتب للبحث ثم اضغط Enter للفتح.",
+  "search.clear": "مسح",
+  "search.didYouMean": "هل تقصد «{{name}}»؟",
+
 
   // Hero Section
   "hero.badge": "مجاني 100% • دون تسجيل",

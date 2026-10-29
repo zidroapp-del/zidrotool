@@ -139,7 +139,6 @@
   <url><loc>https://zidrotool.com/tools/yaml-to-json</loc><lastmod>2026-08-22</lastmod><changefreq>monthly</changefreq><priority>0.8</priority></url>
   <url><loc>https://zidrotool.com/tools/meta-title-checker</loc><lastmod>2026-08-22</lastmod><changefreq>monthly</changefreq><priority>0.8</priority></url>
   <url><loc>https://zidrotool.com/tools/meta-description-checker</loc><lastmod>2026-08-22</lastmod><changefreq>monthly</changefreq><priority>0.8</priority></url>
-  <url><loc>https://zidrotool.com/tools/keyword-counter</loc><lastmod>2026-08-22</lastmod><changefreq>monthly</changefreq><priority>0.8</priority></url>
   <url><loc>https://zidrotool.com/tools/schema-markup-generator</loc><lastmod>2026-08-22</lastmod><changefreq>monthly</changefreq><priority>0.8</priority></url>
   <url><loc>https://zidrotool.com/tools/unix-timestamp-converter</loc><lastmod>2026-08-22</lastmod><changefreq>monthly</changefreq><priority>0.8</priority></url>
   <url><loc>https://zidrotool.com/tools/bytes-converter</loc><lastmod>2026-08-22</lastmod><changefreq>monthly</changefreq><priority>0.8</priority></url>
@@ -208,6 +207,9 @@
   <url><loc>https://zidrotool.com/tools/jpg-to-pdf</loc><lastmod>2026-08-29</lastmod><changefreq>monthly</changefreq><priority>0.8</priority></url>
   <url><loc>https://zidrotool.com/tools/plagiarism-checker</loc><lastmod>2026-08-29</lastmod><changefreq>monthly</changefreq><priority>0.8</priority></url>
   <url><loc>https://zidrotool.com/tools/compress-image-to-100kb</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://zidrotool.com/tools/what-is-the-length-of-a-title</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://zidrotool.com/tools/keyword-density-checker</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://zidrotool.com/tools/keyword-counter-tool</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
   <url><loc>https://zidrotool.com/tools/compress-image-to-50kb</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
   <url><loc>https://zidrotool.com/tools/compress-image-to-200kb</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
   <url><loc>https://zidrotool.com/tools/compress-image-to-20kb</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
@@ -251,7 +253,6 @@
   <url><loc>https://zidrotool.com/tools/compare-two-texts</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
   <url><loc>https://zidrotool.com/tools/find-difference-between-two-texts</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
   <url><loc>https://zidrotool.com/tools/text-compare-ignore-case</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
-  <url><loc>https://zidrotool.com/tools/compare-text-line-by-line</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
   <url><loc>https://zidrotool.com/blog/building-robust-stt-for-web</loc><lastmod>2026-08-15</lastmod><changefreq>monthly</changefreq><priority>0.7</priority></url>
   <url><loc>https://zidrotool.com/blog/speech-to-text-mobile-tips</loc><lastmod>2026-08-14</lastmod><changefreq>monthly</changefreq><priority>0.7</priority></url>
   <url><loc>https://zidrotool.com/blog/browser-audio-apis-explained</loc><lastmod>2026-08-23</lastmod><changefreq>monthly</changefreq><priority>0.7</priority></url>

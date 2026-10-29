@@ -19,7 +19,7 @@ const COLOR_MAP: Record<string, string> = {
   danger: "bg-danger-50 text-danger dark:bg-danger/15 dark:text-danger",
 };
 
-export function ToolCard({ tool, compact, variant = "default" }: { tool: Tool; compact?: boolean; variant?: "default" | "directory" }) {
+export function ToolCard({ tool, compact, variant = "default" }: { tool: Tool; compact?: boolean; variant?: "default" | "directory" | "nv" }) {
   const { t, i18n } = useTranslation();
   const Icon = getIcon(tool.icon);
   const { isFavorite, toggleFavorite } = useFavorites();
@@ -28,6 +28,34 @@ export function ToolCard({ tool, compact, variant = "default" }: { tool: Tool; c
   const catObj = getCategory(tool.category);
   const colorKey = catObj?.color || "brand";
   const [imageFailed, setImageFailed] = useState(false);
+
+  if (variant === "nv") {
+    return (
+      <Link to={`/tools/${tool.slug}`} className="nv-dcard group">
+        <div className="nv-dcard-media">
+          {!imageFailed ? (
+            <img src={getToolImage(tool)} alt={`${t(tool.nameKey)} illustration`} loading="lazy" decoding="async" onError={() => setImageFailed(true)} />
+          ) : (
+            <div className="nv-dcard-fallback"><Icon className="h-10 w-10" /></div>
+          )}
+          <span className="nv-dcard-shade" aria-hidden="true" />
+          <span className="nv-icon nv-icon-sm nv-dcard-icon"><Icon className="h-5 w-5" /></span>
+          <div className="nv-dcard-badges">
+            {tool.isNew && <span className="nv-dbadge nv-dbadge-new"><Sparkles className="h-3 w-3" />{t("tool.new.badge")}</span>}
+            {tool.popular && !tool.isNew && <span className="nv-dbadge"><Flame className="h-3 w-3" />{t("tool.popular.badge")}</span>}
+          </div>
+        </div>
+        <div className="nv-dcard-body">
+          <h3>{t(tool.nameKey)}</h3>
+          <p>{t(tool.descKey)}</p>
+          <div className="nv-dcard-foot">
+            <span>{tool.tags?.[0] || t("nav.tools")}</span>
+            <span className="nv-dcard-use">{t("tool.use")}<ArrowUpRight className="h-3.5 w-3.5" /></span>
+          </div>
+        </div>
+      </Link>
+    );
+  }
 
   if (variant === "directory") {
     return (
