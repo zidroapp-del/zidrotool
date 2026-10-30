@@ -165,7 +165,40 @@ const TOOL_META: Record<string, ToolMeta> = {
       { qKey: "faq.wordcounter.q6", aKey: "faq.wordcounter.a6" },
     ],
   },
+    "youtube-video-statistics": 
+    { howTo: [{ titleKey: "howto.ytstats.step1.title", descKey: "howto.ytstats.step1.desc" }, { titleKey: "howto.ytstats.step2.title", descKey: "howto.ytstats.step2.desc" }, { titleKey: "howto.ytstats.step3.title", descKey: "howto.ytstats.step3.desc" }], faqs: [{ qKey: "faq.ytstats.q1", aKey: "faq.ytstats.a1" }, { qKey: "faq.ytstats.q2", aKey: "faq.ytstats.a2" }, { qKey: "faq.ytstats.q3", aKey: "faq.ytstats.a3" }, { qKey: "faq.ytstats.q4", aKey: "faq.ytstats.a4" }] },
+  "youtube-channel-statistics":
+   { howTo: [{ titleKey: "howto.ytchan.step1.title", descKey: "howto.ytchan.step1.desc" }, { titleKey: "howto.ytchan.step2.title", descKey: "howto.ytchan.step2.desc" }, { titleKey: "howto.ytchan.step3.title", descKey: "howto.ytchan.step3.desc" }], faqs: [{ qKey: "faq.ytchan.q1", aKey: "faq.ytchan.a1" }, { qKey: "faq.ytchan.q2", aKey: "faq.ytchan.a2" }, { qKey: "faq.ytchan.q3", aKey: "faq.ytchan.a3" }, { qKey: "faq.ytchan.q4", aKey: "faq.ytchan.a4" }] },
+  "youtube-tag-extractor": 
+  { howTo: [{ titleKey: "howto.yttagx.step1.title", descKey: "howto.yttagx.step1.desc" }, { titleKey: "howto.yttagx.step2.title", descKey: "howto.yttagx.step2.desc" }, { titleKey: "howto.yttagx.step3.title", descKey: "howto.yttagx.step3.desc" }], faqs: [{ qKey: "faq.yttagx.q1", aKey: "faq.yttagx.a1" }, { qKey: "faq.yttagx.q2", aKey: "faq.yttagx.a2" }, { qKey: "faq.yttagx.q3", aKey: "faq.yttagx.a3" }, { qKey: "faq.yttagx.q4", aKey: "faq.yttagx.a4" }] },
+  "youtube-tag-generator": 
+  { howTo: [{ titleKey: "howto.yttagg.step1.title", descKey: "howto.yttagg.step1.desc" }, { titleKey: "howto.yttagg.step2.title", descKey: "howto.yttagg.step2.desc" }, { titleKey: "howto.yttagg.step3.title", descKey: "howto.yttagg.step3.desc" }], faqs: [{ qKey: "faq.yttagg.q1", aKey: "faq.yttagg.a1" }, { qKey: "faq.yttagg.q2", aKey: "faq.yttagg.a2" }, { qKey: "faq.yttagg.q3", aKey: "faq.yttagg.a3" }, { qKey: "faq.yttagg.q4", aKey: "faq.yttagg.a4" }] },
+  "youtube-hashtag-extractor":
+   { howTo: [{ titleKey: "howto.yththx.step1.title", descKey: "howto.yththx.step1.desc" }, { titleKey: "howto.yththx.step2.title", descKey: "howto.yththx.step2.desc" }, { titleKey: "howto.yththx.step3.title", descKey: "howto.yththx.step3.desc" }], faqs: [{ qKey: "faq.yththx.q1", aKey: "faq.yththx.a1" }, { qKey: "faq.yththx.q2", aKey: "faq.yththx.a2" }, { qKey: "faq.yththx.q3", aKey: "faq.yththx.a3" }, { qKey: "faq.yththx.q4", aKey: "faq.yththx.a4" }] },
+  "youtube-title-extractor":
+   { howTo: [{ titleKey: "howto.ytttl.step1.title", descKey: "howto.ytttl.step1.desc" }, { titleKey: "howto.ytttl.step2.title", descKey: "howto.ytttl.step2.desc" }, { titleKey: "howto.ytttl.step3.title", descKey: "howto.ytttl.step3.desc" }], faqs: [{ qKey: "faq.ytttl.q1", aKey: "faq.ytttl.a1" }, { qKey: "faq.ytttl.q2", aKey: "faq.ytttl.a2" }, { qKey: "faq.ytttl.q3", aKey: "faq.ytttl.a3" }, { qKey: "faq.ytttl.q4", aKey: "faq.ytttl.a4" }] },
+  "youtube-subscribe-link-generator":
+   { howTo: [{ titleKey: "howto.ytsub.step1.title", descKey: "howto.ytsub.step1.desc" }, { titleKey: "howto.ytsub.step2.title", descKey: "howto.ytsub.step2.desc" }, { titleKey: "howto.ytsub.step3.title", descKey: "howto.ytsub.step3.desc" }], faqs: [{ qKey: "faq.ytsub.q1", aKey: "faq.ytsub.a1" }, { qKey: "faq.ytsub.q2", aKey: "faq.ytsub.a2" }, { qKey: "faq.ytsub.q3", aKey: "faq.ytsub.a3" }, { qKey: "faq.ytsub.q4", aKey: "faq.ytsub.a4" }] },
+  "youtube-thumbnail-downloader":
+   { howTo: [{ titleKey: "howto.ytthumb.step1.title", descKey: "howto.ytthumb.step1.desc" }, { titleKey: "howto.ytthumb.step2.title", descKey: "howto.ytthumb.step2.desc" }, { titleKey: "howto.ytthumb.step3.title", descKey: "howto.ytthumb.step3.desc" }], faqs: [{ qKey: "faq.ytthumb.q1", aKey: "faq.ytthumb.a1" }, { qKey: "faq.ytthumb.q2", aKey: "faq.ytthumb.a2" }, { qKey: "faq.ytthumb.q3", aKey: "faq.ytthumb.a3" }, { qKey: "faq.ytthumb.q4", aKey: "faq.ytthumb.a4" }
 
+  ] 
+  },
+
+   "image-converter": {
+    howTo: [
+      { titleKey: "howto.imgconv.step1.title", descKey: "howto.imgconv.step1.desc" },
+      { titleKey: "howto.imgconv.step2.title", descKey: "howto.imgconv.step2.desc" },
+      { titleKey: "howto.imgconv.step3.title", descKey: "howto.imgconv.step3.desc" },
+    ],
+    faqs: [
+      { qKey: "faq.imgconv.q1", aKey: "faq.imgconv.a1" },
+      { qKey: "faq.imgconv.q2", aKey: "faq.imgconv.a2" },
+      { qKey: "faq.imgconv.q3", aKey: "faq.imgconv.a3" },
+      { qKey: "faq.imgconv.q4", aKey: "faq.imgconv.a4" },
+      { qKey: "faq.imgconv.q5", aKey: "faq.imgconv.a5" },
+    ],
+  },
   "sentence-counter": {
     howTo: [
       { titleKey: "howto.sentencecounter.step1.title", descKey: "howto.sentencecounter.step1.desc" },
@@ -207,26 +240,19 @@ const TOOL_META: Record<string, ToolMeta> = {
     ],
   },
 
-  "youtube-tag-generator": { howTo: CREATOR_HOW_TO, faqs: CREATOR_FAQS },
-  "youtube-hashtag-extractor": { howTo: CREATOR_HOW_TO, faqs: CREATOR_FAQS },
-  "youtube-hashtag-generator": { howTo: CREATOR_HOW_TO, faqs: CREATOR_FAQS },
-  "youtube-title-extractor": { howTo: CREATOR_HOW_TO, faqs: CREATOR_FAQS },
-  "youtube-title-generator": { howTo: CREATOR_HOW_TO, faqs: CREATOR_FAQS },
+   "youtube-hashtag-generator": { howTo: CREATOR_HOW_TO, faqs: CREATOR_FAQS },
+   "youtube-title-generator": { howTo: CREATOR_HOW_TO, faqs: CREATOR_FAQS },
   "youtube-title-length-checker": { howTo: CREATOR_HOW_TO, faqs: CREATOR_FAQS },
   "youtube-description-generator": { howTo: CREATOR_HOW_TO, faqs: CREATOR_FAQS },
   "youtube-embed-code-generator": { howTo: CREATOR_HOW_TO, faqs: CREATOR_FAQS },
   "youtube-channel-id-extractor": { howTo: CREATOR_HOW_TO, faqs: CREATOR_FAQS },
   "youtube-channel-finder": { howTo: CREATOR_HOW_TO, faqs: CREATOR_FAQS },
-  "youtube-channel-statistics": { howTo: CREATOR_HOW_TO, faqs: CREATOR_FAQS },
-  "youtube-video-statistics": { howTo: CREATOR_HOW_TO, faqs: CREATOR_FAQS },
   "youtube-channel-logo-downloader": { howTo: CREATOR_HOW_TO, faqs: CREATOR_FAQS },
   "youtube-channel-banner-downloader": { howTo: CREATOR_HOW_TO, faqs: CREATOR_FAQS },
   "youtube-video-count-checker": { howTo: CREATOR_HOW_TO, faqs: CREATOR_FAQS },
   "youtube-channel-age-checker": { howTo: CREATOR_HOW_TO, faqs: CREATOR_FAQS },
   "youtube-region-restriction-checker": { howTo: CREATOR_HOW_TO, faqs: CREATOR_FAQS },
-  "youtube-thumbnail-downloader": { howTo: CREATOR_HOW_TO, faqs: CREATOR_FAQS },
   "youtube-timestamp-link-generator": { howTo: CREATOR_HOW_TO, faqs: CREATOR_FAQS },
-  "youtube-subscribe-link-generator": { howTo: CREATOR_HOW_TO, faqs: CREATOR_FAQS },
   "youtube-money-calculator": { howTo: CREATOR_HOW_TO, faqs: CREATOR_FAQS },
   "youtube-views-ratio-calculator": { howTo: CREATOR_HOW_TO, faqs: CREATOR_FAQS },
   "youtube-comment-picker": { howTo: CREATOR_HOW_TO, faqs: CREATOR_FAQS },

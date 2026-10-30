@@ -1,180 +1,356 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { PDFDocument, StandardFonts, degrees, rgb } from "pdf-lib";
 import * as pdfjsLib from "pdfjs-dist";
 import pdfWorkerUrl from "pdfjs-dist/build/pdf.worker.min.js?url";
-import { Download, FileImage, Loader2, RotateCw, Stamp, Trash2, Upload } from "lucide-react";
+import {
+  AlertCircle, Check, Download, FileText, Loader2, Lock, RefreshCw, RotateCcw, RotateCw, Scissors, Shield, Stamp,
+  Trash2, UploadCloud, X, Zap,
+} from "lucide-react";
+import { useToast } from "@/components/Toast";
 import { downloadBytes } from "@/lib/utils";
+import { SeoToolShell, seoBtn, seoCard, seoField } from "@/components/SeoToolShell";
 
-if (typeof window !== "undefined") {
-  pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorkerUrl;
-}
+if (typeof window !== "undefined") pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorkerUrl;
 
-type Props = { slug?: string };
-type ImageResult = { page: number; url: string; filename: string };
-type ImageFormat = "png" | "jpg";
+/**
+ * Three PDF editors in one file, chosen by slug:
+ *  pdf-rotator       rotate all or chosen pages
+ *  pdf-page-remover  delete chosen pages
+ *  pdf-watermark     stamp text on all or chosen pages
+ * Pages are shown as clickable thumbnails. Everything runs in the browser.
+ */
+type Props = { slug?: string; initial?: unknown };
+type Kind = "pdf-rotator" | "pdf-page-remover" | "pdf-watermark";
 
-const titles: Record<string, { title: string; description: string; action: string }> = {
-  "pdf-to-image": { title: "PDF to Image", description: "Convert PDF pages to PNG or JPG images in your browser.", action: "Convert to Images" },
-  "pdf-rotator": { title: "Rotate PDF", description: "Rotate all pages or selected pages by 90°, 180°, or 270° clockwise.", action: "Rotate PDF" },
-  "pdf-page-remover": { title: "Remove PDF Pages", description: "Remove selected pages and download a new PDF without them.", action: "Remove Pages" },
-  "pdf-watermark": { title: "Watermark PDF", description: "Add a text watermark to every page or selected pages.", action: "Add Watermark" },
+const META: Record<Kind, { h: string; p: string; chips: string[]; button: string; icon: typeof Stamp; pick: string }> = {
+  "pdf-rotator": { h: "Rotate PDF pages", p: "Fix pages that are sideways or upside down. Rotate the whole document or only the pages you choose.", chips: ["Free", "No upload", "90° · 180° · 270°", "Whole file or chosen pages"], button: "Rotate PDF", icon: RotateCw, pick: "Pages to rotate" },
+  "pdf-page-remover": { h: "Remove pages from PDF", p: "Delete the pages you do not need and download a clean new PDF. Click the pages to remove.", chips: ["Free", "No upload", "Preview every page", "Instant"], button: "Remove pages", icon: Scissors, pick: "Pages to remove" },
+  "pdf-watermark": { h: "Add a watermark to PDF", p: "Stamp your own text, such as DRAFT or your name, across your pages. Choose size, colour, opacity and position.", chips: ["Free", "No upload", "Your own text", "Custom look"], button: "Add watermark", icon: Stamp, pick: "Pages to stamp" },
 };
 
-function saveBytes(bytes: Uint8Array, filename: string) {
-  downloadBytes(filename, bytes, "application/pdf");
+const COLORS: [string, string, [number, number, number]][] = [
+  ["Grey", "#64748b", [0.39, 0.45, 0.55]], ["Red", "#e11d48", [0.88, 0.11, 0.28]], ["Blue", "#4f46e5", [0.31, 0.27, 0.9]], ["Black", "#0f172a", [0.06, 0.09, 0.16]],
+];
+const fmt = (n: number) => (n < 1024 ? `${n} B` : n < 1024 ** 2 ? `${(n / 1024).toFixed(1)} KB` : `${(n / 1024 ** 2).toFixed(2)} MB`);
+
+const LOGO_CSS = `
+@keyframes zpe-rot { 0%,15% { transform: rotate(0); } 45%,60% { transform: rotate(90deg); } 90%,100% { transform: rotate(180deg); } }
+@keyframes zpe-out { 0%,20% { transform: translate(0,0) rotate(0); opacity: 1; } 55%,100% { transform: translate(34px,-14px) rotate(16deg); opacity: 0; } }
+@keyframes zpe-stamp { 0%,30%,100% { transform: translateY(-8px) scale(1.15); opacity: 0; } 45% { transform: translateY(0) scale(1); opacity: .9; } 80% { transform: translateY(0) scale(1); opacity: .9; } }
+@keyframes zpe-glow { 0%,100% { opacity: .35; transform: scale(.92); } 50% { opacity: .85; transform: scale(1.08); } }
+.zpe-rot { transform-box: fill-box; transform-origin: center; animation: zpe-rot 4s ease-in-out infinite; }
+.zpe-out { transform-box: fill-box; transform-origin: center; animation: zpe-out 4s ease-in-out infinite; }
+.zpe-stamp { transform-box: fill-box; transform-origin: center; animation: zpe-stamp 4s ease-in-out infinite; }
+.zpe-glow { animation: zpe-glow 4s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) { .zpe-rot,.zpe-out,.zpe-stamp,.zpe-glow { animation: none !important; } .zpe-stamp { opacity: .9; transform: none; } }
+`;
+function EditLogo({ kind, size = 112 }: { kind: Kind; size?: number }) {
+  const sheet = (
+    <>
+      <path d="M26 14h28l16 16v48a6 6 0 0 1-6 6H26a6 6 0 0 1-6-6V20a6 6 0 0 1 6-6z" fill="url(#pe-sheet)" stroke="#a5b4fc" strokeWidth="1.5" />
+      <path d="M54 14v12a4 4 0 0 0 4 4h12z" fill="#c7d2fe" />
+      <rect x="28" y="40" width="32" height="3" rx="1.5" fill="#c7d2fe" /><rect x="28" y="47" width="24" height="3" rx="1.5" fill="#c7d2fe" /><rect x="28" y="54" width="28" height="3" rx="1.5" fill="#c7d2fe" />
+      <rect x="22" y="64" width="38" height="16" rx="5" fill="url(#pe-badge)" />
+      <text x="41" y="75.5" textAnchor="middle" fontSize="10" fontWeight="800" fill="#fff" fontFamily="Arial, Helvetica, sans-serif" letterSpacing="1">PDF</text>
+    </>
+  );
+  return (
+    <div className="relative shrink-0" style={{ width: size, height: size }} aria-hidden="true">
+      <style>{LOGO_CSS}</style>
+      <div className="zpe-glow absolute inset-2 rounded-full bg-gradient-to-br from-indigo-400/50 via-violet-400/50 to-sky-300/50 blur-xl" />
+      <svg viewBox="0 0 96 96" className="relative h-full w-full drop-shadow-xl">
+        <defs>
+          <linearGradient id="pe-sheet" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stopColor="#fff" /><stop offset="1" stopColor="#e0e7ff" /></linearGradient>
+          <linearGradient id="pe-badge" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stopColor="#f43f5e" /><stop offset="1" stopColor="#e11d48" /></linearGradient>
+        </defs>
+        {kind === "pdf-rotator" && <g className="zpe-rot">{sheet}</g>}
+        {kind === "pdf-page-remover" && (<><g opacity=".55" transform="translate(6,-4)"><path d="M26 14h28l16 16v48a6 6 0 0 1-6 6H26a6 6 0 0 1-6-6V20a6 6 0 0 1 6-6z" fill="#e0e7ff" /></g><g className="zpe-out">{sheet}</g></>)}
+        {kind === "pdf-watermark" && (<>{sheet}<g className="zpe-stamp"><rect x="14" y="30" width="60" height="22" rx="4" fill="none" stroke="#e11d48" strokeWidth="3" transform="rotate(-18 44 41)" /><text x="44" y="46" textAnchor="middle" fontSize="13" fontWeight="900" fill="#e11d48" fontFamily="Arial, Helvetica, sans-serif" transform="rotate(-18 44 41)">DRAFT</text></g></>)}
+      </svg>
+    </div>
+  );
 }
 
-function parsePages(value: string, max: number) {
-  const result = new Set<number>();
-  if (!value.trim()) return Array.from({ length: max }, (_, i) => i);
-  for (const part of value.split(",")) {
-    const p = part.trim();
-    if (!p) continue;
-    if (p.includes("-")) {
-      const pieces = p.split("-").map(Number);
-      if (pieces.length !== 2 || !pieces.every(Number.isInteger)) continue;
-      const [a, b] = pieces;
-      const start = Math.max(1, Math.min(a, b)); const end = Math.min(max, Math.max(a, b));
-      for (let n = start; n <= end; n++) result.add(n - 1);
-    } else {
-      const n = Number(p); if (Number.isInteger(n) && n >= 1 && n <= max) result.add(n - 1);
-    }
-  }
-  return [...result].sort((a, b) => a - b);
-}
-
-function hasInvalidPageToken(value: string, max: number) {
-  if (!value.trim()) return false;
-  return value.split(",").some(part => {
-    const p = part.trim();
-    if (!p) return false;
-    if (/^\d+-\d+$/.test(p)) {
-      const [a, b] = p.split("-").map(Number);
-      return a < 1 || b < 1 || a > max || b > max;
-    }
-    const n = Number(p);
-    return !Number.isInteger(n) || n < 1 || n > max;
-  });
-}
+function pageList(spec: Set<number>, n: number) { return Array.from({ length: n }, (_, i) => i + 1).filter((p) => spec.has(p)); }
 
 export default function PdfEditorTool({ slug = "pdf-rotator" }: Props) {
-  const inputRef = useRef<HTMLInputElement>(null);
+  const kind: Kind = slug === "pdf-page-remover" || slug === "pdf-watermark" ? slug : "pdf-rotator";
+  const meta = META[kind];
+  const { error, success } = useToast();
+  const input = useRef<HTMLInputElement>(null);
+  const pdfRef = useRef<any>(null);
+
   const [file, setFile] = useState<File | null>(null);
-  const [pageCount, setPageCount] = useState(0);
-  const [range, setRange] = useState("");
-  const [rotation, setRotation] = useState<90 | 180 | 270>(90);
-  const [watermark, setWatermark] = useState("ZidroTool");
-  const [format, setFormat] = useState<ImageFormat>("png");
-  const [scale, setScale] = useState<1 | 1.5 | 2>(1.5);
+  const [pages, setPages] = useState(0);
+  const [thumbs, setThumbs] = useState<Record<number, string>>({});
+  const [sel, setSel] = useState<Set<number>>(new Set());
+  const [angle, setAngle] = useState<90 | 180 | 270>(90);
+  const [wmText, setWmText] = useState("CONFIDENTIAL");
+  const [wmSize, setWmSize] = useState(56);
+  const [wmOpacity, setWmOpacity] = useState(30);
+  const [wmColor, setWmColor] = useState(0);
+  const [wmPos, setWmPos] = useState<"diagonal" | "center" | "top" | "bottom">("diagonal");
+  const [drag, setDrag] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [busy, setBusy] = useState(false);
-  const [status, setStatus] = useState("");
-  const [images, setImages] = useState<ImageResult[]>([]);
-  const [dragging, setDragging] = useState(false);
-  const meta = titles[slug] ?? titles["pdf-rotator"];
+  const [msg, setMsg] = useState("");
+  const [result, setResult] = useState<{ bytes: Uint8Array; pages: number } | null>(null);
 
-  useEffect(() => () => images.forEach(i => URL.revokeObjectURL(i.url)), [images]);
+  useEffect(() => () => { pdfRef.current?.destroy?.(); }, []);
+  useEffect(() => { setResult(null); }, [kind, angle, wmText, wmSize, wmOpacity, wmColor, wmPos]);
 
-  const acceptFile = async (next: File | null) => {
-    if (!next) return;
-    if (next.type !== "application/pdf" && !next.name.toLowerCase().endsWith(".pdf")) {
-      setStatus("Please choose a valid PDF file."); return;
-    }
-    setFile(next); setStatus(""); setImages([]); setPageCount(0); setRange("");
+  const reset = () => { pdfRef.current?.destroy?.(); pdfRef.current = null; setFile(null); setPages(0); setThumbs({}); setSel(new Set()); setResult(null); setMsg(""); };
+
+  const load = useCallback(async (f?: File | null) => {
+    if (!f) return;
+    if (!/pdf$/i.test(f.type) && !/\.pdf$/i.test(f.name)) { setMsg("Please choose a PDF file."); return; }
+    reset(); setFile(f); setLoading(true);
     try {
-      const pdf = await PDFDocument.load(await next.arrayBuffer(), { ignoreEncryption: false });
-      setPageCount(pdf.getPageCount());
-      if (!pdf.getPageCount()) throw new Error("This PDF has no pages.");
-    } catch {
-      setPageCount(0); setStatus("This PDF could not be opened. It may be corrupted or password-protected.");
-    }
-  };
-
-  const process = async () => {
-    if (!file || !pageCount) return;
-    setBusy(true); setStatus(""); setImages([]);
-    try {
-      if (hasInvalidPageToken(range, pageCount)) throw new Error(`Enter pages between 1 and ${pageCount}, for example 2,4-6.`);
-      const bytes = await file.arrayBuffer();
-      const selected = parsePages(range, pageCount);
-
-      if (slug === "pdf-to-image") {
-        const pdf = await pdfjsLib.getDocument({ data: bytes }).promise;
-        const wanted = range.trim() ? selected.map(i => i + 1) : Array.from({ length: pdf.numPages }, (_, i) => i + 1);
-        const results: ImageResult[] = [];
-        for (const pageNumber of wanted) {
-          const page = await pdf.getPage(pageNumber);
-          const viewport = page.getViewport({ scale });
-          const canvas = document.createElement("canvas");
-          canvas.width = Math.ceil(viewport.width); canvas.height = Math.ceil(viewport.height);
-          const ctx = canvas.getContext("2d"); if (!ctx) throw new Error("Canvas is unavailable in this browser.");
-          await page.render({ canvasContext: ctx, viewport }).promise;
-          const mime = format === "jpg" ? "image/jpeg" : "image/png";
-          const blob = await new Promise<Blob | null>(resolve => canvas.toBlob(resolve, mime, format === "jpg" ? 0.92 : undefined));
-          if (!blob) throw new Error("Could not create the image.");
-          const ext = format === "jpg" ? "jpg" : "png";
-          results.push({ page: pageNumber, url: URL.createObjectURL(blob), filename: `${file.name.replace(/\.pdf$/i, "")}-page-${pageNumber}.${ext}` });
-        }
-        await pdf.destroy();
-        setImages(results); setStatus(`${results.length} page(s) converted successfully.`); return;
+      const doc = await pdfjsLib.getDocument({ data: await f.arrayBuffer() }).promise;
+      pdfRef.current = doc;
+      setPages(doc.numPages);
+      // rotate and watermark work on every page by default; remove starts with nothing selected
+      setSel(kind === "pdf-page-remover" ? new Set() : new Set(Array.from({ length: doc.numPages }, (_, i) => i + 1)));
+      setLoading(false);
+      for (let n = 1; n <= Math.min(doc.numPages, 120); n++) {
+        if (pdfRef.current !== doc) return;
+        const page = await doc.getPage(n);
+        const vp0 = page.getViewport({ scale: 1 });
+        const vp = page.getViewport({ scale: 170 / vp0.width });
+        const c = document.createElement("canvas");
+        c.width = Math.ceil(vp.width); c.height = Math.ceil(vp.height);
+        const ctx = c.getContext("2d");
+        if (!ctx) continue;
+        ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, c.width, c.height);
+        await page.render({ canvasContext: ctx, viewport: vp }).promise;
+        const url = c.toDataURL("image/jpeg", 0.7);
+        setThumbs((t) => ({ ...t, [n]: url }));
       }
+    } catch (e: any) {
+      console.error(e);
+      setMsg(e?.name === "PasswordException" ? "This PDF is password-protected. Remove the password first, then try again." : "Could not open this PDF. The file may be damaged.");
+      setFile(null); setLoading(false);
+    }
+  }, [kind]);
 
-      const doc = await PDFDocument.load(bytes, { ignoreEncryption: false });
-      const pages = doc.getPages();
-      const indexes = range.trim() ? selected : pages.map((_, i) => i);
+  const toggle = (n: number) => { setSel((s) => { const c = new Set(s); c.has(n) ? c.delete(n) : c.add(n); return c; }); setResult(null); };
+  const setAll = () => { setSel(new Set(Array.from({ length: pages }, (_, i) => i + 1))); setResult(null); };
+  const setNone = () => { setSel(new Set()); setResult(null); };
+  const setOdd = () => { setSel(new Set(Array.from({ length: pages }, (_, i) => i + 1).filter((n) => n % 2 === 1))); setResult(null); };
+  const setEven = () => { setSel(new Set(Array.from({ length: pages }, (_, i) => i + 1).filter((n) => n % 2 === 0))); setResult(null); };
 
-      if (slug === "pdf-page-remover") {
-        if (!range.trim()) throw new Error("Enter the pages you want to remove, for example 2,4-6.");
-        if (selected.length >= pages.length) throw new Error("You cannot remove every page from the PDF.");
-        [...selected].sort((a, b) => b - a).forEach(i => doc.removePage(i));
-      } else if (slug === "pdf-rotator") {
-        indexes.forEach(i => {
-          const page = pages[i]; if (!page) return;
-          const current = page.getRotation().angle;
-          page.setRotation(degrees((current + rotation) % 360));
-        });
-      } else if (slug === "pdf-watermark") {
-        const text = watermark.trim();
-        if (!text) throw new Error("Enter watermark text before continuing.");
+  const run = async () => {
+    if (!file) return;
+    const chosen = pageList(sel, pages);
+    if (!chosen.length) { setMsg(kind === "pdf-page-remover" ? "Click the pages you want to remove." : "Select at least one page."); return; }
+    if (kind === "pdf-page-remover" && chosen.length >= pages) { setMsg("You cannot remove every page. Keep at least one."); return; }
+    if (kind === "pdf-watermark" && !wmText.trim()) { setMsg("Type the watermark text first."); return; }
+    setBusy(true); setMsg(""); setResult(null);
+    try {
+      const doc = await PDFDocument.load(await file.arrayBuffer());
+      if (kind === "pdf-rotator") {
+        const all = doc.getPages();
+        chosen.forEach((n) => { const p = all[n - 1]; p.setRotation(degrees((((p.getRotation().angle + angle) % 360) + 360) % 360)); });
+      } else if (kind === "pdf-page-remover") {
+        [...chosen].reverse().forEach((n) => doc.removePage(n - 1));
+      } else {
         const font = await doc.embedFont(StandardFonts.HelveticaBold);
-        indexes.forEach(i => {
-          const page = pages[i]; if (!page) return;
-          const { width, height } = page.getSize();
-          const size = Math.max(18, Math.min(42, width / 16));
-          const textWidth = font.widthOfTextAtSize(text, size);
-          page.drawText(text, {
-            x: (width - textWidth) / 2, y: height / 2,
-            size, font, color: rgb(0.35, 0.35, 0.35), opacity: 0.25, rotate: degrees(35),
+        const [, , c] = COLORS[wmColor];
+        const text = wmText.trim();
+        const all = doc.getPages();
+        for (const n of chosen) {
+          const p = all[n - 1];
+          const { width: W, height: H } = p.getSize();
+          let fs = wmSize;
+          let w = font.widthOfTextAtSize(text, fs);
+          const maxW = (wmPos === "diagonal" ? Math.hypot(W, H) * 0.8 : W * 0.9);
+          if (w > maxW) { fs = (fs * maxW) / w; w = maxW; }
+          const th = fs * 0.35; // half the visual height of the capital letters
+          const rot = wmPos === "diagonal" ? 45 : 0;
+          const r = (rot * Math.PI) / 180;
+          const cx = W / 2;
+          const cy = wmPos === "top" ? H - fs - 30 : wmPos === "bottom" ? fs + 30 : H / 2;
+          p.drawText(text, {
+            x: cx - (w / 2) * Math.cos(r) + th * Math.sin(r),
+            y: cy - (w / 2) * Math.sin(r) - th * Math.cos(r),
+            size: fs, font, color: rgb(c[0], c[1], c[2]), opacity: wmOpacity / 100, rotate: degrees(rot),
           });
-        });
+        }
       }
-
-      saveBytes(await doc.save({ useObjectStreams: true }), `${file.name.replace(/\.pdf$/i, "")}-${slug}.pdf`);
-      setStatus("Done. Your PDF was generated successfully in your browser.");
-    } catch (error) {
-      console.error(error);
-      setStatus(error instanceof Error ? error.message : "Could not process this PDF.");
+      const bytes = await doc.save();
+      setResult({ bytes, pages: doc.getPageCount() });
+      success("Your PDF is ready");
+    } catch (e: any) {
+      console.error(e);
+      const m = String(e?.message || "");
+      setMsg(/encrypt/i.test(m) ? "This PDF is protected. Remove the protection first, then try again."
+        : /WinAnsi|encode/i.test(m) ? "The watermark uses characters that PDF fonts here cannot draw. Use letters, numbers and common symbols (A–Z, 0–9)."
+        : "Could not edit this PDF. The file may be damaged.");
+      error("PDF edit failed");
     } finally { setBusy(false); }
   };
 
-  const reset = () => { setFile(null); setPageCount(0); setRange(""); setStatus(""); setImages([]); };
+  const outName = `${(file?.name || "document").replace(/\.pdf$/i, "")}-${kind === "pdf-rotator" ? "rotated" : kind === "pdf-page-remover" ? "edited" : "watermarked"}.pdf`;
+  const Btn = meta.icon;
+  const chosenCount = sel.size;
 
-  return <div className="space-y-5">
-    <div className="rounded-2xl border border-ink-200 bg-ink-50/70 p-6 dark:border-ink-800 dark:bg-ink-900/50">
-      <div className="flex items-center gap-3"><FileImage className="h-6 w-6 text-brand-600"/><div><h2 className="font-semibold text-ink-900 dark:text-ink-100">{meta.title}</h2><p className="text-sm text-ink-500 dark:text-ink-400">{meta.description}</p></div></div>
-      <input ref={inputRef} type="file" accept="application/pdf,.pdf" className="hidden" onChange={e => acceptFile(e.target.files?.[0] || null)} />
-      <button type="button" onDragEnter={() => setDragging(true)} onDragLeave={() => setDragging(false)} onDragOver={e => e.preventDefault()} onDrop={e => { e.preventDefault(); setDragging(false); acceptFile(e.dataTransfer.files?.[0] || null); }} onClick={() => inputRef.current?.click()} className={`mt-5 flex w-full flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed px-5 py-10 text-sm font-medium transition ${dragging ? "border-brand-500 bg-brand-50" : "border-ink-300 bg-white hover:border-brand-400 dark:border-ink-700 dark:bg-ink-900"}`}><Upload className="h-6 w-6"/><span>{file ? file.name : "Drop your PDF here or click to choose a file"}</span><span className="text-xs font-normal text-ink-500">PDF only • files are processed locally in your browser</span></button>
-    </div>
+  return (
+    <SeoToolShell>
+      <input ref={input} type="file" accept="application/pdf,.pdf" className="hidden" onChange={(e) => { load(e.target.files?.[0]); e.target.value = ""; }} />
 
-    {file && pageCount > 0 && <div className="rounded-2xl border border-ink-200 bg-white p-5 dark:border-ink-800 dark:bg-ink-950/40">
-      <div className="mb-4 flex items-center justify-between"><div><p className="font-medium">{file.name}</p><p className="text-xs text-ink-500">{pageCount} page(s)</p></div><button type="button" onClick={reset} className="rounded-lg px-3 py-2 text-sm text-ink-500 hover:bg-ink-100">Change file</button></div>
-      {slug !== "pdf-to-image" && <label className="mb-4 block text-sm"><span className="mb-1 block font-medium">Pages</span><input className="input w-full" value={range} onChange={e => setRange(e.target.value)} placeholder={slug === "pdf-page-remover" ? "Example: 2, 4-6" : "Leave empty to apply to all pages"}/><span className="mt-1 block text-xs text-ink-500">Use page numbers like 1,3,5-7.</span></label>}
-      {slug === "pdf-to-image" && <div className="mb-4 grid gap-4 sm:grid-cols-2"><label className="text-sm"><span className="mb-1 block font-medium">Image format</span><select className="input w-full" value={format} onChange={e => setFormat(e.target.value as ImageFormat)}><option value="png">PNG — lossless</option><option value="jpg">JPG — smaller files</option></select></label><label className="text-sm"><span className="mb-1 block font-medium">Quality / scale</span><select className="input w-full" value={scale} onChange={e => setScale(Number(e.target.value) as 1 | 1.5 | 2)}><option value={1}>1× — faster</option><option value={1.5}>1.5× — balanced</option><option value={2}>2× — high resolution</option></select></label></div>}
-      {slug === "pdf-rotator" && <div className="mb-4"><span className="mb-2 block text-sm font-medium">Rotation</span><div className="grid grid-cols-3 gap-2">{([90, 180, 270] as const).map(v => <button type="button" key={v} onClick={() => setRotation(v)} className={`rounded-xl border px-3 py-2 text-sm ${rotation === v ? "border-brand-500 bg-brand-50 text-brand-700" : "border-ink-200"}`}><RotateCw className="mr-1 inline h-4 w-4"/>{v}°</button>)}</div></div>}
-      {slug === "pdf-watermark" && <label className="mb-4 block text-sm"><span className="mb-1 block font-medium"><Stamp className="mr-1 inline h-4 w-4"/>Watermark text</span><input className="input w-full" value={watermark} onChange={e => setWatermark(e.target.value)} placeholder="ZidroTool"/></label>}
-      <button type="button" className="btn-primary w-full" disabled={busy} onClick={process}>{busy ? <><Loader2 className="mr-2 inline h-4 w-4 animate-spin"/>Processing…</> : <><Download className="mr-2 inline h-4 w-4"/>{meta.action}</>}</button>
-    </div>}
+      {!file ? (
+        <>
+          <div className={`${seoCard} zseo-rise flex flex-col items-center gap-4 p-6 text-center sm:flex-row sm:text-left`}>
+            <EditLogo kind={kind} size={120} />
+            <div className="min-w-0">
+              <h2 className="text-2xl font-extrabold tracking-tight text-slate-900 dark:text-white">{meta.h}</h2>
+              <p className="mt-1.5 max-w-xl text-sm leading-relaxed text-slate-600 dark:text-slate-300">{meta.p}</p>
+              <p className="mt-3 flex flex-wrap justify-center gap-2 sm:justify-start">
+                {meta.chips.map((t) => <span key={t} className="rounded-full border border-indigo-200/80 bg-white/80 px-3 py-1 text-xs font-semibold text-indigo-800 dark:border-white/10 dark:bg-white/5 dark:text-indigo-100">{t}</span>)}
+              </p>
+            </div>
+          </div>
+          <button type="button" onClick={() => input.current?.click()}
+            onDragEnter={(e) => { if (e.dataTransfer.types.includes("Files")) setDrag(true); }} onDragLeave={() => setDrag(false)}
+            onDragOver={(e) => { if (e.dataTransfer.types.includes("Files")) e.preventDefault(); }}
+            onDrop={(e) => { e.preventDefault(); setDrag(false); load(e.dataTransfer.files?.[0]); }}
+            className={`${seoCard} zseo-rise group flex w-full flex-col items-center justify-center gap-2 border-2 border-dashed px-5 py-12 text-center transition ${drag ? "scale-[1.01] border-indigo-500 bg-indigo-50/80 dark:bg-indigo-500/10" : "border-indigo-300/80 hover:-translate-y-0.5 hover:border-indigo-500"}`}>
+            <span className={`grid h-12 w-12 place-items-center rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-600 text-white shadow-lg shadow-indigo-500/30 transition group-hover:scale-110 ${drag ? "zseo-float" : ""}`}><UploadCloud className="h-6 w-6" /></span>
+            <span className="text-base font-bold text-slate-900 dark:text-white">Drop your PDF here</span>
+            <span className="text-xs text-slate-600 dark:text-slate-300">or click to choose a file</span>
+          </button>
+          <div className="grid gap-3" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(14rem, 1fr))" }}>
+            {([[Shield, "Private by design", "Your PDF is edited inside your browser and never uploaded."], [FileText, "See every page", "Clickable previews show exactly which pages you are changing."], [Zap, "Fast and free", "No sign-up, no watermark of ours and no page limit."]] as [typeof Shield, string, string][]).map(([Icon, t, d], i) => (
+              <div key={t} style={{ ["--i" as any]: i }} className={`${seoCard} zseo-rise p-4 transition hover:-translate-y-1`}>
+                <span className="zseo-float grid h-9 w-9 place-items-center rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 text-white shadow-md shadow-indigo-500/30" style={{ ["--i" as any]: i }}><Icon className="h-4 w-4" /></span>
+                <p className="mt-3 text-sm font-bold text-slate-900 dark:text-white">{t}</p>
+                <p className="mt-1 text-xs leading-relaxed text-slate-600 dark:text-slate-300">{d}</p>
+              </div>
+            ))}
+          </div>
+        </>
+      ) : (
+        <>
+          <div className={`${seoCard} zseo-rise flex flex-wrap items-center gap-3 p-4`}>
+            <EditLogo kind={kind} size={52} />
+            <div className="min-w-0 flex-1"><p className="truncate text-sm font-bold text-slate-900 dark:text-white" title={file.name}>{file.name}</p><p className="text-xs text-slate-600 dark:text-slate-300">{loading ? "Reading your PDF…" : `${pages} page${pages > 1 ? "s" : ""} · ${fmt(file.size)}`}</p></div>
+            <button type="button" onClick={() => input.current?.click()} className={seoBtn}><RefreshCw className="h-4 w-4" />Change file</button>
+            <button type="button" onClick={reset} className={seoBtn} aria-label="Remove file"><X className="h-4 w-4" /></button>
+          </div>
 
-    {images.length > 0 && <div className="grid gap-4 sm:grid-cols-2">{images.map(image => <div key={image.page} className="overflow-hidden rounded-xl border border-ink-200 bg-white dark:border-ink-800 dark:bg-ink-950"><img src={image.url} alt={`PDF page ${image.page}`} className="max-h-96 w-full object-contain"/><div className="flex items-center justify-between p-3"><span className="text-sm">Page {image.page}</span><a href={image.url} download={image.filename} className="btn-secondary"><Download className="mr-1 inline h-4 w-4"/>Download</a></div></div>)}</div>}
-    {status && <div className="rounded-xl border border-brand-200 bg-brand-50 p-4 text-sm text-brand-800 dark:border-brand-900 dark:bg-brand-950/30 dark:text-brand-200">{status}</div>}
-  </div>;
+          {loading && <div className={`${seoCard} flex items-center justify-center gap-3 p-8 text-slate-600 dark:text-slate-300`}><Loader2 className="h-5 w-5 animate-spin" />Opening PDF…</div>}
+
+          {!loading && pages > 0 && (
+            <>
+              {/* options */}
+              {kind !== "pdf-page-remover" && (
+                <div className={`${seoCard} zseo-rise p-4 sm:p-5`} style={{ ["--i" as any]: 1 }}>
+                  {kind === "pdf-rotator" ? (
+                    <div className="flex flex-wrap items-center gap-3">
+                      <p className="text-sm font-bold text-slate-800 dark:text-slate-100">Rotate clockwise by</p>
+                      <div className="inline-flex rounded-xl border border-indigo-200/70 bg-white/70 p-0.5 dark:border-white/10 dark:bg-white/5">
+                        {([[90, RotateCw, "90°"], [180, RefreshCw, "180°"], [270, RotateCcw, "270° (90° left)"]] as const).map(([v, Icon, l]) => (
+                          <button key={v} type="button" aria-pressed={angle === v} onClick={() => setAngle(v as 90 | 180 | 270)}
+                            className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition ${angle === v ? "bg-gradient-to-r from-indigo-600 to-violet-600 text-white shadow" : "text-slate-600 hover:bg-indigo-50 dark:text-slate-300 dark:hover:bg-white/10"}`}><Icon className="h-3.5 w-3.5" />{l}</button>
+                        ))}
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="grid gap-4" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(14rem, 1fr))" }}>
+                      <div>
+                        <label htmlFor="wm" className="mb-1.5 block text-xs font-bold uppercase tracking-wide text-indigo-700 dark:text-indigo-300">Watermark text</label>
+                        <input id="wm" className={seoField} value={wmText} onChange={(e) => setWmText(e.target.value)} placeholder="CONFIDENTIAL" maxLength={60} />
+                      </div>
+                      <div>
+                        <p className="mb-1.5 text-xs font-bold uppercase tracking-wide text-indigo-700 dark:text-indigo-300">Colour</p>
+                        <div className="flex gap-2">{COLORS.map(([n, hex], i) => (
+                          <button key={n} type="button" onClick={() => setWmColor(i)} aria-label={n} aria-pressed={wmColor === i} title={n}
+                            className={`h-8 w-8 rounded-full border-2 transition hover:scale-110 ${wmColor === i ? "border-indigo-600 ring-2 ring-indigo-400/40" : "border-white"}`} style={{ background: hex }} />
+                        ))}</div>
+                      </div>
+                      <div>
+                        <p className="mb-1.5 text-xs font-bold uppercase tracking-wide text-indigo-700 dark:text-indigo-300">Position</p>
+                        <div className="inline-flex flex-wrap rounded-xl border border-indigo-200/70 bg-white/70 p-0.5 dark:border-white/10 dark:bg-white/5">
+                          {([["diagonal", "Diagonal"], ["center", "Center"], ["top", "Top"], ["bottom", "Bottom"]] as const).map(([v, l]) => (
+                            <button key={v} type="button" aria-pressed={wmPos === v} onClick={() => setWmPos(v)}
+                              className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition ${wmPos === v ? "bg-gradient-to-r from-indigo-600 to-violet-600 text-white shadow" : "text-slate-600 hover:bg-indigo-50 dark:text-slate-300 dark:hover:bg-white/10"}`}>{l}</button>
+                          ))}
+                        </div>
+                      </div>
+                      <div>
+                        <label htmlFor="wms" className="mb-1.5 flex justify-between text-xs font-bold uppercase tracking-wide text-indigo-700 dark:text-indigo-300"><span>Size</span><span>{wmSize}</span></label>
+                        <input id="wms" type="range" min={20} max={120} value={wmSize} onChange={(e) => setWmSize(Number(e.target.value))} className="w-full accent-indigo-600" />
+                      </div>
+                      <div>
+                        <label htmlFor="wmo" className="mb-1.5 flex justify-between text-xs font-bold uppercase tracking-wide text-indigo-700 dark:text-indigo-300"><span>Opacity</span><span>{wmOpacity}%</span></label>
+                        <input id="wmo" type="range" min={10} max={100} value={wmOpacity} onChange={(e) => setWmOpacity(Number(e.target.value))} className="w-full accent-indigo-600" />
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* pages */}
+              <div className={`${seoCard} zseo-rise p-4 sm:p-5`} style={{ ["--i" as any]: 2 }}>
+                <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+                  <p className="text-sm font-bold text-slate-800 dark:text-slate-100">{meta.pick}: {chosenCount} of {pages}</p>
+                  <div className="flex gap-1 text-xs font-semibold">
+                    {[["All", setAll], ["None", setNone], ["Odd", setOdd], ["Even", setEven]].map(([l, fn]: any) => (
+                      <button key={l} type="button" onClick={fn} className="rounded-lg px-2.5 py-1 text-indigo-700 transition hover:bg-indigo-100/70 dark:text-indigo-200 dark:hover:bg-white/10">{l}</button>
+                    ))}
+                  </div>
+                </div>
+                <ul className="grid max-h-[28rem] gap-3 overflow-y-auto p-1" style={{ gridTemplateColumns: "repeat(auto-fill, minmax(7.5rem, 1fr))" }}>
+                  {Array.from({ length: pages }, (_, i) => i + 1).map((n) => {
+                    const on = sel.has(n);
+                    const remove = kind === "pdf-page-remover";
+                    return (
+                      <li key={n}>
+                        <button type="button" onClick={() => toggle(n)} aria-pressed={on}
+                          className={`group relative block w-full overflow-hidden rounded-xl border-2 bg-white text-left transition hover:-translate-y-0.5 ${on ? (remove ? "border-rose-500 shadow-md shadow-rose-500/20" : "border-indigo-500 shadow-md shadow-indigo-500/20") : "border-slate-200 opacity-60 dark:border-white/10"}`}>
+                          <div className="relative grid aspect-[3/4] place-items-center overflow-hidden bg-slate-100 dark:bg-slate-900">
+                            {thumbs[n]
+                              ? <img src={thumbs[n]} alt={`Page ${n}`} className="h-full w-full object-contain transition-transform duration-500" style={{ transform: kind === "pdf-rotator" && on ? `rotate(${angle}deg) scale(${angle === 180 ? 1 : 0.72})` : undefined, filter: remove && on ? "grayscale(1) blur(.5px)" : undefined }} />
+                              : <FileText className="h-6 w-6 text-slate-300" />}
+                            {kind === "pdf-watermark" && on && (
+                              <span className="pointer-events-none absolute inset-0 grid place-items-center overflow-hidden">
+                                <span className="whitespace-nowrap font-black" style={{ color: COLORS[wmColor][1], opacity: wmOpacity / 100, fontSize: Math.max(7, wmSize / 6), transform: wmPos === "diagonal" ? "rotate(-45deg)" : undefined, alignSelf: wmPos === "top" ? "start" : wmPos === "bottom" ? "end" : "center", margin: wmPos === "top" || wmPos === "bottom" ? "10%" : 0 }}>{wmText}</span>
+                              </span>
+                            )}
+                            {remove && on && <span className="absolute inset-0 grid place-items-center bg-rose-500/25"><Trash2 className="h-6 w-6 text-rose-600" /></span>}
+                          </div>
+                          <span className="absolute left-1.5 top-1.5 rounded-full bg-slate-900/70 px-2 py-0.5 text-[11px] font-bold text-white">{n}</span>
+                          <span className={`absolute right-1.5 top-1.5 grid h-5 w-5 place-items-center rounded-full text-white transition ${on ? (remove ? "scale-100 bg-rose-600" : "scale-100 bg-indigo-600") : "scale-0"}`}>{remove ? <X className="h-3 w-3" /> : <Check className="h-3 w-3" />}</span>
+                        </button>
+                      </li>
+                    );
+                  })}
+                </ul>
+                {pages > 120 && <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">Previews are shown for the first 120 pages. All pages are processed.</p>}
+              </div>
+
+              {/* action */}
+              <div className={`${seoCard} zseo-rise p-4 sm:p-5`} style={{ ["--i" as any]: 3 }}>
+                {result ? (
+                  <div className="flex flex-wrap items-center gap-3">
+                    <span className="grid h-11 w-11 place-items-center rounded-full bg-emerald-500 text-white shadow-lg shadow-emerald-500/30"><Check className="h-5 w-5" /></span>
+                    <div className="min-w-0 flex-1"><p className="truncate font-bold text-slate-900 dark:text-white">{outName}</p><p className="text-xs text-slate-600 dark:text-slate-300">{result.pages} page{result.pages > 1 ? "s" : ""} · {fmt(result.bytes.length)}</p></div>
+                    <button type="button" onClick={() => downloadBytes(outName, result.bytes, "application/pdf")} className="zseo-shine inline-flex items-center gap-2 rounded-2xl bg-gradient-to-r from-indigo-600 to-violet-600 px-6 py-3 font-bold text-white shadow-lg shadow-indigo-500/30 transition hover:-translate-y-0.5"><Download className="h-4 w-4" />Download PDF</button>
+                    <button type="button" onClick={reset} className={seoBtn}><FileText className="h-4 w-4" />New file</button>
+                  </div>
+                ) : (
+                  <button type="button" onClick={run} disabled={busy} className="zseo-shine flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-indigo-600 to-violet-600 px-6 py-3.5 text-base font-bold text-white shadow-lg shadow-indigo-500/30 transition hover:-translate-y-0.5 disabled:opacity-60">
+                    {busy ? <><Loader2 className="h-5 w-5 animate-spin" />Working…</> : <><Btn className="h-5 w-5" />{meta.button} ({chosenCount} page{chosenCount === 1 ? "" : "s"})</>}
+                  </button>
+                )}
+              </div>
+            </>
+          )}
+        </>
+      )}
+
+      {msg && <div className={`${seoCard} flex items-start gap-3 p-4 text-sm text-amber-800 dark:text-amber-200`} role="alert"><AlertCircle className="mt-0.5 h-4 w-4 shrink-0" /><p>{msg}</p></div>}
+      <p className="px-1 text-center text-xs text-slate-500 dark:text-slate-400"><Lock className="mr-1 inline h-3 w-3" />Your file stays on your device.</p>
+    </SeoToolShell>
+  );
 }
