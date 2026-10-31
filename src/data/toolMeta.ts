@@ -165,7 +165,10 @@ const TOOL_META: Record<string, ToolMeta> = {
       { qKey: "faq.wordcounter.q6", aKey: "faq.wordcounter.a6" },
     ],
   },
-    "youtube-video-statistics": 
+     "png-to-svg": { howTo: [{ titleKey: "howto.pngsvg.step1.title", descKey: "howto.pngsvg.step1.desc" }, { titleKey: "howto.pngsvg.step2.title", descKey: "howto.pngsvg.step2.desc" }, { titleKey: "howto.pngsvg.step3.title", descKey: "howto.pngsvg.step3.desc" }], faqs: [{ qKey: "faq.pngsvg.q1", aKey: "faq.pngsvg.a1" }, { qKey: "faq.pngsvg.q2", aKey: "faq.pngsvg.a2" }, { qKey: "faq.pngsvg.q3", aKey: "faq.pngsvg.a3" }, { qKey: "faq.pngsvg.q4", aKey: "faq.pngsvg.a4" }] },
+  "svg-to-png": { howTo: [{ titleKey: "howto.svgpng.step1.title", descKey: "howto.svgpng.step1.desc" }, { titleKey: "howto.svgpng.step2.title", descKey: "howto.svgpng.step2.desc" }, { titleKey: "howto.svgpng.step3.title", descKey: "howto.svgpng.step3.desc" }], faqs: [{ qKey: "faq.svgpng.q1", aKey: "faq.svgpng.a1" }, { qKey: "faq.svgpng.q2", aKey: "faq.svgpng.a2" }, { qKey: "faq.svgpng.q3", aKey: "faq.svgpng.a3" }, { qKey: "faq.svgpng.q4", aKey: "faq.svgpng.a4" }] },
+
+  "youtube-video-statistics": 
     { howTo: [{ titleKey: "howto.ytstats.step1.title", descKey: "howto.ytstats.step1.desc" }, { titleKey: "howto.ytstats.step2.title", descKey: "howto.ytstats.step2.desc" }, { titleKey: "howto.ytstats.step3.title", descKey: "howto.ytstats.step3.desc" }], faqs: [{ qKey: "faq.ytstats.q1", aKey: "faq.ytstats.a1" }, { qKey: "faq.ytstats.q2", aKey: "faq.ytstats.a2" }, { qKey: "faq.ytstats.q3", aKey: "faq.ytstats.a3" }, { qKey: "faq.ytstats.q4", aKey: "faq.ytstats.a4" }] },
   "youtube-channel-statistics":
    { howTo: [{ titleKey: "howto.ytchan.step1.title", descKey: "howto.ytchan.step1.desc" }, { titleKey: "howto.ytchan.step2.title", descKey: "howto.ytchan.step2.desc" }, { titleKey: "howto.ytchan.step3.title", descKey: "howto.ytchan.step3.desc" }], faqs: [{ qKey: "faq.ytchan.q1", aKey: "faq.ytchan.a1" }, { qKey: "faq.ytchan.q2", aKey: "faq.ytchan.a2" }, { qKey: "faq.ytchan.q3", aKey: "faq.ytchan.a3" }, { qKey: "faq.ytchan.q4", aKey: "faq.ytchan.a4" }] },

@@ -116,7 +116,7 @@ export function ToolLayout({
 
   // Tools that need the full page width: the side list moves below them.
     const WIDE_TOOLS = ["text-to-handwriting", "age-calculator", "ai-content-rewriter", "ovulation-calculator", "ai-text-summarizer", "image-compressor", "youtube-description-extractor", "ai-grammar-checker", "plagiarism-checker", "word-coFunter", "sentence-counter", "reading-time-calculator", "case-converter", "text-diff-checker"];
-       const wide = tool ? WIDE_TOOLS.includes(tool.slug) || /^(youtube-|pdf-)/.test(tool.slug) || /-(to-pdf|to-jpg|to-image)$/.test(tool.slug) || ["image-converter", "meta-title-checker", "meta-description-checker", "serp-preview", "keyword-density", "keyword-counter"].includes(tool.slug) : false;
+     const wide = tool ? WIDE_TOOLS.includes(tool.slug) || /^(youtube-|pdf-)/.test(tool.slug) || /-(to-pdf|to-jpg|to-image)$/.test(tool.slug) || ["image-converter", "meta-title-checker", "meta-description-checker", "serp-preview", "keyword-density", "keyword-counter", "png-to-svg", "svg-to-png"].includes(tool.slug) : false;
 
   const Icon = tool
     ? getIcon(tool.icon)
